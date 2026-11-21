@@ -193,7 +193,7 @@ pre code { background: none; padding: 0; color: inherit; }
     <li><b>底盘跑起来</b><i>半天</i><p>只接电机驱动和电池。运行主程序，手机打开遥控网页，按方向键两个轮子应该同向转。此时其他模块没接，程序会打印“跳过”，属于正常。</p></li>
     <li><b>表情屏</b><i>1–2 小时</i><p>接上屏幕，应该出现两只会眨的眼睛。屏幕全白或花屏，多半是 DC、RST 接反或者屏幕型号不是 ST7789。</p></li>
     <li><b>耳朵、灯环、触摸</b><i>半天</i><p>摸一下触摸片，眼睛变爱心、耳朵抖动、灯环变粉。舵机抖得厉害说明 5 V 供电不足。</p></li>
-    <li><b>声音和对话</b><i>1–2 天</i><p>先用 <code>arecord</code> 和 <code>aplay</code> 确认能录能放，再填对话服务的地址和密钥。摸着头说话，松手后它回答。这是最容易卡住的一步，多半卡在声卡配置上。</p></li>
+    <li><b>声音和对话</b><i>1–2 天</i><p>先用 <code>arecord</code> 和 <code>aplay</code> 确认能录能放，再填对话服务的地址和密钥。摸着头说话，松手后它回答。再摸着头说“跳个舞”，它会原地正转、扭一扭、反转，跳 16 秒；按遥控网页的方向键随时能打断。这是最容易卡住的一步，多半卡在声卡配置上。</p></li>
     <li><b>摄像头</b><i>1–2 小时</i><p>接上排线重启，遥控网页顶部出现画面。</p></li>
     <li><b>桌沿检测</b><i>半天</i><p>在遥控网页打开桌面模式，把它放在桌上往桌边开，应该在轮子出去之前停住。<b>第一次测试用手在桌边接着。</b>深色或玻璃桌面要重新调电位器。还要试一次<b>贴着桌沿斜着开</b>：前面两个传感器在 ±11，轮子在 ±41，夹角太小时轮子可能先出去。</p></li>
     <li><b>红外家电</b><i>半天</i><p>用程序里的 <code>ir.learn("空调开")</code> 对着它按遥控器，录下来之后对话时说“开空调”它就会发出去。</p></li>
@@ -217,13 +217,13 @@ pre code { background: none; padding: 0; color: inherit; }
     <tr><th>文件</th><th>管什么</th></tr>
     <tr><td><a href="firmware/config.py">config.py</a></td><td>所有引脚号和参数。接线和上表不一样时只改这里</td></tr>
     <tr><td><a href="firmware/main.py">main.py</a></td><td>主程序。哪个模块没接好就跳过哪个，其余照常跑</td></tr>
-    <tr><td><a href="firmware/drive.py">drive.py</a></td><td>差速底盘和桌沿刹停，算法和 3D 模型里的一样</td></tr>
+    <tr><td><a href="firmware/drive.py">drive.py</a></td><td>差速底盘、桌沿刹停、跳舞（原地转圈的速度曲线），算法和 3D 模型里的一样</td></tr>
     <tr><td><a href="firmware/face.py">face.py</a></td><td>画眼睛：平静、开心、爱心、警戒、犯困，说话时嘴会动</td></tr>
     <tr><td><a href="firmware/body.py">body.py</a></td><td>耳朵舵机、灯环、触摸</td></tr>
-    <tr><td><a href="firmware/voice.py">voice.py</a></td><td>录音、语音转文字、大模型对话（能调用“控制家电”“移动”两个动作）、语音合成</td></tr>
+    <tr><td><a href="firmware/voice.py">voice.py</a></td><td>录音、语音转文字、大模型对话（能调用“控制家电”“移动”两个动作；听到“跳舞”“转圈”直接开跳，不等大模型）、语音合成</td></tr>
     <tr><td><a href="firmware/ir.py">ir.py</a></td><td>学习和发送红外遥控码</td></tr>
     <tr><td><a href="firmware/tts_server.py">tts_server.py</a></td><td>机器人的声音：用开源的 CosyVoice 2 合成选定的那个女孩声音（活泼可爱）。跑在电脑或云主机上，不在树莓派上</td></tr>
-    <tr><td><a href="firmware/web.py">web.py</a></td><td>手机网页遥控台：看画面、方向键、换表情、桌面模式</td></tr>
+    <tr><td><a href="firmware/web.py">web.py</a></td><td>手机网页遥控台：看画面、方向键、换表情、桌面模式、跳舞</td></tr>
   </table></div>
   <h3>系统设置</h3>
   <p>在 <code>/boot/firmware/config.txt</code> 末尾加上这几行，然后重启：</p>

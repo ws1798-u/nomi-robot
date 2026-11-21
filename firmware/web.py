@@ -16,7 +16,7 @@ button:active{background:#0c8f79;color:#fff}.row button{padding:0 16px;margin:4p
 <button data-v=0 data-w=2>◀</button><button data-v=0 data-w=0>■</button><button data-v=0 data-w=-2>▶</button>
 <i></i><button data-v=-200 data-w=0>▼</button><i></i></div>
 <div class=row><button data-e=normal>平静</button><button data-e=happy>开心</button><button data-e=heart>爱心</button>
-<button data-e=scan>警戒</button><button data-e=sleep>犯困</button><button data-d=1>桌面模式开/关</button></div>
+<button data-e=scan>警戒</button><button data-e=sleep>犯困</button><button data-d=1>桌面模式开/关</button><button data-dance=1>跳舞</button></div>
 <script>
 const post=o=>fetch('/cmd',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(o)});
 document.querySelectorAll('[data-v]').forEach(b=>{
@@ -24,6 +24,7 @@ document.querySelectorAll('[data-v]').forEach(b=>{
   b.onpointerup=b.onpointerleave=()=>post({v:0,w:0});});
 document.querySelectorAll('[data-e]').forEach(b=>b.onclick=()=>post({expr:b.dataset.e}));
 document.querySelector('[data-d]').onclick=()=>post({desk:'toggle'});
+document.querySelector('[data-dance]').onclick=()=>post({dance:1});
 </script>"""
 
 
@@ -70,6 +71,9 @@ def serve(state, port=8080):
         d = request.get_json(force=True)
         if "v" in d:
             state["v"], state["w"], state["manual_until"] = float(d["v"]), float(d["w"]), time.time() + 1.0
+            state["dance_t0"] = 0.0                     # 方向键随时打断跳舞
+        if d.get("dance"):
+            state["dance_t0"] = time.time()
         if "expr" in d:
             state["expr"], state["expr_until"] = d["expr"], time.time() + 4
         if d.get("desk") == "toggle":

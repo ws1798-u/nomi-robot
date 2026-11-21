@@ -2,11 +2,13 @@
 
 每个硬件模块都是可选的：哪个没接好，启动时会打印一行原因并跳过，其余照常工作。
 """
+import re
 import threading
 import time
 import config as C
 
-state = {"v": 0.0, "w": 0.0, "manual_until": 0.0, "expr": "normal", "expr_until": 0.0, "desk": False}
+state = {"v": 0.0, "w": 0.0, "manual_until": 0.0, "expr": "normal", "expr_until": 0.0, "desk": False, "dance_t0": 0.0}
+DANCE_WORDS = re.compile(r"跳.{0,2}舞|转.?圈")        # 听到这些词直接跳，不用等大模型
 
 
 def load(name, make):
@@ -28,6 +30,9 @@ def main():
             return "已发送" if ir.send(args.get("name", "")) else "没有学过这个遥控按键"
         if name == "move":
             a = args.get("action")
+            if a == "跳舞":
+                state["dance_t0"] = time.time()
+                return "开始跳了"
             state["v"], state["w"] = {"前进": (150, 0), "后退": (-150, 0), "转一圈": (0, 2.2)}.get(a, (0, 0))
             state["manual_until"] = time.time() + (2.9 if a == "转一圈" else 1.2)
             return "好的"
@@ -56,7 +61,11 @@ def main():
                     text = v.transcribe(wav)
                     if not text:
                         return
-                    say, mood = v.chat(text)
+                    if DANCE_WORDS.search(text):
+                        state["dance_t0"] = time.time()
+                        say, mood = "好呀，看我转个圈！", "happy"
+                    else:
+                        say, mood = v.chat(text)
                     state["expr"], state["expr_until"] = mood, time.time() + 6
                     if f:
                         f.talking = True
@@ -72,7 +81,11 @@ def main():
 
         if now > state["expr_until"]:
             state["expr"] = "normal"
-        if now > state["manual_until"]:
+        dancing = now - state["dance_t0"] < drive.DANCE_S
+        if dancing:                                          # 跳舞：原地转圈，表情开心；遥控方向键会打断
+            state["v"], state["w"] = 0.0, drive.dance_w(now - state["dance_t0"])
+            state["expr"], state["expr_until"] = "happy", now + 1
+        elif now > state["manual_until"]:
             state["v"] = state["w"] = 0.0
         if d:
             d.desk_mode = state["desk"]
