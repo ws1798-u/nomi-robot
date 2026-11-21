@@ -31,7 +31,7 @@ pre code { background: none; padding: 0; color: inherit; }
 </style>
 </head>
 <body>
-<nav><div class="wrap"><b>Nomi</b><a href="index.html">首页</a><a href="#parts">采购清单</a><a href="#drawing">尺寸图</a><a href="#wiring">接线</a><a href="#steps">步骤</a><a href="#code">程序</a><a href="make.html">量产与成本</a><a class="cta" href="sim.html">打开 3D 模型</a></div></nav>
+<nav><div class="wrap"><b>Nomi</b><a href="index.html">首页</a><a href="#parts">采购清单</a><a href="#drawing">尺寸图</a><a href="#stl">打印文件</a><a href="#wiring">接线</a><a href="#steps">步骤</a><a href="#code">程序</a><a href="make.html">量产与成本</a><a class="cta" href="sim.html">打开 3D 模型</a></div></nav>
 
 <header class="hero"><div class="wrap">
   <div class="eyebrow">样机制作指南</div>
@@ -40,7 +40,7 @@ pre code { background: none; padding: 0; color: inherit; }
   <div class="note"><b>先说清楚三件事：</b><br>
   1. 这份方案和程序是我按各零件的公开用法写的，<b>没有在实物上跑过</b>。程序通过了语法检查，但接线和驱动在你的板子上大概率需要调试，文中标出了最容易出问题的地方。<br>
   2. 你没有告诉我用哪种主控，我按<b>树莓派 Zero 2 W</b> 写（要跑摄像头和对话，它比 ESP32 省事）。也没说有没有 3D 打印机，我按<b>网上代打印</b>写。<br>
-  3. 外壳需要你或代工方按下面的尺寸图建模。我给的是尺寸和轮廓数据，不是可以直接打印的模型文件。</div>
+  3. 外壳的打印文件已经生成好了（见“尺寸图”一节），但<b>没有实际打印和试装过</b>：外壳本体可以直接打，内部骨架是起步版，孔位要按你买到的零件核对。</div>
   <div class="kpis">
     <div><span>零件总价</span><b id="k-total">—</b><small>元</small></div>
     <div><span>零件种类</span><b id="k-n">—</b><small>种</small></div>
@@ -91,6 +91,25 @@ pre code { background: none; padding: 0; color: inherit; }
 <text x="210" y="215.0">底盘 Ø58</text><text x="316.6" y="132.0">轮 10 × 44</text><text x="132.0" y="124.2">悬崖 ×3</text></g>
 </svg><p style="font-size:14.5px;margin:10px 0 0">两个滑垫（前后各一，Ø8，比轮子最低点高 1 mm）让机身不前后点头。悬崖传感器镜头朝下，离地 4–8 mm。</p></div>
   </div>
+  <h3 id="stl">打印文件</h3>
+  <p>6 个零件，按 115% 比例生成（整机约 143 × 143 × 147 mm），壁厚 2 mm。每个文件都检查过是封闭的单个实体，可以直接导入切片软件。</p>
+  <p><a class="btn" href="cad/nomi-stl-115.zip">下载全部打印文件（zip，约 1 MB）</a><a class="btn ghost" href="cad/make_shell.py">生成脚本 make_shell.py</a></p>
+  <div class="tbl"><table>
+    <tr><th>文件</th><th>是什么</th><th class="n">外形尺寸（mm）</th><th>材料与摆放</th></tr>
+    <tr><td><a href="cad/stl/shell_front.stl">shell_front.stl</a></td><td>前壳：表情窗、摄像头孔、避障窗、轮舱缺口、合缝螺丝耳</td><td class="n">143 × 71 × 130</td><td>树脂或 PLA。合缝面朝下平放，要加支撑</td></tr>
+    <tr><td><a href="cad/stl/shell_back.stl">shell_back.stl</a></td><td>后壳：出音孔、充电口、轮舱缺口、合缝螺丝耳</td><td class="n">143 × 71 × 130</td><td>同上</td></tr>
+    <tr><td><a href="cad/stl/top_cap.stl">top_cap.stl</a></td><td>顶盖：带向下的止口，两条槽让耳朵的摆杆穿出</td><td class="n">71 × 71 × 14</td><td>深色半透明料最好，没有就用黑色。开口朝上放</td></tr>
+    <tr><td><a href="cad/stl/base_plate.stl">base_plate.stl</a></td><td>底盘：两个滑垫、三个悬崖传感器窗、四个螺丝孔</td><td class="n">62 × 62 × 8</td><td>PETG。滑垫朝上放</td></tr>
+    <tr><td><a href="cad/stl/frame.stl">frame.stl</a></td><td>内部骨架：立板加三层搁板（电池、主板、舵机），电机缺口和扎带槽，树莓派安装孔</td><td class="n">137 × 48 × 119</td><td>PETG。立着打，搁板下面要支撑</td></tr>
+    <tr><td><a href="cad/stl/ear.stl">ear.stl</a></td><td>耳朵，带摆杆。打印两个</td><td class="n">14 × 14 × 48</td><td>TPU 软料</td></tr>
+  </table></div>
+  <figure style="margin:18px 0 0"><img src="img/cad-preview.jpg" alt="生成的零件预览：装配后的外壳正面、背面、底面，以及前壳内侧、骨架、顶盖、底盘" style="display:block;width:100%;border-radius:12px;border:1px solid var(--line);background:#fff" loading="lazy"></figure>
+  <div class="note"><b>这些文件的可靠程度不一样：</b><br>
+  · <b>外壳、顶盖、底盘</b>是按轮廓公式直接算出来的，尺寸我用程序核对过（骨架离内壁最近处有 1 mm 间隙，底盘有 0.4 mm），可以直接打印。<br>
+  · <b>骨架是起步版。</b>搁板位置和电机缺口按常见零件尺寸留的，但我没有实物可以试装。它目前没有设计固定到外壳上的结构，样机可以先用热熔胶粘在后壳里，或者自己加螺丝柱。<br>
+  · <b>没有包含的：</b>轮毂（建议直接买 N20 配套的 Ø43–44 橡胶轮）、舵机支架、表情屏和摄像头的固定卡扣、充电座、显示器夹座。这些要按你买到的具体零件再画。<br>
+  · <b>想改比例或尺寸</b>：装好 Python 后运行 <code>pip install manifold3d numpy trimesh</code>，再 <code>python make_shell.py 1.0</code> 就能生成 1:1 的版本；所有尺寸都在脚本开头。</div>
+
   <h3>外壳轮廓数据</h3>
   <p>外壳是一个旋转体：把下面这条轮廓线绕中心轴转一圈，再前后剖成两半。在任何建模软件里用“旋转”命令就能画出来。壁厚 2 mm。</p>
   <div class="tbl"><table><tr><th class="n">离地高度</th><th class="n">半径</th><th class="n">直径</th></tr><tr><td class=n>6</td><td class=n>29.1</td><td class=n>58.2</td></tr><tr><td class=n>10</td><td class=n>41.0</td><td class=n>81.9</td></tr><tr><td class=n>20</td><td class=n>53.3</td><td class=n>106.6</td></tr><tr><td class=n>30</td><td class=n>58.6</td><td class=n>117.3</td></tr><tr><td class=n>40</td><td class=n>61.0</td><td class=n>122.1</td></tr><tr><td class=n>50</td><td class=n>61.9</td><td class=n>123.8</td></tr><tr><td class=n>60</td><td class=n>62.0</td><td class=n>124.0</td></tr><tr><td class=n>70</td><td class=n>61.3</td><td class=n>122.7</td></tr><tr><td class=n>80</td><td class=n>59.3</td><td class=n>118.5</td></tr><tr><td class=n>90</td><td class=n>55.6</td><td class=n>111.3</td></tr><tr><td class=n>100</td><td class=n>50.1</td><td class=n>100.3</td></tr><tr><td class=n>110</td><td class=n>42.0</td><td class=n>84.0</td></tr><tr><td class=n>120</td><td class=n>29.2</td><td class=n>58.4</td></tr><tr><td class=n>128</td><td class=n>0.0</td><td class=n>0.0</td></tr></table></div>
@@ -99,7 +118,7 @@ pre code { background: none; padding: 0; color: inherit; }
     <li><b>前壳开口：</b>表情窗在离地 58–96、左右各 46°的范围；摄像头孔 Ø13 在离地 104；避障传感器窗在离地 37–43。</li>
     <li><b>后壳开口：</b>出音孔在离地 66–102、左右各 24°，打一片 Ø3 的小孔。</li>
     <li><b>顶部：</b>离地 119 以上单独做成顶盖，用深色半透明材料，红外和触摸都在它下面。</li>
-    <li><b>要打印的件：</b>前壳、后壳、顶盖、底盘、内部骨架（一块竖板，电池盒、主板、舵机都锁在上面）、轮毂 ×2、耳朵 ×2（软料）。</li>
+    <li><b>耳朵的传动：</b>舵机横放在最上面一层搁板上，摇臂朝外；耳朵的摆杆从顶盖的槽里穿下来，锁在摇臂上，舵机一转耳朵就前后摆。</li>
     <li><b>表情窗的镜片：</b>样机用 1 mm 厚的茶色亚克力片，热风枪稍微烤弯贴在内侧；或者先不装镜片，直接露出屏幕。</li>
   </ul>
 </div></section>
