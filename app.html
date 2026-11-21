@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nomi · APP 与家电互联</title>
+<meta name="description" content="Nomi 怎么连上手机：四步配网流程、APP 五个主界面的设计，以及它控制家电的完整链路。">
+<link rel="stylesheet" href="site.css">
+</head>
+<body>
+<nav><div class="wrap"><b>NOMI</b><a href="index.html">首页</a><a href="#link">连接方式</a><a href="#pair">配网流程</a><a href="#ui">APP 界面</a><a href="#iot">家电互联</a><a href="make.html">制造与成本</a><a class="cta" href="sim.html">打开 3D</a></div></nav>
+
+<header class="hero"><div class="wrap">
+  <div class="eyebrow">Nomi Home APP</div>
+  <h1>四步连上，<em>一句话</em>管全家</h1>
+  <p class="lead">这一页讲三件事：Nomi 和手机之间靠什么连接；APP 从开箱到日常使用的流程和界面；它控制家电时，每一步信号是怎么走的。</p>
+  <a class="btn" href="#pair">看配网流程 →</a><a class="btn ghost" href="#iot">看家电互联</a>
+</div></header>
+
+<section id="link"><div class="wrap">
+  <div class="sec-head"><div class="eyebrow">01 连接方式</div><h2>四条通道，各管一件事</h2><p>蓝牙只在第一次配网时用；之后所有事情都走 Wi-Fi。</p></div>
+  <div class="tbl"><table>
+    <tr><th>通道</th><th>什么时候用</th><th>怎么工作</th></tr>
+    <tr><td><b>蓝牙 5.2（BLE）</b></td><td>首次配网、换 Wi-Fi</td><td>机器人开机后广播自己的名字，APP 发现它，在加密的蓝牙连接里把家里 Wi-Fi 的名称和密码发过去。Wi-Fi 密码不经过云端。</td></tr>
+    <tr><td><b>Wi-Fi → 云端</b></td><td>在外面远程控制、推送提醒</td><td>机器人连上 Wi-Fi 后与云端保持一条加密长连接（MQTT over TLS）。APP 发的指令经云端转给机器人，机器人的状态和提醒经云端推到手机。</td></tr>
+    <tr><td><b>局域网直连</b></td><td>手机和机器人在同一个 Wi-Fi 下</td><td>APP 在局域网里找到机器人后直接通信，不绕云端：遥控更跟手，断外网也能用基础功能。</td></tr>
+    <tr><td><b>实时视频（WebRTC）</b></td><td>看家、对讲</td><td>云端只帮双方“牵线”（信令），画面和声音尽量点对点直传并全程加密；穿透不了时才走中转服务器。</td></tr>
+  </table></div>
+</div></section>
+
+<section id="pair"><div class="wrap">
+  <div class="sec-head"><div class="eyebrow">02 配网流程</div><h2>从开箱到会打招呼，四步</h2><p>目标是 3 分钟内完成，全程机器人用表情和语音配合提示。</p></div>
+  <div class="phones">
+    <figure><div class="ph"><div class="scr"><div class="sb"><span>9:41</span><span>5G</span></div><div class="bd">
+      <h4>添加 Nomi<small>第 1 步 / 共 4 步</small></h4>
+      <div class="c" style="text-align:center"><div class="ring"><b></b></div><div class="big">正在搜索附近的 Nomi</div><div class="mut">请长按机器人头顶 3 秒，直到灯环变成蓝色闪烁</div></div>
+      <div class="c row"><div class="av">◉</div><div><b>Nomi-3F2A</b><div class="mut">信号强 · 未绑定</div></div><span class="chip">连接</span></div>
+      <div class="mut" style="text-align:center;margin-top:auto">搜不到？<b>扫机身底部二维码</b></div>
+    </div></div></div><figcaption><b>① 发现设备</b>长按头顶进入配网，APP 通过蓝牙自动搜到。搜不到可以扫底部二维码。</figcaption></figure>
+
+    <figure><div class="ph"><div class="scr"><div class="sb"><span>9:42</span><span>5G</span></div><div class="bd">
+      <h4>连接 Wi-Fi<small>第 2 步 / 共 4 步</small></h4>
+      <div class="c"><div class="mut">Wi-Fi 名称</div><div class="inp row" style="margin:4px 0 9px"><b>Home_5G</b><span class="mut">更换</span></div><div class="mut">密码</div><div class="inp f row" style="margin-top:4px"><b>••••••••••</b><span class="mut">显示</span></div></div>
+      <div class="c mut">支持 2.4 GHz 和 5 GHz。密码只通过蓝牙发给机器人，不会上传。</div>
+      <div class="pri" style="margin-top:auto">下一步</div>
+    </div></div></div><figcaption><b>② 告诉它 Wi-Fi</b>自动填入手机当前连接的 Wi-Fi，只需输入密码。</figcaption></figure>
+
+    <figure><div class="ph"><div class="scr"><div class="sb"><span>9:43</span><span>Wi-Fi</span></div><div class="bd">
+      <h4>正在绑定<small>第 3 步 / 共 4 步</small></h4>
+      <div class="c">
+        <div class="row" style="padding:5px 0"><span class="dot"></span><span>Wi-Fi 已连接</span><b style="color:var(--a)">✓</b></div>
+        <div class="row" style="padding:5px 0"><span class="dot"></span><span>验证设备身份</span><b style="color:var(--a)">✓</b></div>
+        <div class="row" style="padding:5px 0"><span class="dot"></span><span>绑定到你的账号</span><b style="color:var(--a)">✓</b></div>
+        <div class="row" style="padding:5px 0"><span class="dot" style="background:#d5d8d6"></span><span>检查固件更新</span><span class="mut">进行中…</span></div>
+      </div>
+      <div class="c mut">请看机器人屏幕上的 4 位数字，确认和这里一致：<div class="big" style="letter-spacing:.3em;color:#151a18;margin-top:4px">4 7 2 9</div></div>
+      <div class="pri" style="margin-top:auto">数字一致，继续</div>
+    </div></div></div><figcaption><b>③ 绑定账号</b>核对机器人屏幕上的数字，防止绑到邻居家的设备。每台机器出厂带唯一密钥。</figcaption></figure>
+
+    <figure><div class="ph"><div class="scr"><div class="sb"><span>9:45</span><span>Wi-Fi</span></div><div class="bd">
+      <h4>认识一下<small>第 4 步 / 共 4 步</small></h4>
+      <div class="c"><div class="mut">给它起个名字</div><div class="inp f" style="margin:4px 0 9px"><b>糯米</b></div><div class="mut">它怎么称呼你</div><div class="inp" style="margin-top:4px"><b>主人</b></div></div>
+      <div class="c row"><div class="av">☺</div><div><b>录入人脸和声音</b><div class="mut">看着它说一句话，约 10 秒</div></div><span class="chip">开始</span></div>
+      <div class="c row"><div><b>它住在哪个房间</b><div class="mut">客厅</div></div><span class="mut">›</span></div>
+      <div class="pri" style="margin-top:auto">完成，打个招呼</div>
+    </div></div></div><figcaption><b>④ 互相认识</b>起名字、录人脸和声音（可跳过）、选房间。完成后机器人会叫出你的称呼。</figcaption></figure>
+  </div>
+  <h3>配网失败时怎么办</h3>
+  <ul>
+    <li><b>连不上 Wi-Fi：</b>机器人表情变成困惑并播报原因（密码错误、信号弱、路由器开了隔离），APP 同步显示对应提示，停留在第 2 步重试。</li>
+    <li><b>手机没有蓝牙权限：</b>改用热点配网，机器人临时开一个热点，手机连上后填写 Wi-Fi 信息。</li>
+    <li><b>换路由器或转送他人：</b>长按头顶 10 秒恢复出厂，清空 Wi-Fi、账号绑定和本机保存的人脸数据。</li>
+  </ul>
+</div></section>
+
+<section id="ui" class="dark"><div class="wrap">
+  <div class="sec-head"><div class="eyebrow">03 APP 界面</div><h2>四个标签页，加一个对话入口</h2><p>底部四个标签：首页、看家、家电、我的。和机器人聊天从首页直接进入。</p></div>
+  <div class="phones">
+    <figure><div class="ph"><div class="scr"><div class="sb"><span>18:30</span><span>Wi-Fi</span></div><div class="bd">
+      <h4>晚上好<small>糯米在客厅 · 心情开心</small></h4>
+      <div class="c row"><div class="av">◉</div><div><b>糯米</b><div class="mut"><span class="dot"></span> 在线 · 电量 82% · 还能用 6.8 小时</div></div></div>
+      <div class="g2"><div class="c"><div class="mut">今天陪伴</div><div class="big">3 小时 20 分</div></div><div class="c"><div class="mut">提醒你喝水</div><div class="big">5 次</div></div></div>
+      <div class="c"><b>快捷指令</b><div class="g3" style="margin-top:7px"><div class="sec">回家</div><div class="sec">睡觉</div><div class="sec">出门</div></div></div>
+      <div class="c row"><div><b>和糯米聊天</b><div class="mut">“今天过得怎么样？”</div></div><span class="mut">›</span></div>
+    </div><div class="tab"><b><i></i>首页</b><span><i></i>看家</span><span><i></i>家电</span><span><i></i>我的</span></div></div></div><figcaption><b>首页</b>一眼看到它在哪、电量和心情；三个快捷指令一键触发整套家电联动。</figcaption></figure>
+
+    <figure><div class="ph"><div class="scr"><div class="sb"><span>14:05</span><span>5G</span></div><div class="bd">
+      <h4>看家<small>客厅 · 实时</small></h4>
+      <div class="cam"><em>● LIVE</em></div>
+      <div class="g3"><div class="sec">截图</div><div class="sec">录像</div><div class="pri" style="padding:9px">按住说话</div></div>
+      <div class="c row"><div class="pad4"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><div><b>遥控</b><div class="mut">拖动走动<br>双击画面：走到那里</div></div></div>
+      <div class="c row"><div><b>看家模式</b><div class="mut">有人移动时推送</div></div><div class="sw on"></div></div>
+    </div><div class="tab"><span><i></i>首页</span><b><i></i>看家</b><span><i></i>家电</span><span><i></i>我的</span></div></div></div><figcaption><b>看家</b>实时画面、对讲、遥控走动。开启看家模式后有人移动会推送并保存片段。</figcaption></figure>
+
+    <figure><div class="ph"><div class="scr"><div class="sb"><span>20:10</span><span>Wi-Fi</span></div><div class="bd">
+      <h4>家电<small>客厅 · 4 台设备，2 台开着</small></h4>
+      <div class="g2">
+        <div class="c"><div class="row"><b>台灯</b><div class="sw on"></div></div><div class="mut">Matter · 亮度 70%</div></div>
+        <div class="c"><div class="row"><b>风扇</b><div class="sw"></div></div><div class="mut">Matter · 已关</div></div>
+        <div class="c"><div class="row"><b>窗帘</b><div class="sw"></div></div><div class="mut">Matter · 已合上</div></div>
+        <div class="c"><div class="row"><b>空调</b><div class="sw on"></div></div><div class="mut">红外 · 制冷 26°</div></div>
+      </div>
+      <div class="c"><b>场景</b><div class="row" style="margin-top:6px"><span>回家：开灯、开空调、问候</span><span class="chip">执行</span></div><div class="row" style="margin-top:6px"><span>睡觉：全关、去充电</span><span class="chip">执行</span></div></div>
+      <div class="sec" style="margin-top:auto">＋ 添加设备 / 学习遥控器</div>
+    </div><div class="tab"><span><i></i>首页</span><span><i></i>看家</span><b><i></i>家电</b><span><i></i>我的</span></div></div></div><figcaption><b>家电</b>每台设备标明走 Matter 还是红外。场景把多个动作和机器人的行为编在一起。</figcaption></figure>
+
+    <figure><div class="ph"><div class="scr"><div class="sb"><span>21:15</span><span>Wi-Fi</span></div><div class="bd">
+      <h4>糯米<small>在听 · 可以直接对它说话</small></h4>
+      <div class="bub me">今天好累啊</div>
+      <div class="bub">辛苦啦～要不要我把灯调暗一点，放首轻音乐？</div>
+      <div class="bub me">好，空调也开一下</div>
+      <div class="bub">好的，已经打开空调 26°，灯光调到 30%，开始播放轻音乐。<div style="margin-top:6px"><span class="chip">空调 开</span> <span class="chip">台灯 30%</span> <span class="chip">音乐</span></div></div>
+      <div class="inp row" style="margin-top:auto"><span class="mut">输入文字，或按住说话</span><b style="color:var(--a)">●</b></div>
+    </div></div></div><figcaption><b>聊天</b>不在它身边也能打字聊。它替你做了什么会以标签列在回复下面，点一下可撤销。</figcaption></figure>
+
+    <figure><div class="ph"><div class="scr"><div class="sb"><span>21:20</span><span>Wi-Fi</span></div><div class="bd">
+      <h4>我的<small>家庭成员 3 人</small></h4>
+      <div class="c"><div class="row" style="padding:4px 0"><b>性格与声音</b><span class="mut">活泼 · 童声 ›</span></div><div class="row" style="padding:4px 0"><b>主动问候</b><div class="sw on"></div></div><div class="row" style="padding:4px 0"><b>勿扰时段</b><span class="mut">23:00–7:00 ›</span></div></div>
+      <div class="c"><div class="row" style="padding:4px 0"><b>它记得的事</b><span class="mut">12 条 ›</span></div><div class="row" style="padding:4px 0"><b>摄像头物理挡片提醒</b><div class="sw on"></div></div><div class="row" style="padding:4px 0"><b>对话记录保存</b><span class="mut">7 天 ›</span></div></div>
+      <div class="c"><div class="row" style="padding:4px 0"><b>家庭成员与权限</b><span class="mut">›</span></div><div class="row" style="padding:4px 0"><b>固件更新</b><span class="chip">已是最新</span></div></div>
+    </div><div class="tab"><span><i></i>首页</span><span><i></i>看家</span><span><i></i>家电</span><b><i></i>我的</b></div></div></div><figcaption><b>我的</b>性格、勿扰时段、它记住了什么（可逐条删除）、隐私和成员权限都在这里。</figcaption></figure>
+  </div>
+</div></section>
+
+<section id="iot"><div class="wrap">
+  <div class="sec-head"><div class="eyebrow">04 家电互联</div><h2>机器人自己就是家里的“中控”</h2><p>新的智能设备走 Matter，机器人在局域网里直接控制，不依赖各家云；没有联网能力的老家电，用头顶的红外管遥控。</p></div>
+  <div class="diagram"><svg viewBox="0 0 1000 440" role="img" aria-label="互联架构图：手机 APP、云端、Nomi 机器人、Matter 设备、红外家电之间的连接">
+    <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 10 5 0 10z" style="fill:#0fae92;stroke:none"/></marker><marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 10 5 0 10z" style="fill:#8c9893;stroke:none"/></marker></defs>
+    <rect class="b" x="30" y="50" width="210" height="96" rx="16"/><text x="50" y="84">手机 APP</text><text class="s" x="50" y="106">遥控 · 看画面 · 管家电</text><text class="s" x="50" y="126">在家或在外都能用</text>
+    <rect class="b" x="395" y="30" width="230" height="124" rx="16"/><text x="415" y="64">云端</text><text class="s" x="415" y="86">设备长连接与消息转发</text><text class="s" x="415" y="106">视频牵线（信令）</text><text class="s" x="415" y="126">语音识别 · 大模型 · 语音合成</text>
+    <rect class="h" x="395" y="262" width="230" height="140" rx="16"/><text x="415" y="296">Nomi 机器人</text><text class="s" x="415" y="318">Matter 控制器（管家电）</text><text class="s" x="415" y="338">红外发射 ×4 + 学习接收</text><text class="s" x="415" y="358">本地唤醒词与离线指令</text><text class="s" x="415" y="378">自动化规则在本机执行</text>
+    <rect class="b" x="770" y="30" width="205" height="96" rx="16"/><text x="790" y="64">第三方平台（可选）</text><text class="s" x="790" y="86">其他品牌的云对云对接</text><text class="s" x="790" y="106">需逐家申请接入</text>
+    <rect class="b" x="770" y="200" width="205" height="96" rx="16"/><text x="790" y="234">Matter 设备</text><text class="s" x="790" y="256">灯 · 插座 · 窗帘 · 传感器</text><text class="s" x="790" y="276">同一个 Wi-Fi 局域网</text>
+    <rect class="b" x="770" y="326" width="205" height="96" rx="16"/><text x="790" y="360">红外家电</text><text class="s" x="790" y="382">空调 · 电视 · 风扇 · 机顶盒</text><text class="s" x="790" y="402">同一个房间内，8 m</text>
+    <path d="M240 86H393" marker-end="url(#ar)" marker-start="url(#ar)"/><text class="l" x="270" y="76">加密 HTTPS / 推送</text>
+    <path d="M510 154V260" marker-end="url(#ar)" marker-start="url(#ar)"/><text class="l" x="520" y="212">加密长连接（MQTT）</text>
+    <path class="d" d="M135 146V332H393" marker-end="url(#ag)" marker-start="url(#ag)"/><text class="l" x="150" y="322" style="fill:#5f6a66">蓝牙配网 · 局域网直连 · 视频直传</text>
+    <path d="M625 300C700 300 700 248 768 248" marker-end="url(#ar)" marker-start="url(#ar)"/><text class="l" x="640" y="240">Matter over Wi-Fi</text>
+    <path d="M625 366H768" marker-end="url(#ar)"/><text class="l" x="650" y="356">38 kHz 红外</text>
+    <path class="d" d="M625 78H768" marker-end="url(#ag)" marker-start="url(#ag)"/>
+  </svg></div>
+
+  <h3>说一句“我回来了”，发生了什么</h3>
+  <ol class="flow">
+    <li><b>听到并认出你</b><i>本机，约 0.2 秒</i><p>麦克风阵列听到唤醒词（或摄像头认出你进门），判断声音来自哪边，机器人转身面向你。这一步不联网。</p></li>
+    <li><b>听懂这句话</b><i>云端</i><p>唤醒后的语音传到云端转成文字，连同“现在 18:30、客厅灯关着、空调关着、说话的是主人”这些状态一起交给大模型。</p></li>
+    <li><b>决定做什么</b><i>云端</i><p>大模型不直接碰设备，它只输出要调用的动作：触发“回家”场景，并写一句问候。能调用哪些动作是我们限定好的清单。</p></li>
+    <li><b>机器人执行</b><i>本机，局域网内</i><p>机器人通过 Matter 打开台灯，对着空调发红外开机码并设到 26°，同时表情变开心、耳朵摆动，说出问候。</p></li>
+    <li><b>确认结果</b><i>本机 → APP</i><p>Matter 设备会回报真实状态；红外是单向的，收不到回执，所以空调状态是“机器人记的”，APP 里会标注“红外”，可以手动校正。</p></li>
+  </ol>
+
+  <h3>能接哪些设备</h3>
+  <div class="tbl"><table>
+    <tr><th>方式</th><th>适合的设备</th><th>优点</th><th>限制</th></tr>
+    <tr><td><b>Matter over Wi-Fi</b></td><td>支持 Matter 的灯、插座、开关、窗帘电机、温湿度和门窗传感器</td><td>跨品牌通用；局域网直连，断外网也能用；设备会回报真实状态</td><td>只认带 Matter 标志的设备。走 Thread 的 Matter 设备还需要家里有一台 Thread 边界路由器</td></tr>
+    <tr><td><b>红外遥控</b></td><td>空调、电视、风扇、机顶盒、投影等带遥控器的老家电</td><td>不用换家电；内置常见品牌码库，冷门型号可以对着机器人按遥控器“学习”</td><td>要在同一个房间、中间没有遮挡；单向发送，无法知道家电真实状态</td></tr>
+    <tr><td><b>云对云（可选）</b></td><td>不支持 Matter 的其他品牌智能设备</td><td>能覆盖用户家里已有的设备</td><td>依赖对方平台开放接口，要逐家申请和适配；断网不可用</td></tr>
+  </table></div>
+
+  <h3>联动场景示例</h3>
+  <div class="tbl"><table>
+    <tr><th>场景</th><th>触发</th><th>家电动作</th><th>机器人动作</th></tr>
+    <tr><td>回家</td><td>认出主人进门，或说“我回来了”</td><td>开客厅灯，空调 26°</td><td>迎上去、开心表情、问候</td></tr>
+    <tr><td>睡觉</td><td>说“晚安”，或到了设定时间</td><td>关灯、关电视、合窗帘、空调调睡眠模式</td><td>说晚安，自己回充电座</td></tr>
+    <tr><td>出门</td><td>APP 点“出门”，或手机离开家</td><td>全部关闭</td><td>进入看家模式，定时巡逻</td></tr>
+    <tr><td>久坐</td><td>桌面模式下连续 45 分钟检测到人在座位</td><td>—</td><td>提醒起来活动、喝水</td></tr>
+    <tr><td>异常</td><td>看家模式下检测到有人移动或异常声响</td><td>可选：开灯</td><td>推送提醒并保存片段</td></tr>
+  </table></div>
+  <div class="note"><b>3D 模型里可以直接试：</b>打开 <a href="sim.html">3D 交互模型</a>，点下方“控制家电”，再在右侧手机面板里开关台灯、风扇、窗帘、空调，能看到头顶红外灯闪烁、信号波纹扩散，房间灯光跟着变化。</div>
+</div></section>
+
+<section><div class="wrap">
+  <div class="sec-head"><div class="eyebrow">05 隐私与安全</div><h2>家里的摄像头和麦克风，要让人放心</h2></div>
+  <div class="bento">
+    <div><h3>看得见的开关</h3><p>摄像头有物理挡片；摄像头或麦克风在工作时，机身指示灯一定亮，这是硬件电路决定的，软件关不掉。</p></div>
+    <div><h3>没唤醒不上传</h3><p>唤醒词在本机识别。只有唤醒之后的那一句话才会传到云端。</p></div>
+    <div><h3>画面点对点</h3><p>实时视频加密直传手机。人脸特征只存在本机，不上传照片。</p></div>
+    <div class="w3"><h3>它记得什么，你说了算</h3><p>对话记录和它记住的习惯都能在 APP 里逐条查看、删除，也可以设置自动清除周期。</p></div>
+    <div class="w3"><h3>家庭成员分权限</h3><p>主人可以邀请家人，分别设置能不能看画面、能不能遥控。恢复出厂会清空账号绑定和本机数据。</p></div>
+  </div>
+</div></section>
+
+<footer><div class="wrap"><p>APP 界面为设计示意稿，不是已开发的应用。互联方案按公开协议的通用做法设计，具体品牌的兼容性需要实测。</p><a href="index.html">首页</a><a href="sim.html">3D 交互</a><a href="make.html">制造与成本</a></div></footer>
+</body>
+</html>
