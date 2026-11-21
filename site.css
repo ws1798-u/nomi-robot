@@ -1,4 +1,4 @@
-:root { --bg: #eef0f3; --card: #ffffff; --ink: #0b0c0e; --sub: #5d6470; --line: rgba(11, 12, 14, 0.13); --acc: #1f2de6; --acc2: #1f2de6; --pink: #ff8fa3; --blue: #23b4e6; --stage: #e2e5ea; --r: 12px; }
+:root { --bg: #eef0f3; --card: #ffffff; --ink: #0b0c0e; --sub: #5d6470; --line: rgba(11, 12, 14, 0.13); --acc: #0c8f79; --acc2: #0c8f79; --btn: #0b0c0e; --pink: #ff8fa3; --blue: #23b4e6; --stage: #e2e5ea; --r: 12px; }
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; scroll-padding-top: 96px; }
 body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.75 "Chivo", -apple-system, 'PingFang SC', 'HarmonyOS Sans SC', 'Microsoft YaHei', 'Noto Sans SC', sans-serif; -webkit-font-smoothing: antialiased; padding-top: 72px; }
@@ -12,11 +12,11 @@ img { max-width: 100%; }
 nav { position: fixed; top: 0; left: 0; right: 0; z-index: 20; height: 72px; background: var(--bg); border-bottom: 1px solid var(--line); }
 nav .wrap { display: flex; align-items: center; gap: 4px; height: 100%; overflow-x: auto; white-space: nowrap; scrollbar-width: none; }
 nav b { display: inline-flex; align-items: center; gap: 8px; font-size: 20px; font-weight: 500; letter-spacing: -0.02em; margin-right: auto; padding-right: 24px; }
-nav b::before { content: ''; width: 20px; height: 20px; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M5 18v-5a7 7 0 0 1 14 0v5' fill='none' stroke='%231f2de6' stroke-width='3.2' stroke-linecap='round'/%3E%3C/svg%3E") center / contain no-repeat; }
+nav b::before { content: ''; width: 20px; height: 20px; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M5 18v-5a7 7 0 0 1 14 0v5' fill='none' stroke='%230c8f79' stroke-width='3.2' stroke-linecap='round'/%3E%3C/svg%3E") center / contain no-repeat; }
 nav a { text-decoration: none; font-size: 15px; color: var(--ink); font-weight: 500; padding: 8px 12px; border-radius: 8px; transition: background 0.2s; }
 nav a:hover { background: rgba(11, 12, 14, 0.06); }
-nav a.cta { background: var(--acc); color: #fff; height: 44px; display: inline-flex; align-items: center; padding: 0 24px; margin-left: 12px; border-radius: 4px; }
-nav a.cta:hover { background: #1823b8; }
+nav a.cta { background: var(--btn); color: #fff; height: 44px; display: inline-flex; align-items: center; padding: 0 24px; margin-left: 12px; border-radius: 999px; }
+nav a.cta:hover { background: #2a2d33; }
 @media (max-width: 639px) { nav { height: 56px; } nav a.cta { height: 40px; padding: 0 16px; } }
 
 /* 首屏 */
@@ -25,8 +25,8 @@ header.hero { padding: 96px 0 24px; }
 h1 { font-size: clamp(38px, 4.4vw, 69px); line-height: 1.05; margin: 0 0 24px; letter-spacing: -0.03em; font-weight: 400; text-wrap: balance; }
 h1 em { font-style: normal; white-space: nowrap; }
 .lead { font-size: clamp(18px, 1.5vw, 20px); color: var(--ink); max-width: 36em; margin: 0 0 32px; line-height: 1.6; }
-.btn { display: inline-flex; align-items: center; gap: 8px; height: 44px; padding: 0 24px; border-radius: 4px; background: var(--acc); color: #fff; font-weight: 500; text-decoration: none; margin: 0 12px 12px 0; transition: transform 0.15s, background 0.2s; }
-.btn:hover { background: #1823b8; transform: translateY(-1px); }
+.btn { display: inline-flex; align-items: center; gap: 8px; height: 44px; padding: 0 24px; border-radius: 999px; background: var(--btn); color: #fff; font-weight: 500; text-decoration: none; margin: 0 12px 12px 0; transition: transform 0.15s, background 0.2s; }
+.btn:hover { background: #2a2d33; transform: translateY(-1px); }
 .btn:active { transform: translateY(1px); }
 .btn.ghost { background: transparent; color: var(--ink); box-shadow: inset 0 0 0 1px rgba(11, 12, 14, 0.35); }
 .btn.ghost:hover { background: rgba(11, 12, 14, 0.06); }
@@ -66,7 +66,7 @@ h3 { font-size: 20px; font-weight: 500; margin: 48px 0 12px; letter-spacing: -0.
 .bento { display: grid; grid-template-columns: repeat(6, 1fr); gap: 18px; }
 .bento > div { grid-column: span 2; background: var(--card); border: 1px solid var(--line); border-radius: var(--r); padding: 26px; }
 .bento > div.w3 { grid-column: span 3; }
-.bento .ico { width: 44px; height: 44px; border-radius: 8px; background: rgba(31, 45, 230, 0.1); color: var(--acc2); display: grid; place-items: center; margin-bottom: 16px; }
+.bento .ico { width: 44px; height: 44px; border-radius: 8px; background: rgba(12, 143, 121, 0.1); color: var(--acc2); display: grid; place-items: center; margin-bottom: 16px; }
 .bento .ico svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 .bento h3 { margin: 0 0 6px; font-size: 19px; }
 .bento p { margin: 0; color: var(--sub); font-size: 15px; line-height: 1.7; }
@@ -95,7 +95,7 @@ th, td { text-align: left; padding: 12px 18px; border-bottom: 1px solid var(--li
 th { font-size: 12.5px; letter-spacing: 0.04em; color: var(--sub); white-space: nowrap; background: rgba(18, 22, 20, 0.03); }
 tr:last-child td { border-bottom: 0; }
 td.n, th.n { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
-tr.sum td { font-weight: 500; background: rgba(31, 45, 230, 0.07); }
+tr.sum td { font-weight: 500; background: rgba(12, 143, 121, 0.07); }
 tr.cat td { font-weight: 500; color: var(--sub); font-size: 13px; background: rgba(18, 22, 20, 0.03); }
 .note { background: #fff6dd; border: 1px solid #ecd9a4; border-radius: 12px; padding: 14px 20px; font-size: 14.5px; margin: 18px 0; color: #4a3d14; }
 .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 14px; margin: 22px 0; }
@@ -127,10 +127,10 @@ footer p { flex: 1 1 100%; margin: 0 0 6px; }
 .diagram svg { display: block; width: 100%; min-width: 760px; height: auto; }
 .diagram text { font: 600 14px -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif; fill: #121614; }
 .diagram .s { font-weight: 500; font-size: 12px; fill: #5f6a66; }
-.diagram .l { font-size: 11.5px; fill: #1f2de6; font-weight: 500; }
+.diagram .l { font-size: 11.5px; fill: #0c8f79; font-weight: 500; }
 .diagram rect.b { fill: #fff; stroke: rgba(18, 22, 20, 0.16); stroke-width: 1.2; }
-.diagram rect.h { fill: #e8eafc; stroke: #1f2de6; stroke-width: 1.4; }
-.diagram path { fill: none; stroke: #1f2de6; stroke-width: 1.6; }
+.diagram rect.h { fill: #e3f3ef; stroke: #0c8f79; stroke-width: 1.4; }
+.diagram path { fill: none; stroke: #0c8f79; stroke-width: 1.6; }
 .diagram path.d { stroke-dasharray: 5 5; stroke: #8c9893; }
 
 @media (max-width: 860px) {

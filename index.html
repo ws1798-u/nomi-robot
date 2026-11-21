@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="zh-CN" data-type="product" data-radius="soft" data-buttons="block" data-motion>
+<html lang="zh-CN" data-type="product" data-radius="soft" data-buttons="pill" data-motion>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -27,7 +27,7 @@
 <style>
 :root {
   --p-bg: #eef0f3; --p-surface: #e2e5ea; --p-ink: #0b0c0e; --p-muted: #5d6470;
-  --p-accent: #1f2de6; --p-accent-ink: #ffffff; --p-action: #1f2de6; --p-action-ink: #ffffff;
+  --p-accent: #0c8f79; --p-accent-ink: #ffffff; --p-action: #0b0c0e; --p-action-ink: #ffffff;
   --p-inv-bg: #0b0c0e; --p-inv-surface: #17181a; --p-inv-ink: #eef0f3; --p-inv-muted: #8e8f92;
   --p-inv-accent: #eef0f3; --p-inv-accent-ink: #0b0c0e; --p-inv-action: #eef0f3; --p-inv-action-ink: #0b0c0e;
   --font-display: "Chivo", system-ui, sans-serif;
@@ -68,7 +68,7 @@
 </head>
 <body>
 <!-- type: product（site-kind tech，硬件）
-     deal: hero product, nav nav-split, close close-type, footer footer-columns, rhythm dark-band, buttons block, mark arc
+     deal: hero product, nav nav-split, close close-type, footer footer-columns, rhythm surface 色带（按反馈从深色改为浅色）, buttons pill（按反馈从方形蓝色改为圆角黑色）, mark arc
      palette cool-grey-cobalt（前两套是近黑底，黑色的 Nova 款会消失在背景里，所以取第三套冷灰底）· type chivo
      moments: iris-opens → #parts -->
 <header class="nav nav--split">
@@ -159,7 +159,7 @@
     </div>
   </section>
 
-  <section class="section ground-inverse" id="parts" data-moment="iris-opens" data-moment-opts='{"from": "base"}' aria-labelledby="parts-h">
+  <section class="section ground-surface" id="parts" data-moment="iris-opens" data-moment-opts='{"from": "base"}' aria-labelledby="parts-h">
     <div class="wrap">
       <div class="grid grid--top">
         <div class="span-5 stack-5">
