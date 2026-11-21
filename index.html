@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nomi 家庭陪伴机器人 · 设计方案</title>
+<meta name="description" content="一只 12.8 cm 高的陪伴机器人：能走、能上桌、能夹在显示器上。三款外观、可拆解 3D、制造流程与成本。">
+<meta property="og:title" content="Nomi 家庭陪伴机器人 · 设计方案">
+<meta property="og:image" content="img/nomi.jpg">
+<link rel="stylesheet" href="site.css">
+</head>
+<body>
+<nav><div class="wrap"><b>NOMI <i>Robot</i></b><a href="#styles">三款外观</a><a href="#modes">三种放法</a><a href="#video">演示视频</a><a href="sim.html">3D 交互</a><a href="make.html">制造与成本</a></div></nav>
+
+<header class="hero"><div class="wrap">
+  <h1>能走、能上桌、能夹在屏幕上的<em>陪伴机器人</em></h1>
+  <p class="lead">Nomi 高 12.8 cm，会看家、连 APP、放歌、主动问候、做表情，还能替你开灯关空调。同一套内部结构做了三款外观。这里是完整的设计方案：可以拆开看的 3D 模型、演示视频、制造流程和成本选材。</p>
+  <a class="btn" href="sim.html">打开 3D 交互模型</a><a class="btn ghost" href="make.html">看制造流程与成本</a>
+</div></header>
+
+<section id="styles"><div class="wrap">
+  <h2>三款外观</h2>
+  <p>主板、电池、电机、摄像头完全通用，只换外壳、耳朵、颜色和表情画法，所以三款可以共用一条产线。</p>
+  <div class="grid">
+    <div class="card"><a href="sim.html?style=nomi"><img src="img/nomi.jpg" alt="简约款 Nomi N1" width="1350" height="1200"></a><div class="pad"><h3>Nomi N1 <span class="tag">简约</span></h3><p>米白蛋形机身配青绿色，胶囊形耳朵，圆角长条眼睛。放在哪种装修里都不突兀。</p><a class="more" href="sim.html?style=nomi">在 3D 里看 →</a></div></div>
+    <div class="card"><a href="sim.html?style=cute"><img src="img/cute.jpg" alt="可爱款 Nomi Mochi" width="1350" height="1200"></a><div class="pad"><h3>Nomi Mochi <span class="tag p">可爱</span></h3><p>奶粉色亲肤外壳，小熊圆耳朵和小尾巴，圆眼睛带腮红。头顶更圆润饱满。</p><a class="more" href="sim.html?style=cute">在 3D 里看 →</a></div></div>
+    <div class="card"><a href="sim.html?style=scifi"><img src="img/scifi.jpg" alt="科幻款 Nomi Nova" width="1350" height="1200"></a><div class="pad"><h3>Nomi Nova <span class="tag b">科幻</span></h3><p>石墨黑金属质感，环绕式面罩，腰部和底部两圈冰蓝灯带，耳朵换成会动的天线鳍片。</p><a class="more" href="sim.html?style=scifi">在 3D 里看 →</a></div></div>
+  </div>
+</div></section>
+
+<section id="modes"><div class="wrap">
+  <h2>三种放法</h2>
+  <p>轮子藏在机身里，放下就能走；不想让它跑，就放桌上或吸到夹座上。</p>
+  <div class="grid">
+    <div class="card"><img src="img/explode.jpg" alt="拆解图" width="1440" height="900"><div class="pad"><h3>地面：自己走</h3><p>两个隐藏式驱动轮差速行走，最高 0.35 m/s。会巡逻、跟随、电量低了自己回充电座。</p></div></div>
+    <div class="card"><img src="img/desk.jpg" alt="桌面模式" width="1440" height="900"><div class="pad"><h3>桌面：陪你工作</h3><p>降速到 0.1 m/s 在桌上活动，底部悬崖传感器探到桌沿立刻刹停。提醒久坐、喝水，随口控制家电。</p></div></div>
+    <div class="card"><img src="img/clip.jpg" alt="夹屏幕模式" width="1440" height="900"><div class="pad"><h3>夹座：夹在显示器上</h3><p>夹座夹住屏幕上沿，中心磁铁把机器人吸在托盘里，USB-C 供电。它能原地转头，摄像头当电脑摄像头用。</p></div></div>
+  </div>
+</div></section>
+
+<section id="video"><div class="wrap">
+  <h2>演示视频</h2>
+  <p>88 秒，直接从 3D 模型逐帧录制：问候、巡逻、安防、控制家电、听歌、桌面模式、夹屏幕模式、拆解、三款外观。</p>
+  <video src="demo.mp4" poster="img/poster.jpg" controls preload="metadata" playsinline></video>
+</div></section>
+
+<section><div class="wrap">
+  <h2>功能一览</h2>
+  <div class="tbl"><table>
+    <tr><th>功能</th><th>怎么实现</th></tr>
+    <tr><td>摄像监控</td><td>前额 1080p 广角摄像头（120°）+ 红外夜视，APP 看实时画面，有人移动时推送</td></tr>
+    <tr><td>连接 APP</td><td>Wi-Fi 6 + 蓝牙 5.2，远程遥控、看画面、管理家电</td></tr>
+    <tr><td>听歌</td><td>背部 36 mm 全频喇叭 5 W，蓝牙 / Wi-Fi 串流</td></tr>
+    <tr><td>走动</td><td>隐藏式双轮差速底盘，ToF 避障，3 个悬崖传感器防跌落</td></tr>
+    <tr><td>问候与情绪价值</td><td>4 麦阵列听声辨位，人脸识别认出主人，云端大模型对话，主动问候和提醒</td></tr>
+    <tr><td>表情动作</td><td>2.4 寸屏 + 弧面镜片显示表情，两只耳朵由舵机带动，RGB 灯环，摸头有反应</td></tr>
+    <tr><td>控制家电</td><td>头顶 360° 红外遥控老家电，Matter 协议接智能灯、插座、窗帘</td></tr>
+  </table></div>
+  <p style="margin-top:18px"><a class="btn" href="make.html">下一步：怎么把它做出来 →</a></p>
+</div></section>
+
+<footer><div class="wrap">Nomi 是概念设计稿。尺寸和性能按常见零件规格推算，成本为估算值，量产前需要打样验证和供应商报价。</div></footer>
+</body>
+</html>
