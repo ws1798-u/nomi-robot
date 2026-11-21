@@ -34,6 +34,9 @@ ASR_MODEL = os.environ.get("NOMI_ASR_MODEL", "")
 CHAT_MODEL = os.environ.get("NOMI_CHAT_MODEL", "")
 TTS_MODEL = os.environ.get("NOMI_TTS_MODEL", "")
 TTS_VOICE = os.environ.get("NOMI_TTS_VOICE", "")
+# 语音合成可以单独指到自己的服务：tts_server.py 用 CosyVoice 2 合成选定的那个女孩声音（活泼可爱）。
+# 不设就和对话用同一家服务商，那时请在对方的音色列表里挑一个接近的甜美女声。
+TTS_BASE = os.environ.get("NOMI_TTS_BASE", "") or API_BASE
 
 NAME = "糯米"
 PERSONA = (

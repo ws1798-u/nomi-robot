@@ -188,7 +188,7 @@ pre code { background: none; padding: 0; color: inherit; }
 </div></section>
 
 <section id="code" class="dark"><div class="wrap">
-  <div class="eyebrow">05 程序</div><h2>全部程序，一共 8 个文件</h2>
+  <div class="eyebrow">05 程序</div><h2>全部程序，一共 9 个文件</h2>
   <p>都是 Python，加起来四百多行。点文件名可以直接看或下载。</p>
   <div class="tbl"><table>
     <tr><th>文件</th><th>管什么</th></tr>
@@ -199,6 +199,7 @@ pre code { background: none; padding: 0; color: inherit; }
     <tr><td><a href="firmware/body.py">body.py</a></td><td>耳朵舵机、灯环、触摸</td></tr>
     <tr><td><a href="firmware/voice.py">voice.py</a></td><td>录音、语音转文字、大模型对话（能调用“控制家电”“移动”两个动作）、语音合成</td></tr>
     <tr><td><a href="firmware/ir.py">ir.py</a></td><td>学习和发送红外遥控码</td></tr>
+    <tr><td><a href="firmware/tts_server.py">tts_server.py</a></td><td>机器人的声音：用开源的 CosyVoice 2 合成选定的那个女孩声音（活泼可爱）。跑在电脑或云主机上，不在树莓派上</td></tr>
     <tr><td><a href="firmware/web.py">web.py</a></td><td>手机网页遥控台：看画面、方向键、换表情、桌面模式</td></tr>
   </table></div>
   <h3>系统设置</h3>
@@ -221,10 +222,18 @@ export NOMI_API_KEY=你的密钥
 export NOMI_ASR_MODEL=语音识别模型名
 export NOMI_CHAT_MODEL=对话模型名
 export NOMI_TTS_MODEL=语音合成模型名
-export NOMI_TTS_VOICE=音色名        <u># 在服务商的音色列表里挑一个女孩声音</u>
+export NOMI_TTS_VOICE=音色名
+export NOMI_TTS_BASE=http://你的电脑地址:8090/v1   <u># 用自己的 tts_server.py 时才设，见下面“机器人的声音”</u>
 
 sudo -E python3 main.py</code></pre>
   <p>然后用手机浏览器打开 <code>http://树莓派的地址:8080</code>。不设置对话服务的那几项也能运行，只是不会对话，摸头时改为显示爱心。</p>
+  <h3>机器人的声音</h3>
+  <p>网站上机器人说话用的是一个固定的声音：开源语音模型 CosyVoice 2，模型自带的女声，加“活泼可爱”的语气。<audio controls preload="none" src="voice/sample.mp3" style="display:block;margin-top:10px;width:min(100%,420px)"></audio></p>
+  <ul>
+    <li><b>想让真机用同一个声音：</b>在一台有显卡的电脑或云主机上运行 <code>tts_server.py</code>，然后把 <code>NOMI_TTS_BASE</code> 指向它。机器人说的每一句话都会用这个声音合成。树莓派 Zero 自己跑不动这个模型。</li>
+    <li><b>不想自己架服务：</b>不设 <code>NOMI_TTS_BASE</code>，语音合成就和对话走同一家服务商。请在对方的音色列表里挑一个最接近的活泼女声，填进 <code>NOMI_TTS_VOICE</code>。声音不会和网站上完全一样。</li>
+    <li><b>要卖产品时：</b>参考音请换成你有授权的配音演员录音。现在用的是模型仓库自带的样本，做演示可以，商用前需要确认它的使用权。</li>
+  </ul>
   <div class="note"><b>最可能要调的地方：</b>声卡配置（<code>arecord -l</code> 看不到设备时检查 overlay 和接线）；红外设备号（用 <code>ir-ctl -f -d /dev/lirc0</code> 看哪个是发射）；灯环需要 root 权限；屏幕方向不对就改 <code>face.py</code> 里的 <code>rotate</code>。大模型服务要支持“工具调用”，否则它不会替你开空调。密钥不要写进代码或传到公开仓库。</div>
 </div></section>
 

@@ -72,7 +72,7 @@ class Voice:
         return re.sub(r"\[情绪:\w+\]", "", say).strip(), (m.group(1) if m else "normal")
 
     def speak(self, text):
-        r = requests.post(f"{C.API_BASE}/audio/speech", headers=self._headers(), timeout=60, json={
+        r = requests.post(f"{C.TTS_BASE}/audio/speech", headers=self._headers(), timeout=60, json={
             "model": C.TTS_MODEL, "voice": C.TTS_VOICE, "input": text, "response_format": "wav"})
         r.raise_for_status()
         with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as f:
