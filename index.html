@@ -1,78 +1,284 @@
 <!doctype html>
-<html lang="zh-CN">
+<html lang="zh-CN" data-type="product" data-radius="soft" data-buttons="block" data-motion>
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Nomi · 家庭陪伴机器人</title>
-<meta name="description" content="一只 12.8 cm 高的陪伴机器人：能走、能上桌、能夹在显示器上。三款外观、APP 与家电互联、AI 对话、可拆解 3D、制造流程与成本。">
-<meta property="og:title" content="Nomi · 家庭陪伴机器人">
-<meta property="og:image" content="img/poster.jpg">
-<link rel="stylesheet" href="site.css">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Nomi：会走、会聊天的家庭陪伴机器人</title>
+<meta name="description" content="Nomi 高 12.8 cm，轮子藏在机身里，能放地上走、放桌上陪、夹在显示器上看家。三款外观，附 3D 模型、APP 设计和制造成本。">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Nomi：会走、会聊天的家庭陪伴机器人">
+<meta property="og:description" content="12.8 cm 高的陪伴机器人设计方案：三款外观、可拆解 3D 模型、APP 与家电互联、制造流程与成本。">
+<meta property="og:image" content="share.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#eef0f3">
+<!-- <link rel="canonical" href="https://[域名确定后填写]/"> -->
+<meta name="site-kind" content="tech">
+<meta name="page-type" content="product">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chivo:wght@400..700&family=Chivo+Mono:wght@400..500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/system.css">
+<link rel="stylesheet" href="assets/ui/cards.css">
+<link rel="stylesheet" href="assets/motion/motion.css">
+<link rel="stylesheet" href="assets/backgrounds/backgrounds.css">
+<link rel="stylesheet" href="assets/layout/layout.css">
+<link rel="stylesheet" href="assets/icons/icon.css">
+<style>
+:root {
+  --p-bg: #eef0f3; --p-surface: #e2e5ea; --p-ink: #0b0c0e; --p-muted: #5d6470;
+  --p-accent: #1f2de6; --p-accent-ink: #ffffff; --p-action: #1f2de6; --p-action-ink: #ffffff;
+  --p-inv-bg: #0b0c0e; --p-inv-surface: #17181a; --p-inv-ink: #eef0f3; --p-inv-muted: #8e8f92;
+  --p-inv-accent: #eef0f3; --p-inv-accent-ink: #0b0c0e; --p-inv-action: #eef0f3; --p-inv-action-ink: #0b0c0e;
+  --font-display: "Chivo", system-ui, sans-serif;
+  --font-text: "Chivo", system-ui, sans-serif;
+  --font-mono: "Chivo Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  --display-weight: 400;
+  --display-tracking: -0.03em;
+  --display-tracking-xl: -0.04em;
+  --ly-scale: 0.96;
+}
+</style>
+<script>document.documentElement.classList.add('m-enter');setTimeout(()=>document.documentElement.classList.add('m-enter-done'),700)</script>
+<script src="assets/backgrounds/backgrounds.js"></script>
+<script>document.documentElement.classList.add('mo-js');setTimeout(()=>document.documentElement.classList.add('mo-safe'),2500)</script>
+<link rel="modulepreload" href="assets/moments/moments.js">
+<link rel="modulepreload" href="assets/moments/lib.js">
+<link rel="modulepreload" href="assets/moments/iris-opens/moment.js">
+<link rel="stylesheet" href="phone.css">
+<style>
+  /* 页面 CSS：只管图片框内部和卡片组的高度 */
+  #styles .tile__media { --tile-ratio: 1 / 1; background: var(--p-bg); }
+  #film .frame { --ratio: 56.25%; background: #0b0c0e; }
+  #film .frame > video { object-fit: contain; }
+  #film .fit-screen { height: min(600px, calc(100svh - 300px)); }
+  .scr .tab { flex: none; height: 54px; padding: 8px 6px 0; line-height: 1.3; } .scr .bd { overflow: hidden; }
+  @media (max-width: 1023px) { #film .fit-screen { height: auto; } }
+  @media (max-width: 639px) {
+    .hero--product .hero__stage { aspect-ratio: 1 / 1; }
+    #film .fit-screen { height: min(520px, calc(100lvh - 280px)); }
+  }
+  #modes .panel { --p-h: 380px; }
+  #app .frame { background: var(--p-surface); display: flex; justify-content: center; align-items: flex-start; gap: 24px; padding: 40px 24px 0; overflow: hidden; }
+  #app .frame .ph { flex: none; }
+  @media (max-width: 1279px) { #app .frame .ph + .ph { display: none; } }
+  @media (max-width: 1023px) { #modes .panel { --p-h: 300px; } }
+  @media (max-width: 639px) { #modes .panel { --p-h: 220px; } #app .frame { padding-top: 24px; } }
+</style>
 </head>
 <body>
-<nav><div class="wrap"><b>NOMI</b><a href="#styles">外观</a><a href="#modes">放法</a><a href="#video">视频</a><a href="app.html">APP 与互联</a><a href="make.html">制造与成本</a><a class="cta" href="sim.html">打开 3D</a></div></nav>
-
-<header class="hero"><div class="wrap">
-  <div class="eyebrow">家庭陪伴机器人 · 设计方案</div>
-  <h1>能走、能上桌、<br>能夹在屏幕上的<em>小伙伴</em></h1>
-  <p class="lead">Nomi 只有 12.8 cm 高。它会看家、放歌、主动问候、做表情，听得懂你说话，还能替你开灯关空调。</p>
-  <a class="btn" href="sim.html">打开 3D 交互模型 →</a><a class="btn ghost" href="#video">看 88 秒演示</a>
-  <div class="stage">
-    <a href="sim.html?style=nomi"><img src="img/nomi.jpg" alt="简约款 Nomi N1" width="1000" height="1100"><span>Nomi N1<small>简约</small></span></a>
-    <a href="sim.html?style=cute"><img src="img/cute.jpg" alt="可爱款 Nomi Mochi" width="1000" height="1100"><span>Nomi Mochi<small>可爱</small></span></a>
-    <a href="sim.html?style=scifi"><img src="img/scifi.jpg" alt="科幻款 Nomi Nova" width="1000" height="1100"><span>Nomi Nova<small>科幻</small></span></a>
+<!-- type: product（site-kind tech，硬件）
+     deal: hero product, nav nav-split, close close-type, footer footer-columns, rhythm dark-band, buttons block, mark arc
+     palette cool-grey-cobalt（前两套是近黑底，黑色的 Nova 款会消失在背景里，所以取第三套冷灰底）· type chivo
+     moments: iris-opens → #parts -->
+<header class="nav nav--split">
+  <div class="wrap nav__bar">
+    <a class="skip-link" href="#top">跳到正文</a>
+    <a class="nav__logo" href="#top"><span class="mark" data-mark="arc" aria-hidden="true"></span>Nomi</a>
+    <nav class="nav__links" aria-label="主导航">
+      <div class="nav__item">
+        <a class="nav__link" href="#styles">外观 <svg class="chev" viewBox="0 0 12 12" aria-hidden="true"><path d="M3 4.5l3 3 3-3" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+        <div class="nav__menu">
+          <div class="wrap grid">
+            <a class="menu-card span-4" href="sim.html?style=nomi"><div class="panel"><img class="frame__img" src="img/tile-nomi.jpg" alt="米白色的 Nomi N1" loading="lazy"></div><span class="t-card">Nomi N1</span><span class="t-small muted">简约 · 米白配青绿</span></a>
+            <a class="menu-card span-4" href="sim.html?style=cute"><div class="panel"><img class="frame__img" src="img/tile-cute.jpg" alt="带熊耳朵的 Nomi Mochi" loading="lazy"></div><span class="t-card">Nomi Mochi</span><span class="t-small muted">可爱 · 熊耳朵和腮红</span></a>
+            <a class="menu-card span-4" href="sim.html?style=scifi"><div class="panel"><img class="frame__img" src="img/tile-scifi.jpg" alt="石墨黑的 Nomi Nova" loading="lazy"></div><span class="t-card">Nomi Nova</span><span class="t-small muted">科幻 · 石墨黑配冰蓝</span></a>
+          </div>
+        </div>
+      </div>
+      <div class="nav__item"><a class="nav__link" href="#modes">放法</a></div>
+      <div class="nav__item"><a class="nav__link" href="#app">APP</a></div>
+      <div class="nav__item"><a class="nav__link" href="#make">制造</a></div>
+    </nav>
+    <div class="nav__actions">
+      <a class="btn btn--primary" href="sim.html">打开 3D 模型</a>
+    </div>
+    <button class="nav__toggle" type="button" aria-expanded="false" aria-label="菜单">
+      <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M2 5h14M2 13h14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+    </button>
   </div>
-  <div class="stats">
-    <div><b>12.8<small>cm</small></b><span>机身高度</span></div>
-    <div><b>3<small>款</small></b><span>外观，内部通用</span></div>
-    <div><b>3<small>种</small></b><span>放法：地面、桌面、屏幕</span></div>
-    <div><b>约 7<small>小时</small></b><span>陪伴待机续航</span></div>
+</header>
+
+<main id="top">
+  <section class="hero hero--product" data-enter aria-labelledby="hero-h">
+    <div class="wrap"><div class="hero-text hero__in">
+      <div class="hero__head">
+        <div>
+          <h1 id="hero-h">会走、会聊天的家庭陪伴机器人</h1>
+          <p class="hero__lead">Nomi 高 12.8 cm，轮子藏在机身里。它看家、放歌、陪你说话，还替你开灯关空调。</p>
+        </div>
+        <div class="btn-row"><a class="btn btn--primary" href="sim.html">打开 3D 模型</a><a class="btn btn--secondary" href="#film">看演示视频</a></div>
+      </div>
+      <div class="hero__stage">
+        <picture><source media="(max-width: 639px)" srcset="img/lineup-phone.jpg" width="840" height="840"><img src="img/lineup.jpg" alt="三台 Nomi 并排：米白色的 N1、带熊耳朵的 Mochi、石墨黑的 Nova" width="2560" height="1132" fetchpriority="high"></picture>
+      </div>
+    </div></div>
+  </section>
+
+  <section class="section" id="styles" aria-labelledby="styles-h">
+    <div class="wrap">
+      <div class="section-head section-head--row">
+        <div><h2 id="styles-h">三款外观。<span class="muted">里面是同一套主板、电池和电机。</span></h2></div>
+        <a class="link" href="make.html#bom">看三款的成本差异</a>
+      </div>
+      <div class="grid">
+        <a class="tile span-4" href="sim.html?style=nomi">
+          <div class="tile__media"><img src="img/tile-nomi.jpg" alt="Nomi N1 斜侧面：米白蛋形机身，青绿色胶囊耳朵" width="1000" height="1000" loading="lazy"></div>
+          <div class="tile__head"><h3>Nomi N1</h3><span class="tile__price">简约</span></div>
+          <p class="tile__facts">米白机身 · 胶囊耳朵 · 长条眼睛</p>
+        </a>
+        <a class="tile span-4" href="sim.html?style=cute">
+          <div class="tile__media"><img src="img/tile-cute.jpg" alt="Nomi Mochi 斜侧面：奶白机身，粉色熊耳朵、腮红和小脚丫" width="1000" height="1000" loading="lazy"></div>
+          <div class="tile__head"><h3>Nomi Mochi</h3><span class="tile__price">可爱</span></div>
+          <p class="tile__facts">熊耳朵 · 腮红 · 小脚丫和尾巴</p>
+        </a>
+        <a class="tile span-4" href="sim.html?style=scifi">
+          <div class="tile__media"><img src="img/tile-scifi.jpg" alt="Nomi Nova 斜侧面：石墨黑机身，环绕面罩和冰蓝灯带" width="1000" height="1000" loading="lazy"></div>
+          <div class="tile__head"><h3>Nomi Nova</h3><span class="tile__price">科幻</span></div>
+          <p class="tile__facts">环绕面罩 · 天线鳍片 · 两圈灯带</p>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="modes" aria-labelledby="modes-h">
+    <div class="wrap">
+      <div class="section-head"><h2 id="modes-h">放桌上陪你工作，夹屏幕上当摄像头。<span class="muted">放回地面，它自己走。</span></h2></div>
+      <div class="grid">
+        <article class="card card--row span-6">
+          <h3>桌面：走到桌沿自己停</h3>
+          <p>降速到 0.1 m/s，底部悬崖传感器探出桌沿就刹停。坐满 45 分钟，它提醒你起来走走。</p>
+          <div class="panel"><img class="frame__img" src="img/use-desk.jpg" alt="Nomi 停在书桌上，旁边是键盘和显示器" loading="lazy"></div>
+        </article>
+        <article class="card card--row span-6">
+          <h3>夹座：吸在显示器顶上</h3>
+          <p>夹座夹住屏幕上沿，中心磁铁吸住机身，USB-C 供电。它原地转头，镜头当电脑摄像头用。</p>
+          <div class="panel"><img class="frame__img" src="img/use-clip.jpg" alt="Nomi 坐在显示器顶部的夹座上" loading="lazy"></div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="section ground-inverse" id="parts" data-moment="iris-opens" data-moment-opts='{"from": "base"}' aria-labelledby="parts-h">
+    <div class="wrap">
+      <div class="grid grid--top">
+        <div class="span-5 stack-5">
+          <h2 id="parts-h">拆开看，里面有八个子系统</h2>
+          <p class="t-lead">两节电池压在机身中下部，重心低，急停不点头。3D 模型里每一层都能单独拆出来看。</p>
+          <ul class="rows rows--spec">
+            <li><span class="rows__name">摄像头</span><span class="rows__value">1080p · 120° 广角</span></li>
+            <li><span class="rows__name">驱动轮</span><span class="rows__value">Ø44 mm · 最高 0.35 m/s</span></li>
+            <li><span class="rows__name">麦克风与喇叭</span><span class="rows__value">4 麦阵列 · 36 mm 5 W</span></li>
+            <li><span class="rows__name">电池</span><span class="rows__value">2 × 18650 · 24.1 Wh</span></li>
+            <li><span class="rows__name">尺寸与重量</span><span class="rows__value">124 × 124 × 128 mm · 约 420 g</span></li>
+          </ul>
+          <a class="link" href="sim.html">在 3D 里逐层拆开</a>
+        </div>
+        <div class="frame frame--photo frame--split span-6 start-7">
+          <img class="frame__img" src="img/parts.jpg" alt="Nomi 的拆解图：前后外壳分开，中间是主板、电池、电机和轮子，上方是顶盖和耳朵" loading="lazy">
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="film" aria-labelledby="film-h">
+    <div class="wrap">
+      <div class="section-head"><h2 id="film-h">88 秒，看它过完一天</h2></div>
+      <figure class="frame frame--photo fit-screen">
+        <video class="frame__img" controls playsinline preload="metadata" poster="img/poster.jpg" aria-label="Nomi 演示视频：问候、巡逻、控制家电、桌面模式、夹屏幕模式和拆解"><source src="demo.mp4" type="video/mp4"></video>
+      </figure>
+    </div>
+  </section>
+
+  <section class="section" id="app" aria-labelledby="app-h">
+    <div class="wrap">
+      <div class="grid grid--top">
+        <div class="span-5 stack-5">
+          <h2 id="app-h">四步连上手机，一句话管全家电器</h2>
+          <p class="t-lead">蓝牙配网，之后走 Wi-Fi。新的智能设备走 Matter，老空调、老电视用头顶的红外管遥控。</p>
+          <ul class="rows">
+            <li><span class="rows__name">配网</span><span class="rows__value">4 步，约 3 分钟</span></li>
+            <li><span class="rows__name">红外遥控</span><span class="rows__value">360°，8 m</span></li>
+            <li><span class="rows__name">对话</span><span class="rows__value">接入大模型，说完约 1.5 秒开口</span></li>
+          </ul>
+          <a class="link" href="app.html">看 APP 界面和互联方案</a>
+        </div>
+        <div class="frame frame--split span-6 start-7" role="img" aria-label="Nomi Home APP 的首页和家电页">
+          <div class="ph" aria-hidden="true"><div class="scr"><div class="sb"><span>18:30</span><span>Wi-Fi</span></div><div class="bd">
+            <div class="h4">晚上好<small>糯米在客厅 · 心情开心</small></div>
+            <div class="c row"><div class="av">◉</div><div><b>糯米</b><div class="mut"><span class="dot"></span> 在线 · 电量 82%</div></div></div>
+            <div class="g2"><div class="c"><div class="mut">今天陪伴</div><div class="big">3 小时 20 分</div></div><div class="c"><div class="mut">提醒你喝水</div><div class="big">5 次</div></div></div>
+            <div class="c"><b>快捷指令</b><div class="g3" style="margin-top:7px"><div class="sec">回家</div><div class="sec">睡觉</div><div class="sec">出门</div></div></div>
+          </div><div class="tab"><b><i></i>首页</b><span><i></i>看家</span><span><i></i>家电</span><span><i></i>我的</span></div></div></div>
+          <div class="ph" aria-hidden="true"><div class="scr"><div class="sb"><span>20:10</span><span>Wi-Fi</span></div><div class="bd">
+            <div class="h4">家电<small>客厅 · 4 台设备，2 台开着</small></div>
+            <div class="g2">
+              <div class="c"><div class="row"><b>台灯</b><div class="sw on"></div></div><div class="mut">Matter · 亮度 70%</div></div>
+              <div class="c"><div class="row"><b>风扇</b><div class="sw"></div></div><div class="mut">Matter · 已关</div></div>
+              <div class="c"><div class="row"><b>窗帘</b><div class="sw"></div></div><div class="mut">Matter · 已合上</div></div>
+              <div class="c"><div class="row"><b>空调</b><div class="sw on"></div></div><div class="mut">红外 · 制冷 26°</div></div>
+            </div>
+            <div class="c"><b>场景</b><div class="row" style="margin-top:6px"><span>回家：开灯、开空调</span><span class="chip">执行</span></div><div class="row" style="margin-top:6px"><span>睡觉：全关、去充电</span><span class="chip">执行</span></div></div>
+          </div><div class="tab"><span><i></i>首页</span><span><i></i>看家</span><b><i></i>家电</b><span><i></i>我的</span></div></div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="make" aria-labelledby="make-h">
+    <div class="wrap">
+      <div class="section-head section-head--row">
+        <div><h2 id="make-h">从一台样机到量产。<span class="muted">每一步花多少钱，都算过。</span></h2></div>
+        <a class="link" href="make.html">看完整的制造文档</a>
+      </div>
+      <div class="grid grid--top">
+        <div class="span-6">
+      <ul class="rows">
+            <li><span class="rows__name">先做一台能跑的样机</span><p>3D 打印外壳加现成的开发板，一个人两三周做完。</p><span class="rows__value">约 500–800 元</span></li>
+            <li><span class="rows__name">单台物料与组装</span><p>按首批 1000 台估算，逐项列了 38 种零件。</p><span class="rows__value">约 586 元</span></li>
+            <li><span class="rows__name">模具、认证和打样</span><p>开工前一次性投入，不含团队工资。</p><span class="rows__value">57–88 万元</span></li>
+            <li><span class="rows__name">从立项到出货</span><p>样机、工程验证、开模、设计验证、小批量、量产，共 11 步。</p><span class="rows__value">9–12 个月</span></li>
+            <li><span class="rows__name">AI 对话的运行成本</span><p>语音识别、大模型、语音合成和云服务，按一台活跃设备算。</p><span class="rows__value">每月约 9.7 元</span></li>
+          </ul>
+        </div>
+        <div class="frame frame--photo frame--split span-6 start-7">
+          <img class="frame__img" src="img/drive.jpg" alt="透过半透明的外壳看到两只驱动轮、减速电机和底盘" loading="lazy">
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="footer closing" id="contact" aria-labelledby="close-h">
+  <div class="wrap">
+    <div class="closing__cta close--type">
+      <div class="section-head">
+        <h2 id="close-h">在浏览器里把它拆开看</h2>
+        <p>不用安装。换外观、切场景、拖动滑杆逐层拆解。</p>
+      </div>
+      <a class="btn btn--primary btn--xl btn--wide" href="sim.html">打开 3D 模型<svg class="m-arrow" viewBox="0 0 12 12" aria-hidden="true"><path class="m-arrow__stem" d="M1 6h8"/><path class="m-arrow__head" d="M4.5 2.5 8 6l-3.5 3.5"/></svg></a>
+    </div>
+    <div class="closing__links">
+      <div class="grid">
+        <div class="span-4 stack-4">
+          <a class="nav__logo" href="#top"><span class="mark" data-mark="arc" aria-hidden="true"></span>Nomi</a>
+          <p class="footer__lede">一只 12.8 cm 高的家庭陪伴机器人的完整设计方案。</p>
+        </div>
+        <div class="span-2 footer__col"><h3>机器人</h3><ul><li><a href="#styles">三款外观</a></li><li><a href="#modes">三种放法</a></li><li><a href="#parts">内部结构</a></li></ul></div>
+        <div class="span-2 footer__col"><h3>演示</h3><ul><li><a href="sim.html">3D 模型</a></li><li><a href="#film">演示视频</a></li></ul></div>
+        <div class="span-2 footer__col"><h3>APP</h3><ul><li><a href="app.html#pair">配网流程</a></li><li><a href="app.html#ui">界面设计</a></li><li><a href="app.html#iot">家电互联</a></li></ul></div>
+        <div class="span-2 footer__col"><h3>制造</h3><ul><li><a href="make.html#flow">量产流程</a></li><li><a href="make.html#bom">成本清单</a></li><li><a href="make.html#ai">AI 对话</a></li></ul></div>
+      </div>
+      <div class="footer__legal">
+        <span>&copy; 2026 Nomi 概念设计稿。尺寸与成本为估算值，量产前需打样验证和供应商报价。</span>
+        <div class="socials"></div>
+      </div>
+    </div>
   </div>
-</div></header>
+</footer>
 
-<section id="styles"><div class="wrap">
-  <div class="sec-head"><div class="eyebrow">01 外观</div><h2>一套内芯，三种性格</h2><p>主板、电池、电机、摄像头完全通用，只换外壳、耳朵、颜色和表情画法，三款可以共用一条产线。</p></div>
-  <div class="grid">
-    <div class="card"><a href="sim.html?style=nomi"><img src="img/nomi.jpg" alt="" width="1000" height="1100" loading="lazy"></a><div class="pad"><h3>Nomi N1 <span class="tag">简约</span></h3><p>米白蛋形机身配青绿色，胶囊形耳朵，圆角长条眼睛。放在哪种装修里都不突兀。</p><a class="more" href="sim.html?style=nomi">在 3D 里看 →</a></div></div>
-    <div class="card"><a href="sim.html?style=cute"><img src="img/cute.jpg" alt="" width="1000" height="1100" loading="lazy"></a><div class="pad"><h3>Nomi Mochi <span class="tag p">可爱</span></h3><p>奶白亲肤外壳，一对大圆熊耳朵，脸颊印着腮红，底下露出两只小脚丫，背后还有个小尾巴。大眼睛配猫咪嘴。</p><a class="more" href="sim.html?style=cute">在 3D 里看 →</a></div></div>
-    <div class="card"><a href="sim.html?style=scifi"><img src="img/scifi.jpg" alt="" width="1000" height="1100" loading="lazy"></a><div class="pad"><h3>Nomi Nova <span class="tag b">科幻</span></h3><p>石墨黑金属质感，环绕式面罩，腰部和底部两圈冰蓝灯带，耳朵换成会动的天线鳍片。</p><a class="more" href="sim.html?style=scifi">在 3D 里看 →</a></div></div>
-  </div>
-</div></section>
-
-<section id="modes"><div class="wrap">
-  <div class="sec-head"><div class="eyebrow">02 放法</div><h2>放地上会走，放桌上会陪，夹屏幕上会看</h2><p>轮子藏在机身里，放下就能走；不想让它跑，就放桌上或吸到夹座上。</p></div>
-  <div class="grid">
-    <div class="card"><img src="img/explode.jpg" alt="拆解图" width="1440" height="900" loading="lazy"><div class="pad"><h3>地面：自己走</h3><p>两个隐藏式驱动轮差速行走，最高 0.35 m/s。会巡逻、电量低了自己回充电座。</p></div></div>
-    <div class="card"><img src="img/desk.jpg" alt="桌面模式" width="1440" height="900" loading="lazy"><div class="pad"><h3>桌面：陪你工作</h3><p>降速在桌上活动，底部悬崖传感器探到桌沿立刻刹停。提醒久坐、喝水，随口控制家电。</p></div></div>
-    <div class="card"><img src="img/clip.jpg" alt="夹屏幕模式" width="1440" height="900" loading="lazy"><div class="pad"><h3>夹座：夹在显示器上</h3><p>夹座夹住屏幕上沿，中心磁铁吸住机器人，USB-C 供电。它能原地转头，摄像头当电脑摄像头用。</p></div></div>
-  </div>
-</div></section>
-
-<section id="video"><div class="wrap">
-  <div class="sec-head"><div class="eyebrow">03 演示</div><h2>88 秒看完它的一天</h2><p>直接从 3D 模型逐帧录制：问候、巡逻、安防、控制家电、听歌、桌面模式、夹屏幕模式、拆解、三款外观。</p></div>
-  <video src="demo.mp4" poster="img/poster.jpg" controls preload="none" playsinline></video>
-</div></section>
-
-<section><div class="wrap">
-  <div class="sec-head"><div class="eyebrow">04 能力</div><h2>小身体里装了这些</h2></div>
-  <div class="bento">
-    <div class="w3"><div class="ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.5"/><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z"/></svg></div><h3>看家</h3><p>前额 1080p 广角摄像头加红外夜视。出门后在 APP 里看实时画面、遥控它走过去看；有人移动时推送提醒。</p></div>
-    <div class="w3"><div class="ico"><svg viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4V5Z"/><path d="M8.5 10h7M8.5 13h4"/></svg></div><h3>对话与陪伴</h3><p>4 个麦克风听声辨位，认得出家里每个人。接入大模型聊天，会记住你的习惯，回家时主动问候。</p></div>
-    <div><div class="ico"><svg viewBox="0 0 24 24"><path d="M9 18V6l10-2v12"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="16.5" cy="16" r="2.5"/></svg></div><h3>听歌</h3><p>背部 36 mm 全频喇叭 5 W，跟着节拍摇头晃耳朵。</p></div>
-    <div><div class="ico"><svg viewBox="0 0 24 24"><circle cx="9" cy="10" r="1"/><circle cx="15" cy="10" r="1"/><path d="M8.5 14.5c2 1.8 5 1.8 7 0"/><rect x="3.5" y="4.5" width="17" height="15" rx="7"/></svg></div><h3>表情动作</h3><p>弧面镜片后的屏幕显示眼睛，耳朵由舵机带动，摸头会害羞。</p></div>
-    <div><div class="ico"><svg viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 0-3.5 10.9V16h7v-2.1A6 6 0 0 0 12 3Z"/><path d="M9.5 19.5h5"/></svg></div><h3>控制家电</h3><p>头顶 360° 红外管老家电，Matter 协议接智能灯、插座、窗帘。</p></div>
-  </div>
-</div></section>
-
-<section class="dark"><div class="wrap">
-  <div class="sec-head"><div class="eyebrow">05 往下看</div><h2>它怎么连上手机、怎么管家电、怎么造出来</h2><p>这三件事各有一页讲清楚。</p></div>
-  <div class="grid">
-    <div class="card"><div class="pad"><div class="num">APP</div><h3>配网与界面</h3><p>从开箱到绑定只要四步。APP 的五个主界面：首页、看家、家电、聊天、我的。</p><a class="more" href="app.html">看 APP 设计 →</a></div></div>
-    <div class="card"><div class="pad"><div class="num">IOT</div><h3>家电互联</h3><p>一句“我回来了”背后发生了什么：语音、大模型、Matter 和红外之间的完整链路。</p><a class="more" href="app.html#iot">看互联方案 →</a></div></div>
-    <div class="card"><div class="pad"><div class="num">MAKE</div><h3>制造、成本与 AI 接入</h3><p>样机怎么做、量产 11 步、每个零件的选材、逐项成本，以及大模型对话怎么接。</p><a class="more" href="make.html">看制造文档 →</a></div></div>
-  </div>
-</div></section>
-
-<footer><div class="wrap"><p>Nomi 是概念设计稿。尺寸和性能按常见零件规格推算，成本为估算值，量产前需要打样验证和供应商报价。</p><a href="sim.html">3D 交互</a><a href="app.html">APP 与互联</a><a href="make.html">制造与成本</a></div></footer>
+<script type="module" src="assets/system.js"></script>
+<script type="module" src="assets/motion/motion.js"></script>
+<script type="module" src="assets/layout/layout.js"></script>
 </body>
 </html>
