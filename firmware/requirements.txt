@@ -1,0 +1,8 @@
+gpiozero
+lgpio
+luma.lcd
+pillow
+adafruit-circuitpython-servokit
+rpi_ws281x
+flask
+requests

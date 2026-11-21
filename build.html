@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nomi 样机制作指南：零件、图纸、接线、程序</title>
+<meta name="description" content="自己动手做一台 Nomi 样机：采购清单、尺寸图、接线表、组装步骤和全部程序。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chivo:wght@400..700&family=Chivo+Mono:wght@400..500&display=swap" rel="stylesheet">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#eef0f3">
+<link rel="stylesheet" href="site.css">
+<style>
+.draw { display: grid; grid-template-columns: 1.3fr 1fr; gap: 18px; }
+.draw > div { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 14px; }
+.draw svg { display: block; width: 100%; height: auto; }
+.draw .o { fill: #f4f5f7; stroke: #0b0c0e; stroke-width: 1.6; }
+.draw .p { fill: #d6dae1; stroke: #5d6470; stroke-width: 1; }
+.draw .w { fill: #2a2d31; }
+.draw .b { fill: #0c8f79; fill-opacity: .35; stroke: #0c8f79; }
+.draw .d { fill: none; stroke: #5d6470; stroke-dasharray: 4 4; }
+.draw .e { fill: #0c8f79; }
+.draw .g { stroke: #5d6470; stroke-width: 1; }
+.draw .t { fill: #0b0c0e; } .draw .tn { fill: #fff; font: 500 11px sans-serif; text-anchor: middle; }
+.draw .dm line { stroke: #0c8f79; stroke-width: 1.2; } .draw .dm text { fill: #0c8f79; font: 500 13px sans-serif; text-anchor: middle; }
+.legend { columns: 2; font-size: 14.5px; padding-left: 1.4em; margin: 12px 0 0; }
+code { font: 13.5px 'Chivo Mono', Menlo, monospace; background: rgba(11,12,14,.06); padding: 1px 6px; border-radius: 5px; }
+pre code { background: none; padding: 0; color: inherit; }
+@media (max-width: 860px) { .draw { grid-template-columns: 1fr; } .legend { columns: 1; } }
+</style>
+</head>
+<body>
+<nav><div class="wrap"><b>Nomi</b><a href="index.html">首页</a><a href="#parts">采购清单</a><a href="#drawing">尺寸图</a><a href="#wiring">接线</a><a href="#steps">步骤</a><a href="#code">程序</a><a href="make.html">量产与成本</a><a class="cta" href="sim.html">打开 3D 模型</a></div></nav>
+
+<header class="hero"><div class="wrap">
+  <div class="eyebrow">样机制作指南</div>
+  <h1>自己动手做一台 Nomi</h1>
+  <p class="lead">照着这一页买零件、打印外壳、接线、装程序，就能做出一台会走、有表情、能对话、能遥控家电、手机上能看画面的样机。</p>
+  <div class="note"><b>先说清楚三件事：</b><br>
+  1. 这份方案和程序是我按各零件的公开用法写的，<b>没有在实物上跑过</b>。程序通过了语法检查，但接线和驱动在你的板子上大概率需要调试，文中标出了最容易出问题的地方。<br>
+  2. 你没有告诉我用哪种主控，我按<b>树莓派 Zero 2 W</b> 写（要跑摄像头和对话，它比 ESP32 省事）。也没说有没有 3D 打印机，我按<b>网上代打印</b>写。<br>
+  3. 外壳需要你或代工方按下面的尺寸图建模。我给的是尺寸和轮廓数据，不是可以直接打印的模型文件。</div>
+  <div class="kpis">
+    <div><span>零件总价</span><b id="k-total">—</b><small>元</small></div>
+    <div><span>零件种类</span><b id="k-n">—</b><small>种</small></div>
+    <div><span>做到能走有表情</span><b>1 个</b><small>周末</small></div>
+    <div><span>全部做完</span><b>4–8</b><small>周</small></div>
+  </div>
+</div></header>
+
+<section id="parts"><div class="wrap">
+  <div class="eyebrow">01 采购清单</div><h2>买这些</h2>
+  <p>都是电商平台上搜型号就能买到的通用模块。价格是常见零售价的估算。</p>
+  <div class="tbl"><table id="parts-t"></table></div>
+  <h3>工具</h3>
+  <p>电烙铁和焊锡、万用表、十字螺丝刀、剥线钳、热熔胶枪、杜邦线、M2 和 M2.5 螺丝螺母各一包。一张 16 GB 以上的存储卡。</p>
+</div></section>
+
+<section id="drawing"><div class="wrap">
+  <div class="eyebrow">02 尺寸图</div><h2>外壳和内部布局</h2>
+  <p>单位毫米。数字和 3D 模型用的是同一组。<b>第一次做建议整体放大到 115%</b>，现成模块之间要走线，1:1 会很挤。</p>
+  <div class="draw">
+    <div><svg viewBox="0 0 560 520" role="img" aria-label="正视剖面图：外壳轮廓和内部零件的安装高度">
+<path class="o" d="M337.3,422.0 L358.9,415.9 L373.3,409.8 L384.0,403.7 L392.6,397.6 L399.6,391.5 L405.5,385.4 L410.4,379.3 L414.7,373.2 L418.3,367.1 L421.4,361.0 L424.1,354.9 L426.4,348.8 L428.3,342.7 L429.9,336.6 L431.3,330.5 L432.4,324.4 L433.4,318.3 L434.1,312.2 L434.7,306.1 L435.2,300.0 L435.5,293.9 L435.7,287.8 L435.9,281.7 L436.0,275.6 L436.0,269.5 L436.0,263.4 L436.0,257.3 L435.8,251.2 L435.5,245.1 L435.0,239.0 L434.4,232.9 L433.5,226.8 L432.5,220.7 L431.3,214.6 L430.0,208.5 L428.4,202.4 L426.7,196.3 L424.8,190.2 L422.6,184.1 L420.3,178.0 L417.8,171.9 L415.0,165.8 L412.0,159.7 L408.7,153.6 L405.2,147.5 L401.3,141.4 L397.2,135.3 L392.7,129.2 L387.9,123.1 L382.7,117.0 L376.9,110.9 L370.7,104.8 L363.9,98.7 L356.3,92.6 L347.8,86.5 L338.2,80.4 L327.0,74.3 L313.4,68.2 L295.1,62.1 L250.0,56.0 L250.0,56.0 L204.9,62.1 L186.6,68.2 L173.0,74.3 L161.8,80.4 L152.2,86.5 L143.7,92.6 L136.1,98.7 L129.3,104.8 L123.1,110.9 L117.3,117.0 L112.1,123.1 L107.3,129.2 L102.8,135.3 L98.7,141.4 L94.8,147.5 L91.3,153.6 L88.0,159.7 L85.0,165.8 L82.2,171.9 L79.7,178.0 L77.4,184.1 L75.2,190.2 L73.3,196.3 L71.6,202.4 L70.0,208.5 L68.7,214.6 L67.5,220.7 L66.5,226.8 L65.6,232.9 L65.0,239.0 L64.5,245.1 L64.2,251.2 L64.0,257.3 L64.0,263.4 L64.0,269.5 L64.0,275.6 L64.1,281.7 L64.3,287.8 L64.5,293.9 L64.8,300.0 L65.3,306.1 L65.9,312.2 L66.6,318.3 L67.6,324.4 L68.7,330.5 L70.1,336.6 L71.7,342.7 L73.6,348.8 L75.9,354.9 L78.6,361.0 L81.7,367.1 L85.3,373.2 L89.6,379.3 L94.5,385.4 L100.4,391.5 L107.4,397.6 L116.0,403.7 L126.7,409.8 L141.1,415.9 L162.7,422.0Z"/>
+<line class="g" x1="40" y1="440" x2="470" y2="440"/>
+<rect class="w" x="358.0" y="308.0" width="30.0" height="132.0" rx="3"/><rect class="w" x="112.0" y="308.0" width="30.0" height="132.0" rx="3"/>
+<rect class="p" x="280.0" y="356.0" width="72.0" height="36.0" rx="3"/><rect class="p" x="148.0" y="356.0" width="72.0" height="36.0" rx="3"/>
+<rect class="p" x="133.0" y="266.0" width="234.0" height="63.0" rx="3"/>
+<rect class="b" x="151.0" y="251.0" width="198.0" height="9.0" rx="3"/>
+<rect class="d" x="160.0" y="152.0" width="180.0" height="90.0" rx="3"/>
+<rect class="p" x="160.0" y="113.0" width="36.0" height="30.0" rx="3"/><rect class="p" x="304.0" y="113.0" width="36.0" height="30.0" rx="3"/>
+<circle class="p" cx="250" cy="128" r="18"/>
+<rect class="e" x="169.0" y="17.0" width="18.0" height="60.0" rx="3"/><rect class="e" x="313.0" y="17.0" width="18.0" height="60.0" rx="3"/>
+<rect class="b" x="163.0" y="416.0" width="174.0" height="7.5" rx="3"/>
+<g><circle class="t" cx="373.0" cy="374.0" r="10"/><text class="tn" x="373.0" y="378.0">1</text></g><g><circle class="t" cx="316.0" cy="374.0" r="10"/><text class="tn" x="316.0" y="378.0">2</text></g><g><circle class="t" cx="250.0" cy="297.5" r="10"/><text class="tn" x="250.0" y="301.5">3</text></g><g><circle class="t" cx="250.0" cy="255.5" r="10"/><text class="tn" x="250.0" y="259.5">4</text></g><g><circle class="t" cx="250.0" cy="197.0" r="10"/><text class="tn" x="250.0" y="201.0">5</text></g><g><circle class="t" cx="178.0" cy="128.0" r="10"/><text class="tn" x="178.0" y="132.0">6</text></g><g><circle class="t" cx="250.0" cy="128.0" r="10"/><text class="tn" x="250.0" y="132.0">7</text></g><g><circle class="t" cx="322.0" cy="47.0" r="10"/><text class="tn" x="322.0" y="51.0">8</text></g><g><circle class="t" cx="250.0" cy="419.9" r="10"/><text class="tn" x="250.0" y="423.9">9</text></g>
+<g class="dm"><line x1="64" y1="478" x2="436" y2="478"/><line x1="64" y1="470" x2="64" y2="486"/><line x1="436" y1="470" x2="436" y2="486"/><text x="250" y="498">124</text>
+<line x1="127" y1="456" x2="373" y2="456"/><text x="250" y="452">轮距 82</text>
+<line x1="486" y1="440" x2="486" y2="56"/><line x1="478" y1="440" x2="494" y2="440"/><line x1="478" y1="56" x2="494" y2="56"/><text x="520" y="248">128</text>
+<line x1="406" y1="440" x2="406" y2="308"/><text x="432" y="374">Ø44</text>
+<line x1="24" y1="440" x2="24" y2="260"/><line x1="16" y1="260" x2="32" y2="260"/><line x1="16" y1="440" x2="32" y2="440"/><text x="24" y="350" transform="rotate(-90 20 350)">最宽处 60</text></g>
+</svg><ol class="legend"><li>驱动轮 Ø44，轴心离地 22</li><li>N20 减速电机，轴心离地 22</li><li>18650 电池盒，离地 37–58</li><li>树莓派和转接板，离地 61</li><li>表情屏（虚线，在前壳内侧），离地 66–96</li><li>耳朵舵机，离地 99–109</li><li>摄像头，离地 104，镜头朝前上方约 29°</li><li>耳朵，转轴离地 121</li><li>底盘 Ø58，离地 5.5–8</li></ol></div>
+    <div><svg viewBox="0 0 420 430" role="img" aria-label="底视图：底盘、轮子、滑垫和悬崖传感器的位置">
+<circle class="o" style="stroke-dasharray:5 5" cx="210" cy="210" r="161.20000000000002"/>
+<circle class="b" cx="210" cy="210" r="75.4"/>
+<rect class="w" x="303.6" y="152.8" width="26.0" height="114.4" rx="4"/><rect class="w" x="90.39999999999999" y="152.8" width="26.0" height="114.4" rx="4"/>
+<circle class="p" cx="210" cy="158.0" r="10.4"/><circle class="p" cx="210" cy="262.0" r="10.4"/>
+<rect class="e" x="165.8" y="142.39999999999998" width="15.600000000000001" height="10.4"/><rect class="e" x="238.6" y="142.39999999999998" width="15.600000000000001" height="10.4"/><rect class="e" x="202.2" y="246.4" width="15.600000000000001" height="10.4"/>
+<g class="dm"><text x="210" y="24">前</text><text x="210" y="420">后</text>
+<line x1="103.39999999999999" y1="314.0" x2="316.6" y2="314.0"/><text x="210" y="330.0">82</text>
+<text x="210" y="215.0">底盘 Ø58</text><text x="316.6" y="132.0">轮 10 × 44</text><text x="132.0" y="124.2">悬崖 ×3</text></g>
+</svg><p style="font-size:14.5px;margin:10px 0 0">两个滑垫（前后各一，Ø8，比轮子最低点高 1 mm）让机身不前后点头。悬崖传感器镜头朝下，离地 4–8 mm。</p></div>
+  </div>
+  <h3>外壳轮廓数据</h3>
+  <p>外壳是一个旋转体：把下面这条轮廓线绕中心轴转一圈，再前后剖成两半。在任何建模软件里用“旋转”命令就能画出来。壁厚 2 mm。</p>
+  <div class="tbl"><table><tr><th class="n">离地高度</th><th class="n">半径</th><th class="n">直径</th></tr><tr><td class=n>6</td><td class=n>29.1</td><td class=n>58.2</td></tr><tr><td class=n>10</td><td class=n>41.0</td><td class=n>81.9</td></tr><tr><td class=n>20</td><td class=n>53.3</td><td class=n>106.6</td></tr><tr><td class=n>30</td><td class=n>58.6</td><td class=n>117.3</td></tr><tr><td class=n>40</td><td class=n>61.0</td><td class=n>122.1</td></tr><tr><td class=n>50</td><td class=n>61.9</td><td class=n>123.8</td></tr><tr><td class=n>60</td><td class=n>62.0</td><td class=n>124.0</td></tr><tr><td class=n>70</td><td class=n>61.3</td><td class=n>122.7</td></tr><tr><td class=n>80</td><td class=n>59.3</td><td class=n>118.5</td></tr><tr><td class=n>90</td><td class=n>55.6</td><td class=n>111.3</td></tr><tr><td class=n>100</td><td class=n>50.1</td><td class=n>100.3</td></tr><tr><td class=n>110</td><td class=n>42.0</td><td class=n>84.0</td></tr><tr><td class=n>120</td><td class=n>29.2</td><td class=n>58.4</td></tr><tr><td class=n>128</td><td class=n>0.0</td><td class=n>0.0</td></tr></table></div>
+  <ul>
+    <li><b>公式：</b>最宽处在离地 60 mm，半径 62。往下 <code>r = 62 × ∛(1 − t³)</code>，<code>t = (60 − y) / 56</code>；往上 <code>r = 62 × √(1 − t²)</code>，<code>t = (y − 60) / 68</code>。</li>
+    <li><b>前壳开口：</b>表情窗在离地 58–96、左右各 46°的范围；摄像头孔 Ø13 在离地 104；避障传感器窗在离地 37–43。</li>
+    <li><b>后壳开口：</b>出音孔在离地 66–102、左右各 24°，打一片 Ø3 的小孔。</li>
+    <li><b>顶部：</b>离地 119 以上单独做成顶盖，用深色半透明材料，红外和触摸都在它下面。</li>
+    <li><b>要打印的件：</b>前壳、后壳、顶盖、底盘、内部骨架（一块竖板，电池盒、主板、舵机都锁在上面）、轮毂 ×2、耳朵 ×2（软料）。</li>
+    <li><b>表情窗的镜片：</b>样机用 1 mm 厚的茶色亚克力片，热风枪稍微烤弯贴在内侧；或者先不装镜片，直接露出屏幕。</li>
+  </ul>
+</div></section>
+
+<section id="wiring"><div class="wrap">
+  <div class="eyebrow">03 接线</div><h2>每根线接哪里</h2>
+  <p>引脚号是树莓派的 BCM 编号（不是板子上的物理针脚序号）。所有模块的地线（GND）都要接在一起。</p>
+  <div class="tbl"><table>
+    <tr><th>模块</th><th>模块引脚</th><th>接树莓派</th><th>说明</th></tr>
+    <tr><td rowspan="2"><b>电机驱动 DRV8833</b></td><td>IN1、IN2（左轮）</td><td>GPIO5、GPIO6</td><td rowspan="2">VM 接电池 7.4 V，不要接 5 V。左右轮转反了就把那个电机的两根线对调</td></tr>
+    <tr><td>IN3、IN4（右轮）</td><td>GPIO13、GPIO26</td></tr>
+    <tr><td><b>表情屏 ST7789</b></td><td>SDA、SCL、CS、DC、RST</td><td>GPIO10、GPIO11、GPIO8、GPIO25、GPIO24</td><td>VCC 和背光 BL 接 3.3 V</td></tr>
+    <tr><td><b>舵机板 PCA9685</b></td><td>SDA、SCL</td><td>GPIO2、GPIO3</td><td>逻辑电 VCC 接 3.3 V，舵机电 V+ 接 5 V。左耳插 0 号，右耳插 1 号</td></tr>
+    <tr><td><b>灯环 WS2812</b></td><td>DIN</td><td>GPIO12</td><td>电源接 5 V。灯乱闪就在数据线上加一个 3.3 V 转 5 V 的电平转换</td></tr>
+    <tr><td><b>功放 MAX98357A</b></td><td>BCLK、LRC、DIN</td><td>GPIO18、GPIO19、GPIO21</td><td>电源接 5 V，输出接喇叭</td></tr>
+    <tr><td><b>麦克风 INMP441</b></td><td>SCK、WS、SD</td><td>GPIO18、GPIO19、GPIO20</td><td>电源接 3.3 V，L/R 接地。时钟两根线和功放共用</td></tr>
+    <tr><td><b>悬崖传感器 ×3</b></td><td>DO</td><td>前左 GPIO17、前右 GPIO27、后 GPIO22</td><td>电源接 3.3 V。用模块上的电位器调到“对着桌面灭、悬空亮”</td></tr>
+    <tr><td><b>触摸 TTP223</b></td><td>SIG</td><td>GPIO23</td><td>贴在顶盖内侧，电源 3.3 V</td></tr>
+    <tr><td><b>红外发射</b></td><td>经三极管驱动 4 颗发射管</td><td>GPIO4</td><td>GPIO 带不动发射管，必须加一颗 NPN 三极管（如 S8050）和限流电阻</td></tr>
+    <tr><td><b>红外接收 VS1838B</b></td><td>OUT</td><td>GPIO15</td><td>电源接 3.3 V，只在“学习遥控器”时用</td></tr>
+    <tr><td><b>摄像头</b></td><td>排线</td><td>CSI 接口</td><td>Zero 用的是窄排线，买的时候确认带 Zero 转接排线</td></tr>
+  </table></div>
+  <h3>供电</h3>
+  <div class="line"><span>2 节 18650 串联 7.4 V</span><span>2 串保护板</span><span>总开关</span><span>分两路</span></div>
+  <ul>
+    <li><b>一路直接给电机驱动</b>的 VM（7.4 V）。</li>
+    <li><b>一路进 5 V 3 A 降压模块</b>，输出给树莓派（从 5 V 针脚供电）、舵机板、灯环和功放。先用万用表确认降压模块输出是 5.0–5.2 V 再接树莓派。</li>
+    <li><b>充电：</b>样机用带均衡的 2 串锂电充电模块（8.4 V），从外壳后面留一个充电口。</li>
+  </ul>
+  <div class="note"><b>锂电池安全：</b>只用带保护板的电池组；正负极接反会烧模块甚至起火，上电前用万用表量一遍；充电时人要在旁边，不要过夜充。</div>
+</div></section>
+
+<section id="steps"><div class="wrap">
+  <div class="eyebrow">04 步骤</div><h2>按这个顺序做，每一步都能单独验证</h2>
+  <ol class="flow">
+    <li><b>先在桌面上搭电路，不装壳</b><i>半天</i><p>烧录树莓派系统（Raspberry Pi OS Lite 64 位），在烧录工具里填好 Wi-Fi 和 SSH。按下面“程序”一节装好依赖。</p></li>
+    <li><b>底盘跑起来</b><i>半天</i><p>只接电机驱动和电池。运行主程序，手机打开遥控网页，按方向键两个轮子应该同向转。此时其他模块没接，程序会打印“跳过”，属于正常。</p></li>
+    <li><b>表情屏</b><i>1–2 小时</i><p>接上屏幕，应该出现两只会眨的眼睛。屏幕全白或花屏，多半是 DC、RST 接反或者屏幕型号不是 ST7789。</p></li>
+    <li><b>耳朵、灯环、触摸</b><i>半天</i><p>摸一下触摸片，眼睛变爱心、耳朵抖动、灯环变粉。舵机抖得厉害说明 5 V 供电不足。</p></li>
+    <li><b>声音和对话</b><i>1–2 天</i><p>先用 <code>arecord</code> 和 <code>aplay</code> 确认能录能放，再填对话服务的地址和密钥。摸着头说话，松手后它回答。这是最容易卡住的一步，多半卡在声卡配置上。</p></li>
+    <li><b>摄像头</b><i>1–2 小时</i><p>接上排线重启，遥控网页顶部出现画面。</p></li>
+    <li><b>桌沿检测</b><i>半天</i><p>在遥控网页打开桌面模式，把它放在桌上往桌边开，应该在轮子出去之前停住。<b>第一次测试用手在桌边接着。</b>深色或玻璃桌面要重新调电位器。</p></li>
+    <li><b>红外家电</b><i>半天</i><p>用程序里的 <code>ir.learn("空调开")</code> 对着它按遥控器，录下来之后对话时说“开空调”它就会发出去。</p></li>
+    <li><b>装进外壳</b><i>1–2 天</i><p>电池放最下面，主板在中间，屏幕和摄像头固定在前壳，喇叭在后壳。先用热熔胶临时固定，确认都能工作再上螺丝。</p></li>
+  </ol>
+  <h3>这份样机没有做的</h3>
+  <ul>
+    <li><b>自动回充电座：</b>需要定位，建议样机先手动放回去充。</li>
+    <li><b>唤醒词：</b>现在是“摸头说话”。想喊名字唤醒，可以后面加开源的唤醒词库。</li>
+    <li><b>人脸识别、听声辨位、Matter：</b>都可以加，但每一项都是单独的工程。智能家电建议先接你家里已有的平台。</li>
+    <li><b>手机 APP：</b>用网页遥控台代替，只能在同一个 Wi-Fi 下用。</li>
+    <li><b>避障：</b>清单里买了测距模块，程序里还没用它。</li>
+  </ul>
+</div></section>
+
+<section id="code" class="dark"><div class="wrap">
+  <div class="eyebrow">05 程序</div><h2>全部程序，一共 8 个文件</h2>
+  <p>都是 Python，加起来四百多行。点文件名可以直接看或下载。</p>
+  <div class="tbl"><table>
+    <tr><th>文件</th><th>管什么</th></tr>
+    <tr><td><a href="firmware/config.py">config.py</a></td><td>所有引脚号和参数。接线和上表不一样时只改这里</td></tr>
+    <tr><td><a href="firmware/main.py">main.py</a></td><td>主程序。哪个模块没接好就跳过哪个，其余照常跑</td></tr>
+    <tr><td><a href="firmware/drive.py">drive.py</a></td><td>差速底盘和桌沿刹停，算法和 3D 模型里的一样</td></tr>
+    <tr><td><a href="firmware/face.py">face.py</a></td><td>画眼睛：平静、开心、爱心、警戒、犯困，说话时嘴会动</td></tr>
+    <tr><td><a href="firmware/body.py">body.py</a></td><td>耳朵舵机、灯环、触摸</td></tr>
+    <tr><td><a href="firmware/voice.py">voice.py</a></td><td>录音、语音转文字、大模型对话（能调用“控制家电”“移动”两个动作）、语音合成</td></tr>
+    <tr><td><a href="firmware/ir.py">ir.py</a></td><td>学习和发送红外遥控码</td></tr>
+    <tr><td><a href="firmware/web.py">web.py</a></td><td>手机网页遥控台：看画面、方向键、换表情、桌面模式</td></tr>
+  </table></div>
+  <h3>系统设置</h3>
+  <p>在 <code>/boot/firmware/config.txt</code> 末尾加上这几行，然后重启：</p>
+<pre><code>dtparam=spi=on
+dtparam=i2c_arm=on
+dtoverlay=googlevoicehat-soundcard    <u># I2S 麦克风 + 功放</u>
+dtoverlay=gpio-ir-tx,gpio_pin=4       <u># 红外发射</u>
+dtoverlay=gpio-ir,gpio_pin=15         <u># 红外接收</u></code></pre>
+  <h3>安装和运行</h3>
+<pre><code>sudo apt update
+sudo apt install -y python3-pip python3-picamera2 v4l-utils alsa-utils git
+git clone https://github.com/ws1798-u/nomi-robot.git
+cd nomi-robot/firmware
+sudo pip3 install --break-system-packages -r requirements.txt
+
+<u># 对话服务：任何兼容 OpenAI 接口格式的服务商都行，把这几项换成你自己的</u>
+export NOMI_API_BASE=https://你的服务商地址/v1
+export NOMI_API_KEY=你的密钥
+export NOMI_ASR_MODEL=语音识别模型名
+export NOMI_CHAT_MODEL=对话模型名
+export NOMI_TTS_MODEL=语音合成模型名
+export NOMI_TTS_VOICE=音色名
+
+sudo -E python3 main.py</code></pre>
+  <p>然后用手机浏览器打开 <code>http://树莓派的地址:8080</code>。不设置对话服务的那几项也能运行，只是不会对话，摸头时改为显示爱心。</p>
+  <div class="note"><b>最可能要调的地方：</b>声卡配置（<code>arecord -l</code> 看不到设备时检查 overlay 和接线）；红外设备号（用 <code>ir-ctl -f -d /dev/lirc0</code> 看哪个是发射）；灯环需要 root 权限；屏幕方向不对就改 <code>face.py</code> 里的 <code>rotate</code>。大模型服务要支持“工具调用”，否则它不会替你开空调。密钥不要写进代码或传到公开仓库。</div>
+</div></section>
+
+<footer><div class="wrap"><p>这是一份自己动手的样机方案，未经实物验证，仅供个人制作。要销售需要重新做结构、电路并通过相关认证，见<a href="make.html">量产与成本</a>。</p><a href="index.html">首页</a><a href="sim.html">3D 交互</a><a href="app.html">APP 与互联</a><a href="make.html">制造与成本</a></div></footer>
+
+<script>
+const PARTS = [
+  ['主控', '树莓派 Zero 2 W（带排针）', 1, 130, '跑全部程序，自带 Wi-Fi 和蓝牙'],
+  ['存储卡', 'microSD 32 GB', 1, 25, '装系统'],
+  ['摄像头', 'OV5647 广角 120°，带 Zero 排线', 1, 35, '看家、手机看画面'],
+  ['表情屏', '2.4 寸 SPI 屏，ST7789，240×320', 1, 22, '画眼睛'],
+  ['驱动电机', 'N20 减速电机 6 V 150 rpm', 2, 12, '走动'],
+  ['电机驱动', 'DRV8833 模块', 1, 5, '控制两个电机'],
+  ['轮胎', 'N20 配套橡胶轮 Ø43–44', 2, 3, '或自己打印轮毂加 O 型圈'],
+  ['耳朵舵机', 'SG90 或更小的 3.7 g 舵机', 2, 7, '耳朵摆动'],
+  ['舵机板', 'PCA9685 16 路 PWM 模块', 1, 12, '稳定驱动舵机'],
+  ['灯环', 'WS2812 16 颗环形', 1, 9, '氛围灯'],
+  ['功放', 'MAX98357A I2S 功放模块', 1, 10, '放声音'],
+  ['喇叭', '4 Ω 3 W，直径 36–40 mm', 1, 6, '放声音'],
+  ['麦克风', 'INMP441 I2S 麦克风模块', 1, 8, '听你说话'],
+  ['悬崖传感器', 'TCRT5000 循迹模块（数字输出）', 3, 2, '桌沿检测'],
+  ['触摸', 'TTP223 触摸模块', 1, 1.5, '摸头'],
+  ['测距', 'VL53L1X 模块', 1, 14, '避障（程序里暂未使用）'],
+  ['红外发射', '940 nm 发射管 ×4 + S8050 三极管 + 电阻', 1, 3, '遥控家电'],
+  ['红外接收', 'VS1838B', 1, 1, '学习遥控器'],
+  ['电池', '18650 带保护，3000 mAh 以上', 2, 15, '供电'],
+  ['电池盒与保护板', '2 节串联电池盒 + 2 串保护板', 1, 10, '保护电池'],
+  ['降压模块', '5 V 3 A 降压模块', 1, 6, '给主板和舵机供电'],
+  ['充电模块', '2 串锂电充电板 8.4 V（带均衡）+ 适配器', 1, 22, '充电'],
+  ['开关与线材', '船型开关、杜邦线、硅胶线、洞洞板', 1, 20, '接线'],
+  ['外壳打印', '前后壳、顶盖、底盘、骨架、轮毂（代打印）', 1, 200, '树脂打外壳，PETG 打骨架'],
+  ['耳朵', 'TPU 软料打印', 2, 8, '摸着是软的'],
+  ['镜片', '1 mm 茶色亚克力片', 1, 8, '表情窗'],
+];
+const f = (x) => (Math.round(x * 10) / 10).toLocaleString('zh-CN');
+let total = 0;
+document.getElementById('parts-t').innerHTML = '<tr><th>零件</th><th>型号与规格</th><th class="n">数量</th><th class="n">单价</th><th class="n">小计</th><th>用途</th></tr>' +
+  PARTS.map((r) => ((total += r[2] * r[3]), `<tr><td><b>${r[0]}</b></td><td>${r[1]}</td><td class="n">${r[2]}</td><td class="n">${f(r[3])}</td><td class="n">${f(r[2] * r[3])}</td><td>${r[4]}</td></tr>`)).join('') +
+  `<tr class="sum"><td colspan="4">合计</td><td class="n">${f(total)}</td><td></td></tr>`;
+document.getElementById('k-total').textContent = '约 ' + Math.round(total / 10) * 10;
+document.getElementById('k-n').textContent = PARTS.length;
+</script>
+</body>
+</html>
