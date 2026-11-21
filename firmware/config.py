@@ -24,6 +24,18 @@ RING_PIN, RING_N = 12, 16
 # 红外：发射 GPIO4（经三极管），接收 GPIO15。需要在 /boot/firmware/config.txt 里开 overlay
 IR_TX_DEV, IR_RX_DEV = "/dev/lirc0", "/dev/lirc1"   # 发射 GPIO4，接收 GPIO15；设备号用 ir-ctl -f -d 确认
 
+# 回充红外接收头 VS1838B ×2，装在后壳左右两侧（离地约 35，偏离正后方 ±31°），OUT 接下面两个脚
+BEACON_RX = {"l": 14, "r": 16}       # 左后、右后。GPIO14 是串口 TX，要在 raspi-config 里把串口关掉
+
+# 电量和充电检测：ADS1115 模块，接 I2C（地址 0x48，和舵机板 0x40、ToF 0x29 不冲突）
+#   A0：电池电压，经 100k / 33k 分压（8.4 V → 2.08 V）
+#   A1：充电触点的 VBUS（在肖特基二极管前面取），经 100k / 100k 分压（5 V → 2.5 V）
+ADC_ADDR = 0x48
+BAT_DIV = (100 + 33) / 33
+VBUS_DIV = 2.0
+LOW_PCT = 15                         # 电量低于这个就自己回去充电
+FULL_PCT = 95                        # 充到这个就算充满（灯环变常亮）
+
 # 轮子：直径 44 mm，轮距 82 mm，N20 空载 150 rpm
 WHEEL_D, TRACK, RPM_MAX = 44.0, 82.0, 150.0
 

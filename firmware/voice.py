@@ -15,8 +15,8 @@ TOOLS = [
         "name": "set_device", "description": "用红外控制家电。name 是之前学习遥控器时起的名字，例如 空调开、空调关、电视开关",
         "parameters": {"type": "object", "properties": {"name": {"type": "string"}}, "required": ["name"]}}},
     {"type": "function", "function": {
-        "name": "move", "description": "让机器人自己动一下。主人让你跳舞、转圈圈时用 跳舞",
-        "parameters": {"type": "object", "properties": {"action": {"type": "string", "enum": ["转一圈", "跳舞", "前进", "后退", "停"]}}, "required": ["action"]}}},
+        "name": "move", "description": "让机器人自己动一下。主人让你跳舞、转圈圈时用 跳舞；让你去充电、说你没电了时用 去充电",
+        "parameters": {"type": "object", "properties": {"action": {"type": "string", "enum": ["转一圈", "跳舞", "前进", "后退", "停", "去充电"]}}, "required": ["action"]}}},
 ]
 
 

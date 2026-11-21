@@ -40,6 +40,11 @@ PINS_USB = ((0.0, 0), (3.4, 90), (5.4, 180), (7.3, 270))
 PINS_POWER = ((0.0, 0), (7.3, 270))       # 地面充电座只要 VBUS 和 GND
 AXLE_Z = WHEEL_D / 2             # 轮轴离地
 WHEEL_X = 41 * K                 # 轮子中心到机身中心
+# 滑垫：四个 Ø5，分在左右两侧（x = ±24.5，y = ±14），中间留一条约 44 宽的空道给充电座的接口台
+PAD_R = 2.5
+PADS = [(sx * 24.5, sy * 14.0) for sx in (1, -1) for sy in (1, -1)]
+# 回充红外接收头：后壳上左右各一个（VS1838B，Ø5 圆头），离地 30 × 比例，偏离正后方 ±0.55 弧度
+IR_RX_Z, IR_RX_A = 30, 0.55
 
 
 def box(x0, x1, y0, y1, z0, z1):
@@ -112,6 +117,10 @@ def cutters():
         for gx in np.arange(-21, 22, 6.0):
             if (gx / 24) ** 2 + ((gz - 84) / 19) ** 2 < 1:
                 c.append(cyl_y(1.5, -80 * K, -30 * K, gx * K, gz * K, 12))
+    # 回充红外接收头的孔：Ø5.4，沿半径方向，VS1838B 的圆头从里面塞进来，热熔胶固定
+    for s_ in (1, -1):
+        a = math.pi + s_ * IR_RX_A
+        c.append(cyl_y(2.7, 30 * K, 90 * K, 0, IR_RX_Z * K, 24).rotate([0, 0, -math.degrees(a)]))
     # 隐藏 USB-C 的窗口：底部后缘，平时被壳内侧的旋转滑门挡住，见 usb_door()
     c.append(sector(math.pi - DOOR_WIN, math.pi + DOOR_WIN, 20 * K, 80 * K, WIN_Z0 * K, WIN_Z1 * K))
     out = c[0]
@@ -244,13 +253,14 @@ def cap():
 
 
 def base_plate():
-    """底盘：嵌在外壳底部开口里，带两个滑垫、三个悬崖传感器窗、四个螺丝孔。"""
+    """底盘：嵌在外壳底部开口里，带四个滑垫、三个悬崖传感器窗、四个螺丝孔。
+    滑垫分在左右两侧（x = ±24.5），中间留出一条空道：倒车上充电座时，滑垫从接口台两边走过去，不会撞上。"""
     z0 = Y0 * K
     r = prof(z0) - WALL - 0.4
-    p = cyl_z(r, z0, z0 + 2.5, seg=SEG)
-    for y in (20 * K * 0.8, -20 * K * 0.8):
-        p = p + cyl_z(4, 1.0, z0 + 0.1, 0, y, 32)            # 滑垫底面比轮子最低点高 1 mm
-    # 悬崖传感器窗：放得下 TCRT5000 本体（10.2 × 5.8），长边前后方向；后面那个往右偏 9，避开后滑垫
+    p = revolve([(0.01, z0), (r - 0.8, z0), (r, z0 + 0.8), (r, z0 + 2.5), (0.01, z0 + 2.5)])   # 下沿倒角 0.8，过板边更顺
+    for x, y in PADS:
+        p = p + cyl_z(PAD_R, 1.0, z0 + 0.1, x, y, 32)            # 滑垫底面比轮子最低点高 1 mm
+    # 悬崖传感器窗：放得下 TCRT5000 本体（10.2 × 5.8），长边前后方向；后面那个往右偏 9
     for x, y in ((-11, 15), (11, 15), (9, -17)):
         p = p - box(x * K - 3.1, x * K + 3.1, y * K - 5.3, y * K + 5.3, z0 - 1, z0 + 4)
     p = p - cyl_z(13.7, z0 - 1, z0 + 0.8, seg=64)                 # 钢环槽：Ø27 × 0.8 的钢环，和底面齐平，给座子的磁铁吸
@@ -350,20 +360,111 @@ def clip_tray():
     return t
 
 
+# ---------------- 地面充电座（能自己倒车开上来的版本） ----------------
+# 坐标：接口台中心是原点，后墙在 -Y，机器人从 +Y 那边倒车进来。底板上表面 Z=0，地面 Z=-3。
+DOCK_R = 84 * K                   # 底板半径
+RAMP_W, RAMP_LIP = 20.0, 0.6      # 底板外圈 20 mm 宽的缓坡：边缘只有 0.6 mm 厚，坡度约 7°
+DOCK_YF = -(RB * K + 8)           # 后墙正面
+DOCK_WD = 22.0                    # 后墙厚度（里面放信标板、USB-C 转接板和配重）
+RAIL_X = WHEEL_X + WHEEL_W / 2 + 2    # 导轨内侧：轮子外侧再留 2 mm
+RAIL_H, RAIL_T = 5.0, 3.0
+PLUG_R, PLUG_FL, PLUG_FT = 14.0, 15.2, 1.0    # 浮动接口台：本体半径、底部凸缘半径、凸缘厚
+PLUG_FLOAT = 2.0                  # 接口台能左右（X 方向）各滑 2 mm：轮子在导轨里还有 ±2 mm 余量，靠磁铁把接口台拉到钢环正下方
+PLUG_DOWN, PLUG_UP = 3.6, 6.9 + 0.3           # 接口台顶面：平时落在 3.6（弹针头 4.6，比机器人后倾时外壳最低处 4.7 还低）；被磁铁吸起最多到 7.2，底盘在 6.9 先贴上
+SLEEVE_TOP = 3.6
+CAP_R, CAP_T = 18.0, 0.8
+PLUG_Z0 = -3 + CAP_T              # 接口台落下时底面的高度（压在底盖环上）
+PLUG_H = PLUG_DOWN - PLUG_Z0
+LIP_Z = PLUG_Z0 + PLUG_FT + (PLUG_UP - PLUG_DOWN) + 0.1     # 套筒内唇下沿：凸缘顶到这里就停（内唇厚约 1 mm）
+BEACON_Z = IR_RX_Z * K            # 信标灯高度 = 机器人接收头高度
+BEACON_SIDE = 27                  # 左右两颗信标灯斜着照的角度（度）
+# 后墙下方两块挡块：机器人倒车时外壳碰到它就停，这时机身中心正好在接口台上方（前后误差 < 0.5 mm）。
+# 挡块在轮轴附近的高度（离地 17–27），机身前后点头时这里几乎不移动；贴 1 mm 毛毡。
+STOP_X0, STOP_X1, STOP_Z0, STOP_Z1, FELT = 17.0, 25.0, 17.0, 27.0, 1.0
+
+
+def stadium(hx, hy, z0, z1):
+    """俯视是跑道形（X 方向长）的柱子：半长 hx、半宽 hy。"""
+    d = max(hx - hy, 0.01)
+    return box(-d, d, -hy, hy, z0, z1) + cyl_z(hy, z0, z1, -d, 0, 64) + cyl_z(hy, z0, z1, d, 0, 64)
+
+
+def rail(x_sign):
+    """一侧导轨：靠墙一段笔直，前面一段往外张开 20°，像个漏斗，把轮子引到正中。"""
+    xs = x_sign
+    pts = [(xs * RAIL_X, DOCK_YF + 1), (xs * RAIL_X, 5.0), (xs * (RAIL_X + 12), 38.0),
+           (xs * (RAIL_X + 12 + RAIL_T), 38.0), (xs * (RAIL_X + RAIL_T), 5.0), (xs * (RAIL_X + RAIL_T), DOCK_YF + 1)]
+    m = Manifold.extrude(CrossSection([ccw(pts)]), RAIL_H + 3).translate([0, 0, -3])
+    return m
+
+
+def beacon_block():
+    """后墙里的信标块：三颗 5 mm 红外灯。中间一颗在 8 mm 长的 Ø2.4 细孔后面，光束很窄，只照正前方一条线；
+    左右两颗斜着 27° 往两边照（和中间那束有一点重叠，不留空隙）。返回 (实体, 要挖掉的孔)。"""
+    y0, y1 = DOCK_YF - 16, DOCK_YF
+    z = BEACON_Z
+    solid = box(-17, 17, y0, y1, z - 7, z + 7)
+    holes = cyl_y(1.2, DOCK_YF - 9, DOCK_YF + 1, 0, z, 24)                 # 中间：细长光阑
+    holes = holes + cyl_y(2.65, y0 - 1, DOCK_YF - 8.9, 0, z, 32)            # 中间：灯座
+    holes = holes + cyl_y(3.0, y0 - 1, y0 + 1.0, 0, z, 32)                  # 灯的凸缘
+    for s_ in (1, -1):
+        h = cyl_y(2.65, -12, 14, 0, 0, 32).rotate([0, 0, -s_ * BEACON_SIDE]).translate([s_ * 9, DOCK_YF - 7, z])
+        holes = holes + h
+    return solid, holes
+
+
 def dock_base():
-    """地面充电座（样机版）：底板 + 和夹座一样的接口凸台（只装 VBUS、GND 两根针）+ 后墙。
-    后墙是空心的，背面下方开 USB-C 口，里面放转接板；正面开一条状态灯缝。
-    样机先靠手把机器人放上去；量产版的接口台是浮动的，机器人能自己倒车开上来，见制造页。"""
-    rp = 84 * K
-    t = Manifold.cylinder(3, rp, rp - 1.5, SEG).translate([0, 0, -3])           # 底板，边上倒个斜角
-    yf = -(RB * K + 8)                                                          # 后墙正面
-    t = iface(t, -yf, PINS_POWER)
-    w, h, d = 30 * K, 85 * K, 14
+    """地面充电座：
+    · 底板外圈是一圈 7° 的缓坡，边缘只有 0.6 mm 厚，轮子和滑垫都能顺着开上来；
+    · 左右两条低导轨（高 5）做成漏斗，把轮子引到正中，最后左右各只留 2 mm 余量；
+    · 中间是套筒，里面放浮动接口台（dock_plug，单独打印）：平时落下去，机器人倒车经过时碰不到；
+      到位后磁铁把它吸起来、左右拉正，贴住底盘钢环，两根弹针接通 VBUS 和 GND；
+    · 后墙下方两块挡块定住前后位置：机器人倒车碰到挡块就停，正好在接口台上方；
+    · 后墙正面有三颗红外信标灯（左、中、右）和状态灯缝，背面下方是 USB-C 电源口，墙里放信标小板和配重。"""
+    plate = revolve([(0.01, -3), (DOCK_R, -3), (DOCK_R, -3 + RAMP_LIP), (DOCK_R - RAMP_W, 0), (0.01, 0)])
+    yf, d = DOCK_YF, DOCK_WD
+    w, h = 30 * K, 85 * K
     wall = box(-w, w, yf - d, yf, -3, h) - box(-w + 2, w - 2, yf - d + 2, yf - 2, -1, h - 2)
-    wall = wall - box(-5, 5, yf - d - 1, yf - d + 3, 1.5, 5.5)                 # 背面 USB-C 开口 10 × 4
-    wall = wall - box(-15 * K, 15 * K, yf - 3, yf + 1, 70 * K, 70 * K + 3)      # 正面状态灯缝
-    t = (t + wall) ^ cyl_z(rp, -4, h + 1, seg=SEG)
-    return t - box(-1.5, 1.5, yf - 2.5, yf + 0.5, -2, 0.1)                     # 走线槽通进墙里
+    bs, bh = beacon_block()
+    wall = wall + (bs ^ box(-w, w, yf - d, yf, -3, h))
+    wall = wall - bh
+    wall = wall - box(-5, 5, yf - d - 1, yf - d + 3, 1.5, 5.5)                # 背面 USB-C 开口 10 × 4
+    wall = wall - box(-15 * K, 15 * K, yf - 3, yf + 1, 70 * K, 70 * K + 3)    # 正面状态灯缝
+    # 挡块：面到机身中心的距离 = 外壳在这里的半径（按挡块内侧边、上沿算）+ 毛毡厚
+    ys = -math.sqrt(prof(STOP_Z1) ** 2 - STOP_X0 ** 2) - FELT
+    for s_ in (1, -1):
+        x0, x1 = sorted((s_ * STOP_X0, s_ * STOP_X1))
+        wall = wall + box(x0, x1, yf - 1, ys, -3, STOP_Z1)
+    t = plate + wall + rail(1) + rail(-1)
+    # 接口台套筒：俯视是跑道形，左右长（接口台能左右滑 2 mm），顶面离底板 3.6（比机器人外壳最低处还低），
+    # 上口一圈内唇在前后两边压住接口台的凸缘，吸起来也拔不出去
+    fx, fy = PLUG_FL + 0.3 + PLUG_FLOAT, PLUG_FL + 0.3
+    t = t + stadium(fx + 1.2, fy + 1.5, -0.5, SLEEVE_TOP)
+    t = t - stadium(fx, fy, PLUG_Z0, LIP_Z)                                    # 凸缘上下、左右滑的腔
+    t = t - stadium(PLUG_R + 0.3 + PLUG_FLOAT, PLUG_R + 0.3, -2.5, SLEEVE_TOP + 1)   # 本体穿出内唇
+    t = t - cyl_z(CAP_R + 0.2, -4, PLUG_Z0, seg=64)                              # 底面沉槽，放底盖环
+    # 底面走线槽：从套筒通到后墙里，宽 3 深 1.5；进墙的地方往上打穿
+    t = t - box(-1.5, 1.5, yf - 8, -14, -4, -1.5)
+    t = t - box(-1.5, 1.5, yf - 8, yf - 3, -4, 0.5)
+    return t
+
+
+def dock_plug():
+    """浮动接口台：放在充电座的套筒里，上下能滑 3.6 mm，左右能滑 2 mm。顶面一圈 Ø26 环形磁铁，中间两根弹针（VBUS、GND）。
+    平时靠自重落在底盖环上（顶面离底板 3.6）；机器人停到位，磁铁隔着空气把它吸上去，贴住底盘的钢环。打印时凸缘朝下。"""
+    H = PLUG_H
+    p = cyl_z(PLUG_FL, 0, PLUG_FT, seg=64) + revolve([(0.01, PLUG_FT - 0.1), (PLUG_R, PLUG_FT - 0.1), (PLUG_R, H - 0.6), (PLUG_R - 0.6, H), (0.01, H)])
+    p = p - (cyl_z(13.15, H - 3.1, H + 1, seg=64) - cyl_z(9.0, H - 4, H + 2, seg=48))   # 环形磁铁坑
+    p = p - cyl_z(8.5, -1, H - 3.6, seg=48)                                              # 弹针尾巴焊线的腔
+    for r, a in PINS_POWER:
+        p = p - cyl_z(0.8, H - 3.7, H + 1, r * math.cos(math.radians(a)), r * math.sin(math.radians(a)), 16)
+    return p
+
+
+def dock_cap():
+    """底盖环：从充电座底面卡进沉槽，托住接口台，用 502 或热熔胶粘住。中间的孔和一道缺口让弹针的线出来，接到走线槽。"""
+    c = cyl_z(CAP_R, 0, CAP_T, seg=64) - cyl_z(9.0, -1, CAP_T + 1, seg=48)
+    return c - box(-1.6, 1.6, -CAP_R - 1, -8, -1, CAP_T + 1)
 
 
 def clip_leg():
@@ -378,6 +479,6 @@ def clip_leg():
 
 if __name__ == "__main__":
     print(f"比例 {K:.2f}：整机约 {2 * RB * K:.0f} × {2 * RB * K:.0f} × {YTOP * K:.0f} mm，壁厚 {WALL} mm")
-    parts = {"shell_front": half(True), "shell_back": half(False), "top_cap": cap(), "base_plate": base_plate(), "frame": frame(), "ear": ear(), "clip_tray": clip_tray(), "clip_leg": clip_leg(), "usb_door": usb_door(), "dock_base": dock_base()}
+    parts = {"shell_front": half(True), "shell_back": half(False), "top_cap": cap(), "base_plate": base_plate(), "frame": frame(), "ear": ear(), "clip_tray": clip_tray(), "clip_leg": clip_leg(), "usb_door": usb_door(), "dock_base": dock_base(), "dock_plug": dock_plug(), "dock_cap": dock_cap()}
     for n, m in parts.items():
         save(n, m)

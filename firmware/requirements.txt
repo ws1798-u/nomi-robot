@@ -6,3 +6,5 @@ adafruit-circuitpython-servokit
 rpi_ws281x
 flask
 requests
+adafruit-circuitpython-ads1x15
+adafruit-blinka
