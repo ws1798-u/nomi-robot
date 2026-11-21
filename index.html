@@ -86,7 +86,7 @@
   @media (max-width: 639px) { #modes .panel { --p-h: 220px; } #app .frame { padding-top: 24px; } }
 </style>
 <style>
-.hero__stage[data-hero3d] .hero3d{position:absolute;inset:0;width:100%;height:100%;display:block;opacity:0;transition:opacity .6s ease;touch-action:pan-y;cursor:grab;-webkit-tap-highlight-color:transparent}
+.hero__stage[data-hero3d] .hero3d{position:absolute;inset:0;width:100%;height:100%;display:block;opacity:0;transition:opacity .6s ease;touch-action:pan-y pinch-zoom;cursor:grab;-webkit-tap-highlight-color:transparent}
 .hero__stage[data-hero3d] .hero3d.is-grab{cursor:grabbing}
 .hero__stage[data-hero3d].is-3d .hero3d{opacity:1}
 .hero__stage[data-hero3d] picture{transition:opacity .6s ease}
@@ -139,7 +139,7 @@
         <div class="btn-row"><a class="btn btn--primary" href="sim.html">打开 3D 模型</a><a class="btn btn--secondary" href="#film">看演示视频</a></div>
       </div>
       <div class="hero__stage" data-hero3d>
-        <picture><source media="(max-width: 639px)" srcset="img/lineup-phone.jpg?v=20261121b" width="840" height="840"><img src="img/lineup.jpg?v=20261121b" alt="三台 Nomi 并排：米白色的 N1、带熊耳朵的 Mochi、石墨黑的 Nova" width="2560" height="1132" fetchpriority="high"></picture><span class="hero3d-tip">← 左右拖动，转着看每一台 →</span>
+        <picture><source media="(max-width: 639px)" srcset="img/lineup-phone.jpg?v=20261121b" width="840" height="840"><img src="img/lineup.jpg?v=20261121b" alt="三台 Nomi 并排：米白色的 N1、带熊耳朵的 Mochi、石墨黑的 Nova" width="2560" height="1132" fetchpriority="high"></picture><span class="hero3d-tip">拖动任意一台，上下左右转着看</span>
       </div>
       <div class="hero__names">
         <a href="sim.html?style=nomi"><b>Nomi N1</b><span>简约 · 胶囊耳朵</span></a>
@@ -313,6 +313,6 @@
 <script type="module" src="assets/system.js"></script>
 <script type="module" src="assets/motion/motion.js"></script>
 <script type="module" src="assets/layout/layout.js"></script>
-<script type="module" src="assets/hero3d.js?v=20261122b"></script>
+<script type="module" src="assets/hero3d.js?v=20261122c"></script>
 </body>
 </html>
