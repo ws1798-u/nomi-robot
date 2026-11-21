@@ -32,6 +32,12 @@ def prof(h):
 
 # 实际零件尺寸（不缩放）
 WHEEL_D, WHEEL_W = 44.0, 10.0
+# 底部接口（夹座、充电座、机器人共用，买来的零件，不缩放）：
+#   机器人底面：钢环 Ø27 / Ø17 × 0.8，中间一块 Ø16 × 1.6 的四环触点板（嘉立创打样，沉金）
+#   座子凸台：环形钕铁硼磁铁 Ø26 / Ø18 × 3，中间插 Ø1.5 × 8 的弹簧顶针
+#   四根针分在四个方向：中心 VBUS、3.4 D+、5.4 D−、7.3 GND（离中心的距离，mm）
+PINS_USB = ((0.0, 0), (3.4, 90), (5.4, 180), (7.3, 270))
+PINS_POWER = ((0.0, 0), (7.3, 270))       # 地面充电座只要 VBUS 和 GND
 AXLE_Z = WHEEL_D / 2             # 轮轴离地
 WHEEL_X = 41 * K                 # 轮子中心到机身中心
 
@@ -97,12 +103,55 @@ def cutters():
         for gx in np.arange(-21, 22, 6.0):
             if (gx / 24) ** 2 + ((gz - 84) / 19) ** 2 < 1:
                 c.append(cyl_y(1.5, -80 * K, -30 * K, gx * K, gz * K, 12))
-    # 充电口
-    c.append(cyl_y(4.2, -80 * K, -20 * K, 0, 22 * K, 32))
+    # 隐藏 USB-C 的窗口：底部后缘，平时被壳内侧的旋转滑门挡住，见 usb_door()
+    c.append(sector(math.pi - DOOR_WIN, math.pi + DOOR_WIN, 20 * K, 80 * K, WIN_Z0 * K, WIN_Z1 * K))
     out = c[0]
     for m in c[1:]:
         out = out + m
     return out
+
+
+# 隐藏 USB-C 滑门（样机版）：一片顺着壳内壁弯的弧形门，夹在上下两道带内唇的导轨之间，绕机身竖轴滑动。
+# 门上的拨片从窗口里露出来，用指甲往右一推就滑开 0.45 弧度；拨片碰到窗口两边就是两头的限位。
+# 量产版把门做在壳外侧、和壳面平齐（见 3D 模型），样机打印做不了那么薄，所以放在内侧，关上时比外壳凹进 2 mm。
+WIN_Z0, WIN_Z1 = 10.0, 17.0       # 窗口上下（未缩放的离地高度）；再往下导轨会碰到底盘
+DOOR_WIN = 0.25                   # 窗口半宽（弧度）
+DOOR_HALF = 0.33                  # 门的半宽（弧度），比窗口宽，关上时四周都盖住
+DOOR_OPEN = 0.45                  # 滑开的角度
+DOOR_T = 1.5                      # 门厚
+
+
+def inner_r(h):
+    return prof(h) - WALL
+
+
+def band(z0, z1, r_out, r_in, n=30):
+    """贴着外壳内壁的一圈带子：半径从 内壁+r_out 到 内壁-r_in，高度 z0..z1（已乘比例）。"""
+    hs = np.linspace(z0, z1, n)
+    return revolve([(inner_r(h) + r_out, h) for h in hs] + [(max(inner_r(h) - r_in, 0.5), h) for h in hs[::-1]])
+
+
+def door_rails():
+    """后壳内侧的上下两道导轨，L 形：一条贴壁的托条 + 一道内唇，门的上下沿卡在里面。"""
+    a0, a1 = math.pi - DOOR_HALF - 0.07, math.pi + DOOR_HALF + DOOR_OPEN + 0.07
+    lo0, lo1 = (WIN_Z0 - 1.6) * K, (WIN_Z0 - 0.6) * K           # 门下沿在 WIN_Z0 - 0.6 附近
+    hi0, hi1 = (WIN_Z1 + 0.6) * K, (WIN_Z1 + 1.6) * K
+    dz0, dz1 = lo1 + 0.2, hi0 - 0.2                              # 门的上下沿
+    rails = band(lo0 - 1.2, lo0, 0.5, DOOR_T + 1.6) + band(hi1, hi1 + 1.2, 0.5, DOOR_T + 4)     # 托条（上面那条要伸到内唇）
+    # 内唇做成等半径的一圈：壳在这里很斜，跟着壳面走的唇会顶到门。唇比门的内表面再往里 0.2，压住门沿 0.6 mm
+    for za, zb, href in ((lo0 - 0.6, dz0 + 0.6, dz0), (dz1 - 0.6, hi1 + 0.6, dz1 - 0.6)):
+        r1 = inner_r(href) - 0.2 - DOOR_T - 0.2
+        rails = rails + (cyl_z(r1, za, zb, seg=SEG) - cyl_z(r1 - 1.2, za - 1, zb + 1, seg=SEG))
+    return rails ^ sector(a0, a1, 1, 200, 0, 60 * K, 48)
+
+
+def usb_door():
+    """滑门本体 + 从窗口露出来的拨片。门在关闭位置（居中对着正后方）。"""
+    z0, z1 = (WIN_Z0 - 0.6) * K + 0.2, (WIN_Z1 + 0.6) * K - 0.2
+    d = band(z0, z1, -0.2, 0.2 + DOOR_T) ^ sector(math.pi - DOOR_HALF, math.pi + DOOR_HALF, 1, 200, 0, 60 * K, 48)
+    zk = (WIN_Z0 + WIN_Z1) / 2 * K
+    knob = band(zk - 2.5, zk + 2.5, 1.7, 0.5) ^ sector(math.pi - 0.22 - 0.025, math.pi - 0.22 + 0.025, 1, 200, 0, 60 * K, 8)
+    return d + knob
 
 
 def seam_tabs(front):
@@ -159,6 +208,8 @@ def half(front):
         body = (body + (boss ^ solid)) - cut
     big = 200 * K
     body = body ^ (box(-big, big, 0, big, -big, big) if front else box(-big, big, -big, 0, -big, big))
+    if not front:
+        body = body + door_rails()
     tabs, holes = seam_tabs(front)
     solid_inside = revolve([(0.01, Y0 * K), (prof(Y0 * K), Y0 * K)] + [(prof(h), h) for h in np.linspace(Y0 * K, YCAP * K, 60)] + [(0.01, YCAP * K)])
     for t in tabs:
@@ -193,7 +244,10 @@ def base_plate():
     # 悬崖传感器窗：放得下 TCRT5000 本体（10.2 × 5.8），长边前后方向；后面那个往右偏 9，避开后滑垫
     for x, y in ((-11, 15), (11, 15), (9, -17)):
         p = p - box(x * K - 3.1, x * K + 3.1, y * K - 5.3, y * K + 5.3, z0 - 1, z0 + 4)
-    p = p - cyl_z(11.2, z0 - 1, z0 + 1.0, seg=48)                 # 底面中心的凹槽：嵌一片 Ø22 × 1 的铁片，给夹座的磁铁吸
+    p = p - cyl_z(13.7, z0 - 1, z0 + 0.8, seg=64)                 # 钢环槽：Ø27 × 0.8 的钢环，和底面齐平，给座子的磁铁吸
+    p = p - cyl_z(8.2, z0 - 1, z0 + 1.6, seg=48)                  # 触点板槽：Ø16 × 1.6 的四环触点板，和底面齐平
+    p = p - cyl_z(2.5, z0 - 1, z0 + 4, seg=24)                    # 触点板背面的 4 根线从这里穿上去
+    p = p + box(-9, 9, -(r - 1), -(r - 9), z0 + 2.5, z0 + 5.5)    # 后缘垫块：USB-C 充电板粘在上面，口朝后对准窗口
     for a in (45, 135, 225, 315):
         rr = r - 4.5
         p = p - cyl_z(1.2, z0 - 1, z0 + 4, rr * math.cos(math.radians(a)), rr * math.sin(math.radians(a)), 24)
@@ -252,24 +306,55 @@ def save(name, m):
     return tm
 
 
+def iface(t, r_edge, pins, floor=3):
+    """在托盘 / 底板上加接口凸台：环形磁铁坑、弹针孔、凸台下面的走线腔，以及一条通到后边缘的走线槽。
+    t 的上表面是 Z=0，底板厚 floor。r_edge：后边缘离中心的距离，走线槽通到这里。"""
+    boss_h = Y0 * K - 0.5                                        # 凸台顶离底盘钢环 0.5 mm
+    t = t + Manifold.cylinder(boss_h, 14.5, 14, 64)              # 接口凸台（在前后两个滑垫之间）
+    t = t - (cyl_z(13.15, boss_h - 3.1, boss_h + 1, seg=64) - cyl_z(9.0, boss_h - 4, boss_h + 2, seg=48))   # 环形磁铁坑
+    t = t - cyl_z(8.5, -(floor - 1), boss_h - 3.6, seg=48)       # 走线腔：弹针尾巴在这里焊线
+    for r, a in pins:                                            # 弹针孔 Ø1.6，针头露出凸台约 1.2 mm
+        t = t - cyl_z(0.8, boss_h - 3.7, boss_h + 1, r * math.cos(math.radians(a)), r * math.sin(math.radians(a)), 16)
+    t = t - box(-1.5, 1.5, -(r_edge + 1), -6, -(floor - 1), 0.1)  # 走线槽，宽 3 深 2，装好后用胶带盖住
+    return t
+
+
 def clip_tray():
     """显示器夹座的上半部分：托盘 + 围边 + 磁铁凸台 + 夹板 + 前唇 + 铰链耳。托盘上表面是 Z=0。"""
     reach = math.hypot(WHEEL_X + WHEEL_W / 2, WHEEL_D / 2)       # 机器人原地转一圈，轮子外角扫过的半径
     ri = reach + 2.5                                             # 托盘内半径
     t = Manifold.cylinder(3, ri + 2.5, ri + 2.5, SEG).translate([0, 0, -3])                 # 托盘底，厚 3
     t = t + (Manifold.cylinder(8, ri + 2.5, ri + 2.5, SEG) - Manifold.cylinder(9, ri, ri, SEG))   # 围边，高 8
-    gap = 0.5
-    boss_h = Y0 * K - gap                                        # 凸台顶离底盘铁片 0.5 mm
-    t = t + Manifold.cylinder(boss_h, 13, 12, 48)                # 磁铁凸台（在前后两个滑垫之间）
-    t = t - cyl_z(10.15, boss_h - 3.1, boss_h + 1, seg=48)       # 磁铁坑：Ø20 × 3 的钕铁硼，胶粘
-    t = t - cyl_z(4, -4, 1, 0, -(ri - 8), 24)                    # 走线孔
+    t = iface(t, ri + 2.5, PINS_USB)
     t = t + box(-32, 32, -34, 16, -6, -3)                        # 压在屏幕顶面的夹板，宽 64
     t = t + box(-32, 32, 13, 16, -22, -6)                        # 前唇，向下 16
     for s in (1, -1):                                            # 铰链耳
         x0, x1 = sorted((s * 21, s * 29))
         t = t + box(x0, x1, -42, -30, -15, -3)
     t = t - cyl_x(1.7, -40, 40, -36, -10, 24)                    # 铰链轴孔，穿 M3 螺丝
+    # 托盘后侧的 USB-C 小板仓：放一块带 D+/D− 的 USB-C 母座转接板（约 15 × 10），口朝后，线接电脑
+    yb = -(ri + 2.5)
+    t = t + box(-10, 10, yb - 13, yb + 1, -3, 8)
+    t = t - box(-8.5, 8.5, yb - 11.5, yb, -1.5, 9)               # 上面敞口，放好板子后用胶带或热熔胶封
+    t = t - box(-5, 5, yb - 14, yb - 11.4, 0.6, 4.6)             # 母座开口 10 × 4
+    t = t - box(-1.5, 1.5, yb - 0.5, -(ri - 1), -2, 2)           # 穿过围边，接上走线槽
     return t
+
+
+def dock_base():
+    """地面充电座（样机版）：底板 + 和夹座一样的接口凸台（只装 VBUS、GND 两根针）+ 后墙。
+    后墙是空心的，背面下方开 USB-C 口，里面放转接板；正面开一条状态灯缝。
+    样机先靠手把机器人放上去；量产版的接口台是浮动的，机器人能自己倒车开上来，见制造页。"""
+    rp = 84 * K
+    t = Manifold.cylinder(3, rp, rp - 1.5, SEG).translate([0, 0, -3])           # 底板，边上倒个斜角
+    yf = -(RB * K + 8)                                                          # 后墙正面
+    t = iface(t, -yf, PINS_POWER)
+    w, h, d = 30 * K, 85 * K, 14
+    wall = box(-w, w, yf - d, yf, -3, h) - box(-w + 2, w - 2, yf - d + 2, yf - 2, -1, h - 2)
+    wall = wall - box(-5, 5, yf - d - 1, yf - d + 3, 1.5, 5.5)                 # 背面 USB-C 开口 10 × 4
+    wall = wall - box(-15 * K, 15 * K, yf - 3, yf + 1, 70 * K, 70 * K + 3)      # 正面状态灯缝
+    t = (t + wall) ^ cyl_z(rp, -4, h + 1, seg=SEG)
+    return t - box(-1.5, 1.5, yf - 2.5, yf + 0.5, -2, 0.1)                     # 走线槽通进墙里
 
 
 def clip_leg():
@@ -284,6 +369,6 @@ def clip_leg():
 
 if __name__ == "__main__":
     print(f"比例 {K:.2f}：整机约 {2 * RB * K:.0f} × {2 * RB * K:.0f} × {YTOP * K:.0f} mm，壁厚 {WALL} mm")
-    parts = {"shell_front": half(True), "shell_back": half(False), "top_cap": cap(), "base_plate": base_plate(), "frame": frame(), "ear": ear(), "clip_tray": clip_tray(), "clip_leg": clip_leg()}
+    parts = {"shell_front": half(True), "shell_back": half(False), "top_cap": cap(), "base_plate": base_plate(), "frame": frame(), "ear": ear(), "clip_tray": clip_tray(), "clip_leg": clip_leg(), "usb_door": usb_door(), "dock_base": dock_base()}
     for n, m in parts.items():
         save(n, m)
