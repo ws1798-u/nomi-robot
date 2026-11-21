@@ -97,6 +97,15 @@ def cutters():
     # 摄像头孔：离地 104，朝前上方 29°
     cam = Manifold.cylinder(40 * K, 6.8, 6.8, 48).translate([0, 0, 20 * K]).rotate([-(90 - 29), 0, 0])
     c.append(cam.translate([0, 18 * K, 93 * K]))
+    # 摄像头盖片沉台：光轴穿出外壳的地方，沿光轴往里铣一个 Ø16.4、深 1 mm 的平底台，
+    # 放一片 Ø16 × 1 的平面盖片（透明亚克力或玻璃），盖片外表面中心和壳面齐平，镜头不凸出来
+    ax = np.array([0, math.sin(math.radians(61)), math.cos(math.radians(61))])
+    o = np.array([0, 18 * K, 93 * K])
+    d = 0.0
+    while math.hypot(*(o + d * ax)[:2]) < prof((o + d * ax)[2]):
+        d += 0.05
+    seat = Manifold.cylinder(12, 8.2, 8.2, 64).translate([0, 0, d - 1.0]).rotate([-(90 - 29), 0, 0])
+    c.append(seat.translate(list(o)))
     # 避障传感器（ToF）窗口另外做，见 tof_window()
     # 出音孔：背面一片 Ø3 的小孔
     for gz in np.arange(69, 101, 6.0):

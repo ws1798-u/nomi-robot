@@ -98,7 +98,7 @@ pre code { background: none; padding: 0; color: inherit; }
   <p><a class="btn" href="cad/nomi-stl-115.zip">下载全部打印文件（zip，约 1 MB）</a><a class="btn ghost" href="cad/make_shell.py">生成脚本 make_shell.py</a></p>
   <div class="tbl"><table>
     <tr><th>文件</th><th>是什么</th><th class="n">外形尺寸（mm）</th><th>材料与摆放</th></tr>
-    <tr><td><a href="cad/stl/shell_front.stl">shell_front.stl</a></td><td>前壳：表情窗、摄像头孔、ToF 窗口（凸台 + 盖片槽 + 喇叭口）、轮舱缺口、合缝螺丝耳</td><td class="n">143 × 71 × 130</td><td>树脂或 PLA。合缝面朝下平放，要加支撑</td></tr>
+    <tr><td><a href="cad/stl/shell_front.stl">shell_front.stl</a></td><td>前壳：表情窗、摄像头孔和盖片沉台（Ø16.4 × 1）、ToF 窗口（凸台 + 盖片槽 + 喇叭口）、轮舱缺口、合缝螺丝耳</td><td class="n">143 × 71 × 130</td><td>树脂或 PLA。合缝面朝下平放，要加支撑</td></tr>
     <tr><td><a href="cad/stl/shell_back.stl">shell_back.stl</a></td><td>后壳：出音孔、底部后缘的隐藏 USB-C 窗口和滑门导轨、轮舱缺口、合缝螺丝耳</td><td class="n">143 × 71 × 130</td><td>同上</td></tr>
     <tr><td><a href="cad/stl/top_cap.stl">top_cap.stl</a></td><td>顶盖：带向下的止口，两条槽让耳朵的摆杆穿出</td><td class="n">71 × 71 × 14</td><td>深色半透明料最好，没有就用黑色。开口朝上放</td></tr>
     <tr><td><a href="cad/stl/base_plate.stl">base_plate.stl</a></td><td>底盘：两个滑垫、三个悬崖传感器窗、四个螺丝孔；底面中心的接口槽（钢环 + 四环触点板）；后缘一块垫块放充电板</td><td class="n">62 × 62 × 11</td><td>PETG。滑垫朝上放</td></tr>
@@ -130,6 +130,7 @@ pre code { background: none; padding: 0; color: inherit; }
     <li><b>地面充电座：</b>后墙里放同样的 USB-C 转接板，只接 VBUS、GND 两根线到弹针。样机的接口台是固定的，滑垫过不去，要用手把机器人放上去；能自己倒车开上去的浮动接口台见制造页。</li>
     <li><b>隐藏 USB-C：</b>USB-C 输入的 2 串升压充电板粘在底盘后缘的垫块上，口朝后、对准后壳底部的窗口，口的端面离外壳外表面约 8 mm，所以要用插头比较短的线。装后壳之前，把滑门从导轨一端推进去，拨片卡进窗口；用指甲把拨片往右推就露出接口。样机这个口只充电，不走数据。</li>
   </ul>
+  <figure style="margin:18px 0 0"><img src="img/cad-usb.jpg?v=20261121d" alt="隐藏 USB-C 的打印件怎么用：关着时窗口里是滑门；推开后露出 USB-C；从里面看上下两道导轨夹住滑门；滑门零件本身" style="display:block;width:100%;border-radius:12px;border:1px solid var(--line);background:#fff" loading="lazy"><figcaption style="font-size:13px;color:var(--mute,#777);margin-top:6px">隐藏 USB-C 是这样打印和组装的：后壳 shell_back.stl 底部后缘开窗口、内壁带上下导轨；滑门 usb_door.stl 单独打印，装壳前从导轨一端推进去。</figcaption></figure>
   <figure style="margin:18px 0 0"><img src="img/cad-charge.jpg" alt="充电相关零件预览：底盘底面的钢环槽和触点板槽、夹座的接口凸台和后侧 USB-C 仓、后壳底部的隐藏 USB-C 窗口和滑门、地面充电座" style="display:block;width:100%;border-radius:12px;border:1px solid var(--line);background:#fff" loading="lazy"></figure>
   <figure style="margin:18px 0 0"><img src="img/cad-clip.jpg?v=20261121c" alt="夹座零件预览：托盘俯视、接口凸台特写（环形磁铁坑和 4 个弹针孔）、装上撑脚的侧面、后侧 USB-C 小板仓" style="display:block;width:100%;border-radius:12px;border:1px solid var(--line);background:#fff" loading="lazy"></figure>
   <figure style="margin:18px 0 0"><img src="img/cad-preview.jpg" alt="生成的零件预览：装配后的外壳正面、背面、底面，以及前壳内侧、骨架、顶盖、底盘" style="display:block;width:100%;border-radius:12px;border:1px solid var(--line);background:#fff" loading="lazy"></figure>
@@ -296,6 +297,7 @@ const PARTS = [
   ['外壳打印', '前后壳、顶盖、底盘、骨架、滑门、轮毂（代打印）', 1, 200, '树脂打外壳，PETG 打骨架'],
   ['耳朵', 'TPU 软料打印', 2, 8, '摸着是软的'],
   ['镜片', '1 mm 茶色亚克力片', 1, 8, '表情窗'],
+  ['摄像头盖片', 'Ø16 × 1 mm 透明亚克力圆片（激光切）', 1, 3, '粘进前额沉台，镜头不凸出'],
   ['环形磁铁', '钕铁硼 Ø26 / Ø18 × 3', 2, 5, '夹座和充电座各一颗'],
   ['夹座五金', 'M3 × 60 螺丝和防松螺母、扭簧或橡皮筋、1 mm 硅胶垫', 1, 8, '夹座的铰链和防滑'],
   ['夹座打印', '托盘和撑脚（代打印）', 1, 45, '夹在显示器上'],
