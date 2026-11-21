@@ -92,7 +92,7 @@ pre code { background: none; padding: 0; color: inherit; }
 </svg><p style="font-size:14.5px;margin:10px 0 0">两个滑垫（前后各一，Ø8，比轮子最低点高 1 mm）让机身不前后点头。悬崖传感器镜头朝下，离地 4–8 mm。</p></div>
   </div>
   <h3 id="stl">打印文件</h3>
-  <p>6 个零件，按 115% 比例生成（整机约 143 × 143 × 147 mm），壁厚 2 mm。每个文件都检查过是封闭的单个实体，可以直接导入切片软件。</p>
+  <p>8 个零件（机身 6 个，显示器夹座 2 个），按 115% 比例生成（整机约 143 × 143 × 147 mm），壁厚 2 mm。每个文件都检查过是封闭的单个实体，可以直接导入切片软件。</p>
   <p><a class="btn" href="cad/nomi-stl-115.zip">下载全部打印文件（zip，约 1 MB）</a><a class="btn ghost" href="cad/make_shell.py">生成脚本 make_shell.py</a></p>
   <div class="tbl"><table>
     <tr><th>文件</th><th>是什么</th><th class="n">外形尺寸（mm）</th><th>材料与摆放</th></tr>
@@ -102,12 +102,25 @@ pre code { background: none; padding: 0; color: inherit; }
     <tr><td><a href="cad/stl/base_plate.stl">base_plate.stl</a></td><td>底盘：两个滑垫、三个悬崖传感器窗、四个螺丝孔</td><td class="n">62 × 62 × 8</td><td>PETG。滑垫朝上放</td></tr>
     <tr><td><a href="cad/stl/frame.stl">frame.stl</a></td><td>内部骨架：立板加三层搁板（电池、主板、舵机），电机缺口和扎带槽，树莓派安装孔</td><td class="n">137 × 48 × 119</td><td>PETG。立着打，搁板下面要支撑</td></tr>
     <tr><td><a href="cad/stl/ear.stl">ear.stl</a></td><td>耳朵，带摆杆。打印两个</td><td class="n">14 × 14 × 48</td><td>TPU 软料</td></tr>
+    <tr><td><a href="cad/stl/clip_tray.stl">clip_tray.stl</a></td><td>夹座上半：托盘（内径 118）、8 mm 围边、中心磁铁凸台、64 mm 宽的夹板、前唇、铰链耳</td><td class="n">123 × 123 × 30</td><td>PETG。托盘朝上放，夹板和前唇要支撑</td></tr>
+    <tr><td><a href="cad/stl/clip_leg.stl">clip_leg.stl</a></td><td>夹座的后撑脚：80 mm 长，绕一根 M3 螺丝转</td><td class="n">41 × 14 × 85</td><td>PETG。平躺着打</td></tr>
   </table></div>
+  <h3>夹座怎么装、怎么夹稳</h3>
+  <ul>
+    <li><b>磁铁：</b>一颗 Ø20 × 3 的钕铁硼磁铁，胶粘进托盘中心凸台顶上的坑里。</li>
+    <li><b>铁片：</b>一片 Ø22 × 1 的铁片（或同尺寸的铁垫圈），粘进底盘底面中心的凹槽。机器人放上托盘后，磁铁离铁片约 0.5 mm。</li>
+    <li><b>后撑脚：</b>用一根 M3 × 60 的螺丝穿过两个铰链耳和撑脚，加一个防松螺母，拧到撑脚能转但不晃。</li>
+    <li><b>夹紧力：</b>在撑脚的两个钩槽和夹板之间套两根橡皮筋，或者装一个 M3 轴径的扭簧，让撑脚始终往屏幕背面压。</li>
+    <li><b>防滑：</b>前唇内侧、夹板底面、撑脚末端各贴一片 1 mm 厚的硅胶垫。</li>
+    <li><b>防坠：</b>第一次使用时，用一根细绳把夹座拴在显示器支架上。</li>
+  </ul>
+  <figure style="margin:18px 0 0"><img src="img/cad-clip.jpg" alt="夹座零件预览：托盘俯视、托盘加撑脚的侧面和底面、带铁片凹槽的底盘" style="display:block;width:100%;border-radius:12px;border:1px solid var(--line);background:#fff" loading="lazy"></figure>
   <figure style="margin:18px 0 0"><img src="img/cad-preview.jpg" alt="生成的零件预览：装配后的外壳正面、背面、底面，以及前壳内侧、骨架、顶盖、底盘" style="display:block;width:100%;border-radius:12px;border:1px solid var(--line);background:#fff" loading="lazy"></figure>
   <div class="note"><b>这些文件的可靠程度不一样：</b><br>
   · <b>外壳、顶盖、底盘</b>是按轮廓公式直接算出来的，尺寸我用程序核对过（骨架离内壁最近处有 1 mm 间隙，底盘有 0.4 mm），可以直接打印。<br>
   · <b>骨架是起步版。</b>搁板位置和电机缺口按常见零件尺寸留的，但我没有实物可以试装。它目前没有设计固定到外壳上的结构，样机可以先用热熔胶粘在后壳里，或者自己加螺丝柱。<br>
-  · <b>没有包含的：</b>轮毂（建议直接买 N20 配套的 Ø43–44 橡胶轮）、舵机支架、表情屏和摄像头的固定卡扣、充电座、显示器夹座。这些要按你买到的具体零件再画。<br>
+  · <b>夹座也是起步版。</b>托盘尺寸是按轮子转一圈扫过的范围算的（留了 2.5 mm 余量），但夹得稳不稳取决于你的显示器，一定要先在低处试。只适合上沿平直、厚 8–45 mm 的台式显示器。<br>
+  · <b>没有包含的：</b>轮毂（建议直接买 N20 配套的 Ø43–44 橡胶轮）、舵机支架、表情屏和摄像头的固定卡扣、充电座。这些要按你买到的具体零件再画。<br>
   · <b>想改比例或尺寸</b>：装好 Python 后运行 <code>pip install manifold3d numpy trimesh</code>，再 <code>python make_shell.py 1.0</code> 就能生成 1:1 的版本；所有尺寸都在脚本开头。</div>
 
   <h3>外壳轮廓数据</h3>
@@ -245,6 +258,9 @@ const PARTS = [
   ['外壳打印', '前后壳、顶盖、底盘、骨架、轮毂（代打印）', 1, 200, '树脂打外壳，PETG 打骨架'],
   ['耳朵', 'TPU 软料打印', 2, 8, '摸着是软的'],
   ['镜片', '1 mm 茶色亚克力片', 1, 8, '表情窗'],
+  ['夹座磁铁与铁片', '钕铁硼 Ø20 × 3 一颗，铁片 Ø22 × 1 一片', 1, 6, '把机器人吸在夹座上'],
+  ['夹座五金', 'M3 × 60 螺丝和防松螺母、扭簧或橡皮筋、1 mm 硅胶垫', 1, 8, '夹座的铰链和防滑'],
+  ['夹座打印', '托盘和撑脚（代打印）', 1, 45, '夹在显示器上'],
 ];
 const f = (x) => (Math.round(x * 10) / 10).toLocaleString('zh-CN');
 let total = 0;

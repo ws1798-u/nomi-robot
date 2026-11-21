@@ -77,6 +77,8 @@
   }
   #modes .panel { --p-h: 360px; }
   #modes .panel > video { object-fit: cover; }
+  @media (min-width: 900px) { #modes .grid > .card { grid-column: span 4; } }   /* 三张卡片始终并排，不折成 2 + 1 */
+  @media (min-width: 640px) and (max-width: 899px) { #modes .panel { --p-h: 420px; } }
   #app .frame { background: var(--p-surface); display: flex; justify-content: center; align-items: flex-start; gap: 24px; padding: 40px 24px 0; overflow: hidden; }
   #app .frame .ph { flex: none; }
   @media (max-width: 1279px) { #app .frame .ph + .ph { display: none; } }
@@ -173,7 +175,7 @@
         </article>
         <article class="card card--row span-4">
           <h3>夹座：吸在显示器顶上</h3>
-          <p>夹座夹住屏幕上沿，磁铁吸住机身，USB-C 供电。它原地转头，镜头当电脑摄像头用。</p>
+          <p>宽夹口加弹簧撑脚夹住屏幕，托盘中心的磁铁吸住底盘的铁片。它原地转头，镜头当电脑摄像头用。</p>
           <div class="panel"><video class="frame__img" src="img/mode-clip.mp4" poster="img/mode-clip.jpg" autoplay muted loop playsinline preload="metadata" aria-label="Nomi 坐在显示器顶部的夹座上左右转头"></video></div>
         </article>
       </div>

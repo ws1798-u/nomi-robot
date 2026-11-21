@@ -156,6 +156,7 @@ def base_plate():
         p = p + cyl_z(4, 1.0, z0 + 0.1, 0, y, 32)            # 滑垫底面比轮子最低点高 1 mm
     for x, y in ((-12, 15), (12, 15), (0, -17)):
         p = p - box(x * K - 3.5, x * K + 3.5, y * K - 2.5, y * K + 2.5, z0 - 1, z0 + 4)
+    p = p - cyl_z(11.2, z0 - 1, z0 + 1.0, seg=48)                 # 底面中心的凹槽：嵌一片 Ø22 × 1 的铁片，给夹座的磁铁吸
     for a in (45, 135, 225, 315):
         rr = r - 4.5
         p = p - cyl_z(1.2, z0 - 1, z0 + 4, rr * math.cos(math.radians(a)), rr * math.sin(math.radians(a)), 24)
@@ -214,8 +215,38 @@ def save(name, m):
     return tm
 
 
+def clip_tray():
+    """显示器夹座的上半部分：托盘 + 围边 + 磁铁凸台 + 夹板 + 前唇 + 铰链耳。托盘上表面是 Z=0。"""
+    reach = math.hypot(WHEEL_X + WHEEL_W / 2, WHEEL_D / 2)       # 机器人原地转一圈，轮子外角扫过的半径
+    ri = reach + 2.5                                             # 托盘内半径
+    t = Manifold.cylinder(3, ri + 2.5, ri + 2.5, SEG).translate([0, 0, -3])                 # 托盘底，厚 3
+    t = t + (Manifold.cylinder(8, ri + 2.5, ri + 2.5, SEG) - Manifold.cylinder(9, ri, ri, SEG))   # 围边，高 8
+    gap = 0.5
+    boss_h = Y0 * K - gap                                        # 凸台顶离底盘铁片 0.5 mm
+    t = t + Manifold.cylinder(boss_h, 13, 12, 48)                # 磁铁凸台（在前后两个滑垫之间）
+    t = t - cyl_z(10.15, boss_h - 3.1, boss_h + 1, seg=48)       # 磁铁坑：Ø20 × 3 的钕铁硼，胶粘
+    t = t - cyl_z(4, -4, 1, 0, -(ri - 8), 24)                    # 走线孔
+    t = t + box(-32, 32, -34, 16, -6, -3)                        # 压在屏幕顶面的夹板，宽 64
+    t = t + box(-32, 32, 13, 16, -22, -6)                        # 前唇，向下 16
+    for s in (1, -1):                                            # 铰链耳
+        x0, x1 = sorted((s * 21, s * 29))
+        t = t + box(x0, x1, -42, -30, -15, -3)
+    t = t - cyl_x(1.7, -40, 40, -36, -10, 24)                    # 铰链轴孔，穿 M3 螺丝
+    return t
+
+
+def clip_leg():
+    """夹座的后撑脚：绕 M3 螺丝转，靠扭簧或橡皮筋压在屏幕背面。铰链轴心在原点，撑脚向下。"""
+    leg = cyl_x(4.5, -20.5, 20.5, 0, 0, 32) + box(-20.5, 20.5, -3, 3, -80, 0)
+    leg = leg + box(-20.5, 20.5, -3, 9, -80, -64)                # 末端加厚，贴硅胶垫
+    leg = leg - cyl_x(1.7, -25, 25, 0, 0, 24)
+    for x in (-12, 12):                                          # 两个挂橡皮筋的小钩槽
+        leg = leg - box(x - 2, x + 2, -4, -1, -30, -24)
+    return leg
+
+
 if __name__ == "__main__":
     print(f"比例 {K:.2f}：整机约 {2 * RB * K:.0f} × {2 * RB * K:.0f} × {YTOP * K:.0f} mm，壁厚 {WALL} mm")
-    parts = {"shell_front": half(True), "shell_back": half(False), "top_cap": cap(), "base_plate": base_plate(), "frame": frame(), "ear": ear()}
+    parts = {"shell_front": half(True), "shell_back": half(False), "top_cap": cap(), "base_plate": base_plate(), "frame": frame(), "ear": ear(), "clip_tray": clip_tray(), "clip_leg": clip_leg()}
     for n, m in parts.items():
         save(n, m)
