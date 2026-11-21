@@ -48,7 +48,13 @@
 <link rel="stylesheet" href="phone.css">
 <style>
   /* 页面 CSS：只管图片框内部和卡片组的高度 */
-  #styles .tile__media { --tile-ratio: 1 / 1; background: var(--p-bg); }
+  @media (min-width: 640px) { .hero--product .hero__stage { margin-bottom: 0; } }
+  .hero__names { position: relative; z-index: 2; flex: none; display: grid; grid-template-columns: repeat(3, 1fr); text-align: center; padding-top: 8px; }
+  .hero__names a { display: grid; gap: 2px; justify-items: center; padding: 8px 0; text-decoration: none; color: var(--p-ink); border-radius: 12px; transition: background .2s; }
+  .hero__names a:hover { background: rgba(11, 12, 14, 0.05); }
+  .hero__names b { font-weight: 500; font-size: 18px; }
+  .hero__names span { font-size: 14px; color: var(--p-muted); }
+  @media (max-width: 639px) { .hero__names { display: none; } }
   #film .frame { --ratio: 56.25%; background: #0b0c0e; }
   #film .frame > video { object-fit: contain; }
   #film .fit-screen { height: min(600px, calc(100svh - 300px)); }
@@ -58,7 +64,8 @@
     .hero--product .hero__stage { aspect-ratio: 1 / 1; }
     #film .fit-screen { height: min(520px, calc(100lvh - 280px)); }
   }
-  #modes .panel { --p-h: 380px; }
+  #modes .panel { --p-h: 360px; }
+  #modes .panel > video { object-fit: cover; }
   #app .frame { background: var(--p-surface); display: flex; justify-content: center; align-items: flex-start; gap: 24px; padding: 40px 24px 0; overflow: hidden; }
   #app .frame .ph { flex: none; }
   @media (max-width: 1279px) { #app .frame .ph + .ph { display: none; } }
@@ -112,48 +119,32 @@
       <div class="hero__stage">
         <picture><source media="(max-width: 639px)" srcset="img/lineup-phone.jpg" width="840" height="840"><img src="img/lineup.jpg" alt="三台 Nomi 并排：米白色的 N1、带熊耳朵的 Mochi、石墨黑的 Nova" width="2560" height="1132" fetchpriority="high"></picture>
       </div>
+      <div class="hero__names" id="styles">
+        <a href="sim.html?style=nomi"><b>Nomi N1</b><span>简约 · 胶囊耳朵</span></a>
+        <a href="sim.html?style=cute"><b>Nomi Mochi</b><span>可爱 · 熊耳朵和腮红</span></a>
+        <a href="sim.html?style=scifi"><b>Nomi Nova</b><span>科幻 · 面罩和灯带</span></a>
+      </div>
     </div></div>
-  </section>
-
-  <section class="section" id="styles" aria-labelledby="styles-h">
-    <div class="wrap">
-      <div class="section-head section-head--row">
-        <div><h2 id="styles-h">三款外观。<span class="muted">里面是同一套主板、电池和电机。</span></h2></div>
-        <a class="link" href="make.html#bom">看三款的成本差异</a>
-      </div>
-      <div class="grid">
-        <a class="tile span-4" href="sim.html?style=nomi">
-          <div class="tile__media"><img src="img/tile-nomi.jpg" alt="Nomi N1 斜侧面：米白蛋形机身，青绿色胶囊耳朵" width="1000" height="1000" loading="lazy"></div>
-          <div class="tile__head"><h3>Nomi N1</h3><span class="tile__price">简约</span></div>
-          <p class="tile__facts">米白机身 · 胶囊耳朵 · 长条眼睛</p>
-        </a>
-        <a class="tile span-4" href="sim.html?style=cute">
-          <div class="tile__media"><img src="img/tile-cute.jpg" alt="Nomi Mochi 斜侧面：奶白机身，粉色熊耳朵、腮红和小脚丫" width="1000" height="1000" loading="lazy"></div>
-          <div class="tile__head"><h3>Nomi Mochi</h3><span class="tile__price">可爱</span></div>
-          <p class="tile__facts">熊耳朵 · 腮红 · 小脚丫和尾巴</p>
-        </a>
-        <a class="tile span-4" href="sim.html?style=scifi">
-          <div class="tile__media"><img src="img/tile-scifi.jpg" alt="Nomi Nova 斜侧面：石墨黑机身，环绕面罩和冰蓝灯带" width="1000" height="1000" loading="lazy"></div>
-          <div class="tile__head"><h3>Nomi Nova</h3><span class="tile__price">科幻</span></div>
-          <p class="tile__facts">环绕面罩 · 天线鳍片 · 两圈灯带</p>
-        </a>
-      </div>
-    </div>
   </section>
 
   <section class="section" id="modes" aria-labelledby="modes-h">
     <div class="wrap">
-      <div class="section-head"><h2 id="modes-h">放桌上陪你工作，夹屏幕上当摄像头。<span class="muted">放回地面，它自己走。</span></h2></div>
+      <div class="section-head"><h2 id="modes-h">地上自己走，桌上陪你工作，屏幕上当摄像头。<span class="muted">一台机器，三种放法。</span></h2></div>
       <div class="grid">
-        <article class="card card--row span-6">
-          <h3>桌面：走到桌沿自己停</h3>
-          <p>降速到 0.1 m/s，底部悬崖传感器探出桌沿就刹停。坐满 45 分钟，它提醒你起来走走。</p>
-          <div class="panel"><img class="frame__img" src="img/use-desk.jpg" alt="Nomi 停在书桌上，旁边是键盘和显示器" loading="lazy"></div>
+        <article class="card card--row span-4">
+          <h3>地面：没电了自己回去充电</h3>
+          <p>两轮差速行走，最高 0.35 m/s。电量低于 15%，它自己开回充电座。</p>
+          <div class="panel"><video class="frame__img" src="img/mode-floor.mp4" poster="img/mode-floor.jpg" autoplay muted loop playsinline preload="metadata" aria-label="Nomi 在地面上开回充电座"></video></div>
         </article>
-        <article class="card card--row span-6">
+        <article class="card card--row span-4">
+          <h3>桌面：走到桌沿自己停</h3>
+          <p>降速到 0.1 m/s，悬崖传感器探出桌沿就刹停。坐满 45 分钟，它提醒你起来走走。</p>
+          <div class="panel"><video class="frame__img" src="img/mode-desk.mp4" poster="img/mode-desk.jpg" autoplay muted loop playsinline preload="metadata" aria-label="Nomi 在书桌上走到桌沿后停住"></video></div>
+        </article>
+        <article class="card card--row span-4">
           <h3>夹座：吸在显示器顶上</h3>
-          <p>夹座夹住屏幕上沿，中心磁铁吸住机身，USB-C 供电。它原地转头，镜头当电脑摄像头用。</p>
-          <div class="panel"><img class="frame__img" src="img/use-clip.jpg" alt="Nomi 坐在显示器顶部的夹座上" loading="lazy"></div>
+          <p>夹座夹住屏幕上沿，磁铁吸住机身，USB-C 供电。它原地转头，镜头当电脑摄像头用。</p>
+          <div class="panel"><video class="frame__img" src="img/mode-clip.mp4" poster="img/mode-clip.jpg" autoplay muted loop playsinline preload="metadata" aria-label="Nomi 坐在显示器顶部的夹座上左右转头"></video></div>
         </article>
       </div>
     </div>
