@@ -48,7 +48,18 @@
 <link rel="stylesheet" href="phone.css">
 <style>
   /* 页面 CSS：只管图片框内部和卡片组的高度 */
-  @media (min-width: 640px) { .hero--product .hero__stage { margin-bottom: 0; } }
+  @media (min-width: 640px) {
+    .hero--product .hero__stage { margin-bottom: 0; min-height: 0; overflow: hidden; }
+    .hero--product .hero__stage img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; object-position: 50% 100%; }
+  }
+  .cmp { width: 100%; border-collapse: collapse; font-size: 16px; }
+  .cmp th, .cmp td { text-align: left; vertical-align: top; padding: 14px 24px 14px 0; border-bottom: 1px solid var(--line); }
+  .cmp thead th { font-weight: 500; font-size: 20px; padding-top: 0; }
+  .cmp thead th small { display: block; font-size: 14px; font-weight: 400; color: var(--p-muted); }
+  .cmp tbody th { font-weight: 400; color: var(--p-muted); width: 16%; white-space: nowrap; }
+  .cmp td { width: 28%; }
+  .cmp i { display: inline-block; width: 12px; height: 12px; border-radius: 50%; margin-right: 6px; vertical-align: -1px; box-shadow: inset 0 0 0 1px rgba(11, 12, 14, 0.18); }
+  @media (max-width: 639px) { .cmp { font-size: 14px; } .cmp th, .cmp td { padding: 10px 10px 10px 0; } .cmp thead th { font-size: 15px; } .cmp tbody th { white-space: normal; } }
   .hero__names { position: relative; z-index: 2; flex: none; display: grid; grid-template-columns: repeat(3, 1fr); text-align: center; padding-top: 8px; }
   .hero__names a { display: grid; gap: 2px; justify-items: center; padding: 8px 0; text-decoration: none; color: var(--p-ink); border-radius: 12px; transition: background .2s; }
   .hero__names a:hover { background: rgba(11, 12, 14, 0.05); }
@@ -119,12 +130,31 @@
       <div class="hero__stage">
         <picture><source media="(max-width: 639px)" srcset="img/lineup-phone.jpg" width="840" height="840"><img src="img/lineup.jpg" alt="三台 Nomi 并排：米白色的 N1、带熊耳朵的 Mochi、石墨黑的 Nova" width="2560" height="1132" fetchpriority="high"></picture>
       </div>
-      <div class="hero__names" id="styles">
+      <div class="hero__names">
         <a href="sim.html?style=nomi"><b>Nomi N1</b><span>简约 · 胶囊耳朵</span></a>
         <a href="sim.html?style=cute"><b>Nomi Mochi</b><span>可爱 · 熊耳朵和腮红</span></a>
         <a href="sim.html?style=scifi"><b>Nomi Nova</b><span>科幻 · 面罩和灯带</span></a>
       </div>
     </div></div>
+  </section>
+
+  <section class="section" id="styles" aria-labelledby="styles-h">
+    <div class="wrap">
+      <div class="section-head"><h2 id="styles-h">三款差在哪。<span class="muted">主板、电池、电机和摄像头完全一样。</span></h2></div>
+      <table class="cmp">
+        <thead><tr><th scope="col"><span class="sr-only">项目</span></th><th scope="col">Nomi N1<small>简约</small></th><th scope="col">Nomi Mochi<small>可爱</small></th><th scope="col">Nomi Nova<small>科幻</small></th></tr></thead>
+        <tbody>
+          <tr><th scope="row">颜色</th><td><i style="background:#f6f2ea"></i><i style="background:#12b89a"></i>米白配青绿</td><td><i style="background:#fffaf3"></i><i style="background:#ff8fa3"></i>奶白配粉色</td><td><i style="background:#3a414c"></i><i style="background:#2fd0ff"></i>石墨黑配冰蓝</td></tr>
+          <tr><th scope="row">外壳工艺</th><td>高光免喷涂</td><td>亲肤手感漆</td><td>金属漆加 UV 光油</td></tr>
+          <tr><th scope="row">头顶</th><td>胶囊形硅胶耳朵</td><td>加大的熊耳朵，内侧粉色</td><td>向外张开的天线鳍片，尖端发光</td></tr>
+          <tr><th scope="row">脸</th><td>长条眼睛</td><td>大圆眼、猫咪嘴，腮红印在壳上</td><td>环绕面罩，带取景框和扫描线</td></tr>
+          <tr><th scope="row">灯光</th><td>底部一圈灯环</td><td>底部一圈灯环</td><td>底部、腰部、顶盖三圈灯带，胸口核心灯</td></tr>
+          <tr><th scope="row">多出的零件</th><td>无</td><td>小脚丫、小尾巴</td><td>两侧轮舱护甲</td></tr>
+          <tr><th scope="row">声音与性格</th><td>平和</td><td>童声，软萌</td><td>沉稳电子感，简练</td></tr>
+          <tr><th scope="row">单台成本</th><td>约 586 元</td><td>约 594 元（多 8 元）</td><td>约 600 元（多 14 元）</td></tr>
+        </tbody>
+      </table>
+    </div>
   </section>
 
   <section class="section" id="modes" aria-labelledby="modes-h">
