@@ -91,8 +91,7 @@ def cutters():
     # 摄像头孔：离地 104，朝前上方 29°
     cam = Manifold.cylinder(40 * K, 6.8, 6.8, 48).translate([0, 0, 20 * K]).rotate([-(90 - 29), 0, 0])
     c.append(cam.translate([0, 18 * K, 93 * K]))
-    # 避障传感器窗
-    c.append(box(-6.5, 6.5, 30 * K, 80 * K, 37 * K, 43 * K))
+    # 避障传感器（ToF）窗口另外做，见 tof_window()
     # 出音孔：背面一片 Ø3 的小孔
     for gz in np.arange(69, 101, 6.0):
         for gx in np.arange(-21, 22, 6.0):
@@ -119,8 +118,45 @@ def seam_tabs(front):
     return tabs, holes
 
 
+# ToF 避障窗口（VL53L1X）：窗口中心离地 22（随比例缩放），光轴上仰 10°。
+# 盖片和传感器是买来的实际尺寸，不缩放：盖片 10 × 6 × 1（样机用 1 mm 红外透光亚克力），开口 8 × 4。
+TOF_Z, TOF_TILT = 22, 10
+COVER_W, COVER_H, COVER_T = 10.0, 6.0, 1.0
+TOF_W, TOF_H = 8.0, 4.0
+BOSS_T = 2.0                     # 凸台厚度：VL53L1X 芯片高 1.56，模块板贴在凸台背面，芯片顶面离盖片约 0.44
+
+
+def tof_window():
+    """返回 (凸台, 盖片槽 + 开口)。局部坐标：x 向右，y 沿光轴向前，z 沿窗口向上；盖片内表面在 y=0。
+    盖片做成平的、垂直于光轴，下沿和外壳表面齐平，上沿因为外壳往外鼓，会缩进去 3 mm 多，像一道小眉檐。"""
+    a = math.radians(TOF_TILT)
+    zc = TOF_Z * K
+    # 让盖片外表面的下沿刚好落在外壳表面上
+    yc = 0.0
+    for _ in range(30):
+        zb = zc + COVER_T * math.sin(a) - (COVER_H / 2) * math.cos(a)
+        yc = prof(zb) - COVER_T * math.cos(a) - (COVER_H / 2) * math.sin(a)
+    place = lambda m: m.rotate([TOF_TILT, 0, 0]).translate([0, yc, zc])
+    boss = place(box(-9, 9, -BOSS_T, 15, -6.5, 6.5))
+    pocket = place(box(-COVER_W / 2 - 0.2, COVER_W / 2 + 0.2, 0, 20, -COVER_H / 2 - 0.2, COVER_H / 2 + 0.2))
+    hole = place(box(-TOF_W / 2, TOF_W / 2, -BOSS_T - 1, 1, -TOF_H / 2, TOF_H / 2))
+    # 盖片外面的开口按光束张角做成喇叭口：上沿往上张 25°、左右各张 15°（大于光束的 18.5° / 13.5°），光束不会擦到眉檐
+    hw, hh = COVER_W / 2 + 0.2, COVER_H / 2 + 0.2
+    front = box(-30, 30, COVER_T, 25, -hh, 30)
+    up = box(-hw, hw, 0, 40, -40, 0).rotate([25, 0, 0]).translate([0, COVER_T, hh])
+    sides = [(box(-40, 0, 0, 40, -hh, hh) if s > 0 else box(0, 40, 0, 40, -hh, hh)).rotate([0, 0, -s * 15]).translate([s * hw, COVER_T, 0]) for s in (1, -1)]
+    flare = (up + box(-hw, hw, COVER_T, 25, -hh, hh)) ^ front
+    for sd, s in zip(sides, (1, -1)):
+        flare = flare + ((sd ^ front) ^ box(-30 if s < 0 else 0, 30 if s > 0 else 0, COVER_T, 25, -hh, hh))
+    return boss, pocket + hole + place(flare)
+
+
 def half(front):
     body = shell_body() - cutters()
+    if front:
+        boss, cut = tof_window()
+        solid = revolve([(0.01, Y0 * K)] + [(prof(h), h) for h in np.linspace(Y0 * K, YCAP * K, 90)] + [(0.01, YCAP * K)])
+        body = (body + (boss ^ solid)) - cut
     big = 200 * K
     body = body ^ (box(-big, big, 0, big, -big, big) if front else box(-big, big, -big, 0, -big, big))
     tabs, holes = seam_tabs(front)
@@ -154,8 +190,9 @@ def base_plate():
     p = cyl_z(r, z0, z0 + 2.5, seg=SEG)
     for y in (20 * K * 0.8, -20 * K * 0.8):
         p = p + cyl_z(4, 1.0, z0 + 0.1, 0, y, 32)            # 滑垫底面比轮子最低点高 1 mm
-    for x, y in ((-12, 15), (12, 15), (0, -17)):
-        p = p - box(x * K - 3.5, x * K + 3.5, y * K - 2.5, y * K + 2.5, z0 - 1, z0 + 4)
+    # 悬崖传感器窗：放得下 TCRT5000 本体（10.2 × 5.8），长边前后方向；后面那个往右偏 9，避开后滑垫
+    for x, y in ((-11, 15), (11, 15), (9, -17)):
+        p = p - box(x * K - 3.1, x * K + 3.1, y * K - 5.3, y * K + 5.3, z0 - 1, z0 + 4)
     p = p - cyl_z(11.2, z0 - 1, z0 + 1.0, seg=48)                 # 底面中心的凹槽：嵌一片 Ø22 × 1 的铁片，给夹座的磁铁吸
     for a in (45, 135, 225, 315):
         rr = r - 4.5
