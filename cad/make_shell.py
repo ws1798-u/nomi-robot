@@ -23,6 +23,15 @@ SEG = 96                         # 圆周分段
 FIT = 0.3
 
 
+# 攻牙底孔：商家打印后用丝锥攻 M2 牙（M2 标准底孔 Ø1.6）。这里不加间隙，商家先用 Ø1.6 钻头过一遍再攻。
+TAP_M2 = 0.8
+# 底盘固定：三颗 M2 螺丝从底下穿过底盘，拧进外壳内壁底部的三根螺丝柱（柱上攻 M2 牙）。
+# 位置用程序在一圈里扫过：避开轮子、电机、骨架、USB 滑门和它推开的范围、悬崖传感器和模块板、滑垫、充电板垫块。
+BASE_SCREWS = (90, 220, 320)      # 角度：从 +X 逆时针（90 = 正前方）
+BASE_SCREW_R = 26.5               # 离中心
+BOSS_H = 5.0                      # 螺丝柱高（从底盘上表面往上）
+
+
 def hole(r, seg):
     """圆孔是用 seg 段直线拼的。按“外切”算半径，让每段直线的中点也在 r 上，孔不会比标称尺寸小。"""
     return r / math.cos(math.pi / seg)
@@ -195,7 +204,7 @@ def usb_door():
 
 
 def seam_tabs(front):
-    """前后壳合缝处的螺丝耳：M2 螺丝从后往前穿，四个。"""
+    """前后壳合缝处的螺丝耳：四颗 M2 × 10 从后壳穿过来，拧进前壳的攻牙孔。"""
     tabs, holes = [], []
     for zz in (30 * K, 100 * K):
         for s in (1, -1):
@@ -203,7 +212,10 @@ def seam_tabs(front):
             x0, x1 = sorted((s * (r - 9), s * (r + 0.5)))
             y0, y1 = (0, 6) if front else (-6, 0)
             tabs.append(box(x0, x1, y0, y1, zz - 4, zz + 4))
-            holes.append(cyl_y(hole(1.0 + FIT, 24), -8, 8, s * (r - 5), zz, 24))       # M2 过孔
+            if front:      # 前壳这侧攻 M2 牙：螺丝从后壳穿过来，直接拧进前壳，不用在壳里塞螺母
+                holes.append(cyl_y(hole(TAP_M2, 24), -8, 8, s * (r - 5), zz, 24))
+            else:          # 后壳这侧是 M2 过孔
+                holes.append(cyl_y(hole(1.0 + FIT, 24), -8, 8, s * (r - 5), zz, 24))
     return tabs, holes
 
 
@@ -250,6 +262,9 @@ def half(front):
     body = body ^ (box(-big, big, 0, big, -big, big) if front else box(-big, big, -big, 0, -big, big))
     if not front:
         body = body + door_rails()
+    for th in BASE_SCREWS:
+        if (math.sin(math.radians(th)) > 0) == front:
+            body = body + base_boss(th)
     tabs, holes = seam_tabs(front)
     solid_inside = revolve([(0.01, Y0 * K), (prof(Y0 * K), Y0 * K)] + [(prof(h), h) for h in np.linspace(Y0 * K, YCAP * K, 60)] + [(0.01, YCAP * K)])
     for t in tabs:
@@ -257,6 +272,18 @@ def half(front):
     for h in holes:
         body = body - h
     return body
+
+
+def base_boss(th):
+    """外壳内壁底部的一根螺丝柱（Ø5.5，高 BOSS_H）加一条连到壳壁的筋，底面正好顶住底盘上表面。柱上是 M2 攻牙底孔。"""
+    z0 = Y0 * K
+    zb0, zb1 = z0 + 2.5, z0 + 2.5 + BOSS_H
+    t = math.radians(th)
+    x, y = BASE_SCREW_R * math.cos(t), BASE_SCREW_R * math.sin(t)
+    boss = cyl_z(2.75, zb0, zb1, x, y, 32)
+    inside = revolve([(0.01, zb0), (prof(zb0), zb0), (prof(zb1), zb1), (0.01, zb1)])
+    rib = (box(BASE_SCREW_R, 80, -2, 2, zb0, zb1).rotate([0, 0, th])) ^ inside
+    return (boss + rib) - cyl_z(hole(TAP_M2, 24), zb0 - 1, zb1 + 1, x, y, 24)
 
 
 def cap():
@@ -275,7 +302,7 @@ def cap():
 
 
 def base_plate():
-    """底盘：嵌在外壳底部开口里，带四个滑垫、三个悬崖传感器窗、四个螺丝孔。
+    """底盘：嵌在外壳底部开口里，带四个滑垫、三个悬崖传感器窗、三个螺丝孔（M2 拧进外壳的螺丝柱）。
     滑垫分在左右两侧（x = ±24.5），中间留出一条空道：倒车上充电座时，滑垫从接口台两边走过去，不会撞上。"""
     z0 = Y0 * K
     r = prof(z0) - WALL - FIT
@@ -289,9 +316,8 @@ def base_plate():
     p = p - cyl_z(hole(8 + FIT, 48), z0 - 1, z0 + 1.6, seg=48)                  # 触点板槽：Ø16 × 1.6 的四环触点板，和底面齐平
     p = p - cyl_z(2.5, z0 - 1, z0 + 4, seg=24)                    # 触点板背面的 4 根线从这里穿上去
     p = p + box(-9, 9, -(r - 1), -(r - 9), z0 + 2.4, z0 + 5.5)    # 后缘垫块：USB-C 充电板粘在上面，口朝后对准窗口（往下压 0.1 和底盘连成一体）
-    for a in (45, 135, 225, 315):
-        rr = r - 4.5
-        p = p - cyl_z(hole(1.0 + FIT, 24), z0 - 1, z0 + 4, rr * math.cos(math.radians(a)), rr * math.sin(math.radians(a)), 24)
+    for a in BASE_SCREWS:              # 三个 M2 过孔，螺丝从底下穿上去拧进外壳的螺丝柱
+        p = p - cyl_z(hole(1.0 + FIT, 24), z0 - 1, z0 + 4, BASE_SCREW_R * math.cos(math.radians(a)), BASE_SCREW_R * math.sin(math.radians(a)), 24)
     return p
 
 
