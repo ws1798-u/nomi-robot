@@ -18,6 +18,14 @@ K = float(sys.argv[1]) if len(sys.argv) > 1 else 1.15
 OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "stl")
 WALL = 2.0                       # 壁厚
 SEG = 96                         # 圆周分段
+# 配合间隙（每边）：两个零件套在一起、滑动、转动，或者买来的零件塞进打印件里，都留这么多。
+# 打印商家要求至少 0.3 mm（尼龙 ±0.2–0.3，光固化 ±0.1–0.2），0.3 是能装上的前提下最紧的值。
+FIT = 0.3
+
+
+def hole(r, seg):
+    """圆孔是用 seg 段直线拼的。按“外切”算半径，让每段直线的中点也在 r 上，孔不会比标称尺寸小。"""
+    return r / math.cos(math.pi / seg)
 
 # 外壳轮廓（和 3D 模型、尺寸图是同一个公式）
 YC, RB, BL, BU, Y0, YCAP, YTOP = 60, 62, 56, 68, 6, 119, 128
@@ -109,7 +117,7 @@ def cutters():
     d = 0.0
     while math.hypot(*(o + d * ax)[:2]) < prof((o + d * ax)[2]):
         d += 0.05
-    seat = Manifold.cylinder(12, 8.2, 8.2, 64).translate([0, 0, d - 1.0]).rotate([-(90 - 29), 0, 0])
+    seat = Manifold.cylinder(12, hole(8 + FIT, 64), hole(8 + FIT, 64), 64).translate([0, 0, d - 1.0]).rotate([-(90 - 29), 0, 0])
     c.append(seat.translate(list(o)))
     # 避障传感器（ToF）窗口另外做，见 tof_window()
     # 出音孔：背面一片 Ø3 的小孔
@@ -117,10 +125,10 @@ def cutters():
         for gx in np.arange(-21, 22, 6.0):
             if (gx / 24) ** 2 + ((gz - 84) / 19) ** 2 < 1:
                 c.append(cyl_y(1.5, -80 * K, -30 * K, gx * K, gz * K, 12))
-    # 回充红外接收头的孔：Ø5.4，沿半径方向，VS1838B 的圆头从里面塞进来，热熔胶固定
+    # 回充红外接收头的孔：Ø5 + 间隙，沿半径方向，VS1838B 的圆头从里面塞进来，热熔胶固定
     for s_ in (1, -1):
         a = math.pi + s_ * IR_RX_A
-        c.append(cyl_y(2.7, 30 * K, 90 * K, 0, IR_RX_Z * K, 24).rotate([0, 0, -math.degrees(a)]))
+        c.append(cyl_y(hole(2.5 + FIT, 24), 30 * K, 90 * K, 0, IR_RX_Z * K, 24).rotate([0, 0, -math.degrees(a)]))
     # 隐藏 USB-C 的窗口：底部后缘，平时被壳内侧的旋转滑门挡住，见 usb_door()
     c.append(sector(math.pi - DOOR_WIN, math.pi + DOOR_WIN, 20 * K, 80 * K, WIN_Z0 * K, WIN_Z1 * K))
     out = c[0]
@@ -143,6 +151,18 @@ def inner_r(h):
     return prof(h) - WALL
 
 
+def nfit(z0, z1):
+    """壳壁是斜的：沿半径方向留 FIT，垂直于壁面的实际间隙只有 FIT × cos(倾角)。
+    按 z0..z1 这一段最斜的地方放大，保证垂直于壁面也有 FIT。"""
+    dh = 0.05
+    worst = max(abs(prof(h + dh) - prof(h - dh)) / (2 * dh) for h in np.linspace(z0, z1, 40))
+    facet = prof(z1) * (1 - math.cos(math.pi / SEG))                # 圆周分成 SEG 段平面，平面中间比圆凹进去这么多
+    hs = np.linspace(Y0 * K, YCAP * K, 90)                           # 壳体轮廓的取样点（和 shell_body 一样），点之间是直线
+    zs = np.linspace(z0, z1, 200)
+    chord = max(abs(np.interp(zs, hs, [prof(h) for h in hs]) - np.array([prof(z) for z in zs])))
+    return FIT * math.sqrt(1 + worst * worst) + 2 * facet + chord
+
+
 def band(z0, z1, r_out, r_in, n=30):
     """贴着外壳内壁的一圈带子：半径从 内壁+r_out 到 内壁-r_in，高度 z0..z1（已乘比例）。"""
     hs = np.linspace(z0, z1, n)
@@ -154,19 +174,21 @@ def door_rails():
     a0, a1 = math.pi - DOOR_HALF - 0.07, math.pi + DOOR_HALF + DOOR_OPEN + 0.07
     lo0, lo1 = (WIN_Z0 - 1.6) * K, (WIN_Z0 - 0.6) * K           # 门下沿在 WIN_Z0 - 0.6 附近
     hi0, hi1 = (WIN_Z1 + 0.6) * K, (WIN_Z1 + 1.6) * K
-    dz0, dz1 = lo1 + 0.2, hi0 - 0.2                              # 门的上下沿
+    dz0, dz1 = lo1 + FIT, hi0 - FIT                              # 门的上下沿
+    g = nfit(dz0, dz1)                                           # 门和壳壁、门和内唇的间隙（沿半径）
     rails = band(lo0 - 1.2, lo0, 0.5, DOOR_T + 1.6) + band(hi1, hi1 + 1.2, 0.5, DOOR_T + 4)     # 托条（上面那条要伸到内唇）
-    # 内唇做成等半径的一圈：壳在这里很斜，跟着壳面走的唇会顶到门。唇比门的内表面再往里 0.2，压住门沿 0.6 mm
+    # 内唇做成等半径的一圈：壳在这里很斜，跟着壳面走的唇会顶到门。唇比门的内表面再往里 FIT，压住门沿 0.6 mm
     for za, zb, href in ((lo0 - 0.6, dz0 + 0.6, dz0), (dz1 - 0.6, hi1 + 0.6, dz1 - 0.6)):
-        r1 = inner_r(href) - 0.2 - DOOR_T - 0.2
+        r1 = inner_r(href) - g - DOOR_T - g
         rails = rails + (cyl_z(r1, za, zb, seg=SEG) - cyl_z(r1 - 1.2, za - 1, zb + 1, seg=SEG))
     return rails ^ sector(a0, a1, 1, 200, 0, 60 * K, 48)
 
 
 def usb_door():
     """滑门本体 + 从窗口露出来的拨片。门在关闭位置（居中对着正后方）。"""
-    z0, z1 = (WIN_Z0 - 0.6) * K + 0.2, (WIN_Z1 + 0.6) * K - 0.2
-    d = band(z0, z1, -0.2, 0.2 + DOOR_T) ^ sector(math.pi - DOOR_HALF, math.pi + DOOR_HALF, 1, 200, 0, 60 * K, 48)
+    z0, z1 = (WIN_Z0 - 0.6) * K + FIT, (WIN_Z1 + 0.6) * K - FIT
+    g = nfit(z0, z1)
+    d = band(z0, z1, -g, g + DOOR_T) ^ sector(math.pi - DOOR_HALF, math.pi + DOOR_HALF, 1, 200, 0, 60 * K, 48)
     zk = (WIN_Z0 + WIN_Z1) / 2 * K
     knob = band(zk - 2.5, zk + 2.5, 1.7, 0.5) ^ sector(math.pi - 0.22 - 0.025, math.pi - 0.22 + 0.025, 1, 200, 0, 60 * K, 8)
     return d + knob
@@ -181,7 +203,7 @@ def seam_tabs(front):
             x0, x1 = sorted((s * (r - 9), s * (r + 0.5)))
             y0, y1 = (0, 6) if front else (-6, 0)
             tabs.append(box(x0, x1, y0, y1, zz - 4, zz + 4))
-            holes.append(cyl_y(1.2, -8, 8, s * (r - 5), zz, 24))
+            holes.append(cyl_y(hole(1.0 + FIT, 24), -8, 8, s * (r - 5), zz, 24))       # M2 过孔
     return tabs, holes
 
 
@@ -205,10 +227,10 @@ def tof_window():
         yc = prof(zb) - COVER_T * math.cos(a) - (COVER_H / 2) * math.sin(a)
     place = lambda m: m.rotate([TOF_TILT, 0, 0]).translate([0, yc, zc])
     boss = place(box(-9, 9, -BOSS_T, 15, -6.5, 6.5))
-    pocket = place(box(-COVER_W / 2 - 0.2, COVER_W / 2 + 0.2, 0, 20, -COVER_H / 2 - 0.2, COVER_H / 2 + 0.2))
+    pocket = place(box(-COVER_W / 2 - FIT, COVER_W / 2 + FIT, 0, 20, -COVER_H / 2 - FIT, COVER_H / 2 + FIT))
     hole = place(box(-TOF_W / 2, TOF_W / 2, -BOSS_T - 1, 1, -TOF_H / 2, TOF_H / 2))
     # 盖片外面的开口按光束张角做成喇叭口：上沿往上张 25°、左右各张 15°（大于光束的 18.5° / 13.5°），光束不会擦到眉檐
-    hw, hh = COVER_W / 2 + 0.2, COVER_H / 2 + 0.2
+    hw, hh = COVER_W / 2 + FIT, COVER_H / 2 + FIT
     front = box(-30, 30, COVER_T, 25, -hh, 30)
     up = box(-hw, hw, 0, 40, -40, 0).rotate([25, 0, 0]).translate([0, COVER_T, hh])
     sides = [(box(-40, 0, 0, 40, -hh, hh) if s > 0 else box(0, 40, 0, 40, -hh, hh)).rotate([0, 0, -s * 15]).translate([s * hw, COVER_T, 0]) for s in (1, -1)]
@@ -243,7 +265,7 @@ def cap():
     outer = [(prof(h), h) for h in hs] + [(0.0, YTOP * K)]
     inner = [(0.0, YTOP * K - 1.8)] + [(max(prof(h) - 1.8, 0.0), max(h - 0.9, YCAP * K)) for h in hs[::-1][3:]]
     dome = revolve(outer + inner)
-    r = prof(YCAP * K) - WALL - 0.25
+    r = prof(YCAP * K) - WALL - FIT
     lip = revolve([(r - 1.6, (YCAP - 3) * K), (r, (YCAP - 3) * K), (r, YCAP * K + 0.5), (r - 1.6, YCAP * K + 0.5)])
     part = dome + lip
     for s in (1, -1):
@@ -256,20 +278,20 @@ def base_plate():
     """底盘：嵌在外壳底部开口里，带四个滑垫、三个悬崖传感器窗、四个螺丝孔。
     滑垫分在左右两侧（x = ±24.5），中间留出一条空道：倒车上充电座时，滑垫从接口台两边走过去，不会撞上。"""
     z0 = Y0 * K
-    r = prof(z0) - WALL - 0.4
+    r = prof(z0) - WALL - FIT
     p = revolve([(0.01, z0), (r - 0.8, z0), (r, z0 + 0.8), (r, z0 + 2.5), (0.01, z0 + 2.5)])   # 下沿倒角 0.8，过板边更顺
     for x, y in PADS:
         p = p + cyl_z(PAD_R, 1.0, z0 + 0.1, x, y, 32)            # 滑垫底面比轮子最低点高 1 mm
     # 悬崖传感器窗：放得下 TCRT5000 本体（10.2 × 5.8），长边前后方向；后面那个往右偏 9
     for x, y in ((-11, 15), (11, 15), (9, -17)):
-        p = p - box(x * K - 3.1, x * K + 3.1, y * K - 5.3, y * K + 5.3, z0 - 1, z0 + 4)
-    p = p - cyl_z(13.7, z0 - 1, z0 + 0.8, seg=64)                 # 钢环槽：Ø27 × 0.8 的钢环，和底面齐平，给座子的磁铁吸
-    p = p - cyl_z(8.2, z0 - 1, z0 + 1.6, seg=48)                  # 触点板槽：Ø16 × 1.6 的四环触点板，和底面齐平
+        p = p - box(x * K - 2.9 - FIT, x * K + 2.9 + FIT, y * K - 5.1 - FIT, y * K + 5.1 + FIT, z0 - 1, z0 + 4)
+    p = p - cyl_z(hole(13.5 + FIT, 64), z0 - 1, z0 + 0.8, seg=64)                 # 钢环槽：Ø27 × 0.8 的钢环，和底面齐平，给座子的磁铁吸
+    p = p - cyl_z(hole(8 + FIT, 48), z0 - 1, z0 + 1.6, seg=48)                  # 触点板槽：Ø16 × 1.6 的四环触点板，和底面齐平
     p = p - cyl_z(2.5, z0 - 1, z0 + 4, seg=24)                    # 触点板背面的 4 根线从这里穿上去
     p = p + box(-9, 9, -(r - 1), -(r - 9), z0 + 2.4, z0 + 5.5)    # 后缘垫块：USB-C 充电板粘在上面，口朝后对准窗口（往下压 0.1 和底盘连成一体）
     for a in (45, 135, 225, 315):
         rr = r - 4.5
-        p = p - cyl_z(1.2, z0 - 1, z0 + 4, rr * math.cos(math.radians(a)), rr * math.sin(math.radians(a)), 24)
+        p = p - cyl_z(hole(1.0 + FIT, 24), z0 - 1, z0 + 4, rr * math.cos(math.radians(a)), rr * math.sin(math.radians(a)), 24)
     return p
 
 
@@ -300,7 +322,13 @@ def frame():
         f = f - box(xa, xb, -30, 30, -1, AXLE_Z * 2 + 4)
         # 树莓派 Zero 的四个安装孔：58 × 23，M2.5
         for dy in (-6.5, 16.5):
-            f = f - cyl_z(1.4, 60 * K - 4, 60 * K + 1, s * 29, dy, 24)
+            f = f - cyl_z(hole(1.25 + FIT, 24), 60 * K - 4, 60 * K + 1, s * 29, dy, 24)
+    # 让开前后壳合缝处的螺丝耳（M2 螺丝从这里穿过）
+    for zz in (30 * K, 100 * K):
+        for s in (1, -1):
+            r = prof(zz) - WALL
+            x0, x1 = sorted((s * (r - 9 - FIT), s * (r + 1)))
+            f = f - box(x0, x1, -6 - FIT, 6 + FIT, zz - 4 - FIT, zz + 4 + FIT)
     # 走线孔
     f = f - cyl_y(7, -5, 5, 0, 48 * K, 32) - cyl_y(7, -5, 5, 0, 80 * K, 32)
     return f
@@ -311,7 +339,7 @@ def ear():
     r, h = 6 * K, 14 * K
     cap_ = cyl_z(r, 0, h, seg=48) + Manifold.sphere(r, 48) + Manifold.sphere(r, 48).translate([0, 0, h])
     stem = box(-2, 2, -3.5, 3.5, -22 * K, 0)
-    return (cap_ + stem - cyl_x(1.1, -4, 4, 0, -22 * K + 4, 20)).translate([0, 0, 22 * K])
+    return (cap_ + stem - cyl_x(hole(1.0 + FIT, 20), -4, 4, 0, -22 * K + 4, 20)).translate([0, 0, 22 * K])
 
 
 def save(name, m):
@@ -330,10 +358,10 @@ def iface(t, r_edge, pins, floor=3):
     t 的上表面是 Z=0，底板厚 floor。r_edge：后边缘离中心的距离，走线槽通到这里。"""
     boss_h = Y0 * K - 0.5                                        # 凸台顶离底盘钢环 0.5 mm
     t = t + Manifold.cylinder(boss_h, 14.5, 14, 64)              # 接口凸台（在前后两个滑垫之间）
-    t = t - (cyl_z(13.15, boss_h - 3.1, boss_h + 1, seg=64) - cyl_z(9.0, boss_h - 4, boss_h + 2, seg=48))   # 环形磁铁坑
+    t = t - (cyl_z(hole(13 + FIT, 64), boss_h - 3.1, boss_h + 1, seg=64) - cyl_z(9 - FIT, boss_h - 4, boss_h + 2, seg=48))   # 环形磁铁坑
     t = t - cyl_z(8.5, -(floor - 1), boss_h - 3.6, seg=48)       # 走线腔：弹针尾巴在这里焊线
-    for r, a in pins:                                            # 弹针孔 Ø1.6，针头露出凸台约 1.2 mm
-        t = t - cyl_z(0.8, boss_h - 3.7, boss_h + 1, r * math.cos(math.radians(a)), r * math.sin(math.radians(a)), 16)
+    for r, a in pins:                                            # 弹针孔：Ø1.5 的针 + 间隙，胶固定；针头露出凸台约 1.2 mm
+        t = t - cyl_z(hole(0.75 + FIT, 16), boss_h - 3.7, boss_h + 1, r * math.cos(math.radians(a)), r * math.sin(math.radians(a)), 16)
     t = t - box(-1.5, 1.5, -(r_edge + 1), -6, -(floor - 1), 0.1)  # 走线槽，宽 3 深 2，装好后用胶带盖住
     return t
 
@@ -350,7 +378,7 @@ def clip_tray():
     for s in (1, -1):                                            # 铰链耳
         x0, x1 = sorted((s * 21, s * 29))
         t = t + box(x0, x1, -42, -30, -15, -3)
-    t = t - cyl_x(1.7, -40, 40, -36, -10, 24)                    # 铰链轴孔，穿 M3 螺丝
+    t = t - cyl_x(hole(1.5 + FIT, 24), -40, 40, -36, -10, 24)              # 铰链轴孔，穿 M3 螺丝
     # 托盘后侧的 USB-C 小板仓：放一块带 D+/D− 的 USB-C 母座转接板（约 15 × 10），口朝后，线接电脑
     yb = -(ri + 2.5)
     t = t + box(-10, 10, yb - 13, yb + 1, -3, 8)
@@ -383,10 +411,13 @@ BEACON_SIDE = 27                  # 左右两颗信标灯斜着照的角度（�
 STOP_X0, STOP_X1, STOP_Z0, STOP_Z1, FELT = 17.0, 25.0, 17.0, 27.0, 1.0
 
 
-def stadium(hx, hy, z0, z1):
-    """俯视是跑道形（X 方向长）的柱子：半长 hx、半宽 hy。"""
+def stadium(hx, hy, z0, z1, cut=False):
+    """俯视是跑道形（X 方向长）的柱子：半长 hx、半宽 hy。cut=True 时当孔用，圆头按外切算，不会比标称小。"""
+    if cut:
+        e = hole(hy, 128) - hy
+        hx, hy = hx + e, hy + e
     d = max(hx - hy, 0.01)
-    return box(-d, d, -hy, hy, z0, z1) + cyl_z(hy, z0, z1, -d, 0, 64) + cyl_z(hy, z0, z1, d, 0, 64)
+    return box(-d, d, -hy, hy, z0, z1) + cyl_z(hy, z0, z1, -d, 0, 128) + cyl_z(hy, z0, z1, d, 0, 128)
 
 
 def rail(x_sign):
@@ -405,10 +436,10 @@ def beacon_block():
     z = BEACON_Z
     solid = box(-17, 17, y0, y1, z - 7, z + 7)
     holes = cyl_y(1.2, DOCK_YF - 9, DOCK_YF + 1, 0, z, 24)                 # 中间：细长光阑
-    holes = holes + cyl_y(2.65, y0 - 1, DOCK_YF - 8.9, 0, z, 32)            # 中间：灯座
-    holes = holes + cyl_y(3.0, y0 - 1, y0 + 1.0, 0, z, 32)                  # 灯的凸缘
+    holes = holes + cyl_y(hole(2.5 + FIT, 32), y0 - 1, DOCK_YF - 8.9, 0, z, 32)       # 中间：灯座
+    holes = holes + cyl_y(hole(2.9 + FIT, 32), y0 - 1, y0 + 1.0, 0, z, 32)            # 灯的凸缘
     for s_ in (1, -1):
-        h = cyl_y(2.65, -12, 14, 0, 0, 32).rotate([0, 0, -s_ * BEACON_SIDE]).translate([s_ * 9, DOCK_YF - 7, z])
+        h = cyl_y(hole(2.5 + FIT, 32), -12, 14, 0, 0, 32).rotate([0, 0, -s_ * BEACON_SIDE]).translate([s_ * 9, DOCK_YF - 7, z])
         holes = holes + h
     return solid, holes
 
@@ -438,11 +469,11 @@ def dock_base():
     t = plate + wall + rail(1) + rail(-1)
     # 接口台套筒：俯视是跑道形，左右长（接口台能左右滑 2 mm），顶面离底板 3.6（比机器人外壳最低处还低），
     # 上口一圈内唇在前后两边压住接口台的凸缘，吸起来也拔不出去
-    fx, fy = PLUG_FL + 0.3 + PLUG_FLOAT, PLUG_FL + 0.3
+    fx, fy = PLUG_FL + FIT + PLUG_FLOAT, PLUG_FL + FIT
     t = t + stadium(fx + 1.2, fy + 1.5, -0.5, SLEEVE_TOP)
-    t = t - stadium(fx, fy, PLUG_Z0, LIP_Z)                                    # 凸缘上下、左右滑的腔
-    t = t - stadium(PLUG_R + 0.3 + PLUG_FLOAT, PLUG_R + 0.3, -2.5, SLEEVE_TOP + 1)   # 本体穿出内唇
-    t = t - cyl_z(CAP_R + 0.2, -4, PLUG_Z0, seg=64)                              # 底面沉槽，放底盖环
+    t = t - stadium(fx, fy, PLUG_Z0, LIP_Z, cut=True)                                    # 凸缘上下、左右滑的腔
+    t = t - stadium(PLUG_R + FIT + PLUG_FLOAT, PLUG_R + FIT, -2.5, SLEEVE_TOP + 1, cut=True)   # 本体穿出内唇
+    t = t - cyl_z(hole(CAP_R + FIT, 64), -4, PLUG_Z0, seg=64)                              # 底面沉槽，放底盖环
     # 底面走线槽：从套筒通到后墙里，宽 3 深 1.5；进墙的地方往上打穿
     t = t - box(-1.5, 1.5, yf - 8, -14, -4, -1.5)
     t = t - box(-1.5, 1.5, yf - 8, yf - 3, -4, 0.5)
@@ -454,10 +485,10 @@ def dock_plug():
     平时靠自重落在底盖环上（顶面离底板 3.6）；机器人停到位，磁铁隔着空气把它吸上去，贴住底盘的钢环。打印时凸缘朝下。"""
     H = PLUG_H
     p = cyl_z(PLUG_FL, 0, PLUG_FT, seg=64) + revolve([(0.01, PLUG_FT - 0.1), (PLUG_R, PLUG_FT - 0.1), (PLUG_R, H - 0.6), (PLUG_R - 0.6, H), (0.01, H)])
-    p = p - (cyl_z(13.15, H - 3.1, H + 1, seg=64) - cyl_z(9.0, H - 4, H + 2, seg=48))   # 环形磁铁坑
+    p = p - (cyl_z(hole(13 + FIT, 64), H - 3.1, H + 1, seg=64) - cyl_z(9 - FIT, H - 4, H + 2, seg=48))   # 环形磁铁坑
     p = p - cyl_z(8.5, -1, H - 3.6, seg=48)                                              # 弹针尾巴焊线的腔
     for r, a in PINS_POWER:
-        p = p - cyl_z(0.8, H - 3.7, H + 1, r * math.cos(math.radians(a)), r * math.sin(math.radians(a)), 16)
+        p = p - cyl_z(hole(0.75 + FIT, 16), H - 3.7, H + 1, r * math.cos(math.radians(a)), r * math.sin(math.radians(a)), 16)
     return p
 
 
@@ -471,7 +502,7 @@ def clip_leg():
     """夹座的后撑脚：绕 M3 螺丝转，靠扭簧或橡皮筋压在屏幕背面。铰链轴心在原点，撑脚向下。"""
     leg = cyl_x(4.5, -20.5, 20.5, 0, 0, 32) + box(-20.5, 20.5, -3, 3, -80, 0)
     leg = leg + box(-20.5, 20.5, -3, 9, -80, -64)                # 末端加厚，贴硅胶垫
-    leg = leg - cyl_x(1.7, -25, 25, 0, 0, 24)
+    leg = leg - cyl_x(hole(1.5 + FIT, 24), -25, 25, 0, 0, 24)
     for x in (-12, 12):                                          # 两个挂橡皮筋的小钩槽
         leg = leg - box(x - 2, x + 2, -4, -1, -30, -24)
     return leg
