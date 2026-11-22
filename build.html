@@ -251,6 +251,7 @@ pre code { background: none; padding: 0; color: inherit; }
     <tr><td><a href="firmware/ir.py">ir.py</a></td><td>学习和发送红外遥控码</td></tr>
     <tr><td><a href="firmware/tts_server.py">tts_server.py</a></td><td>机器人的声音：用开源的 CosyVoice 2 合成选定的那个女孩声音（活泼可爱）。跑在电脑或云主机上，不在树莓派上</td></tr>
     <tr><td><a href="firmware/web.py">web.py</a></td><td>手机网页遥控台：看画面、方向键、换表情、桌面模式、跳舞、回去充电，显示电量和回充状态</td></tr>
+    <tr><td><a href="firmware/creator.example.json">creator.example.json</a></td><td>机器人的“创造者”设定：名字、怎么称呼他（比如“爸爸”）、他的爱好。复制成 <code>creator.json</code> 改成你自己的，放进树莓派的 firmware 文件夹；这个文件不要传到公开仓库</td></tr>
   </table></div>
   <h3 id="dock-sim">回充模拟</h3>
   <p>还没有实物，所以先在电脑上把回充流程跑了一遍：<code>sim_dock.py</code> 直接调用机器人上那份 <code>dock.py</code> 和软启停，外面套一个简化的“房间”。模拟了三颗信标灯的照射范围、后壳两个接收头的位置和视角、每帧 10% 的漏收、左右轮 ±5% 的速度偏差和抖动、漏斗导轨、挡块和浮动接口台。没模拟家具遮挡、反光、地毯和门槛。</p>

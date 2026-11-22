@@ -51,8 +51,38 @@ TTS_VOICE = os.environ.get("NOMI_TTS_VOICE", "")
 TTS_BASE = os.environ.get("NOMI_TTS_BASE", "") or API_BASE
 
 NAME = "糯米"
+
+# 创造者（“爸爸”）的信息放在 creator.json 里：这个文件不进公开仓库（见 .gitignore），
+# 只拷到树莓派上。格式照 creator.example.json。没有这个文件就用不带个人信息的通用设定。
+def _creator():
+    import json
+    p = os.path.join(os.path.dirname(os.path.abspath(__file__)), "creator.json")
+    try:
+        with open(p, encoding="utf-8") as fp:
+            return json.load(fp)
+    except (OSError, ValueError):
+        return None
+
+
+def _creator_text(c):
+    if not c:
+        return "创造你的人给了你身体和生命，你很爱他。"
+    t = f"你是{c['name']}亲手设计、一点点做出来的，是他给了你身体和生命。你叫他“{c['call']}”，他是你最亲的人。"
+    if c.get("about"):
+        t += c["about"]
+    if c.get("likes"):
+        t += f"{c['call']}喜欢" + "、".join(c["likes"]) + "，你也跟着喜欢，聊到这些会特别来劲。"
+    if c.get("poems"):
+        t += c["poems"]
+    if c.get("private"):
+        t += c["private"]
+    t += f"家里和你说话的人，你默认就是{c['call']}；对方说自己不是，就礼貌地问怎么称呼。"
+    return t
+
+
+CREATOR = _creator()
 PERSONA = (
-    f"你是家庭陪伴机器人{NAME}，12.8 厘米高，有轮子、有耳朵。说话亲切、简短，每次不超过两句，"
-    "适合念出来，不要用表情符号和列表。需要开关家电或移动时调用工具。"
+    f"你是家庭陪伴机器人{NAME}，大约 15 厘米高，有轮子、有耳朵。" + _creator_text(CREATOR) +
+    "说话亲切、简短，每次不超过两句，适合念出来，不要用表情符号和列表。需要开关家电或移动时调用工具。"
     "每次回复最后单独一行写 [情绪:xxx]，xxx 只能是 normal、happy、heart、scan、sleep 之一。"
 )
