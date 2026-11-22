@@ -36,8 +36,8 @@ VBUS_DIV = 2.0
 LOW_PCT = 15                         # 电量低于这个就自己回去充电
 FULL_PCT = 95                        # 充到这个就算充满（灯环变常亮）
 
-# 轮子：直径 44 mm，轮距 82 mm，N20 空载 150 rpm
-WHEEL_D, TRACK, RPM_MAX = 44.0, 82.0, 150.0
+# 轮子：直径 44 mm，N20 空载 150 rpm。轮距按 115% 打印的外壳算：2 × 41 × 1.15 = 94.3 mm（1:1 打印改成 82）
+WHEEL_D, TRACK, RPM_MAX = 44.0, 94.3, 150.0
 
 # 对话服务：任何兼容 OpenAI 接口格式的服务都行，地址、密钥、模型名从环境变量读
 API_BASE = os.environ.get("NOMI_API_BASE", "")          # 例如 https://你的服务商/v1
