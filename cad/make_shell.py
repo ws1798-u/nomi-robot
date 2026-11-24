@@ -532,7 +532,36 @@ def belt_ribs():
     for sy in (1, -1):                                               # 前后两段正中的走线口：只切后墙，不碰壳壁和槽口
         y0, y1 = sorted((sy * (rb - BELT_RIB - 1.0), sy * (rb + 0.5)))
         ch = ch - box(-3, 3, y0, y1, zm - 1.2, zm + 1.2)
-    return ch - belt_wells(BELT_END) - belt_slot()                    # 槽道不能把槽口又补上
+    return (ch + belt_gussets()) - belt_wells(BELT_END) - belt_slot()   # 槽道不能把槽口又补上
+
+
+def belt_gussets():
+    """槽道后墙外侧的三角加强筋（v1.6.1）：每隔约 30 mm（弧长）一片，厚 1.6，上下各一片，
+    一个角贴着槽道后墙，另外两个角连到槽上方 / 下方 8 mm 的壳内壁上，把后墙和上下两半壳撑成一体，摔的时候腰不容易折。
+    筋都在后墙外面（朝机身中间那侧），不挡灯带，也不挡导光条从轮舱口推进去。"""
+    za, zb, depth = _belt_channel_z()
+    zlo, zhi = za - BELT_RIB, zb + BELT_RIB
+    zm = (za + zb) / 2
+    rback = inner_r(zm) - depth - BELT_RIB
+    def one(ang):
+        g = None
+        for pts in ([(rback + 0.3, zhi - 0.5), (inner_r(zhi + 8) + 0.6, zhi + 8), (inner_r(zhi) + 0.6, zhi)],
+                    [(rback + 0.3, zlo + 0.5), (inner_r(zlo - 8) + 0.6, zlo - 8), (inner_r(zlo) + 0.6, zlo)]):
+            p = Manifold.extrude(CrossSection([ccw(pts)]), 1.6).translate([0, 0, -0.8]).rotate([90, 0, 0])
+            g = p if g is None else g + p
+        return g.rotate([0, 0, ang])
+    y = WHEEL_D / 2 + 3
+    r0 = inner_r(zm)
+    th0 = math.degrees(math.asin(y / r0))
+    span = 180 - 2 * th0
+    n = int(r0 * math.radians(span) / 30)
+    out = None
+    for base in (90, 270):
+        for k in range(n + 1):
+            g = one(base - span / 2 + 5 + (span - 10) * k / max(n, 1))
+            out = g if out is None else out + g
+    return out ^ solid_inside_all()
+
 
 
 def belt_strip():
@@ -812,6 +841,11 @@ def ear_cup_placed(s=1):
     return max((ear_place(ear_cup(), s) ^ _head_inside()).decompose(), key=lambda b: b.volume())
 
 
+# 骨架底边固定（v1.6.1）：底盘下面再拧 2 颗 M2 × 6，拧进骨架底边的两个小凸台（凸台攻 M2）。这样腰部光带槽下面那一圈外壳
+# 不光靠槽道挂在上半身上：下面一圈 → 底盘 → 这 2 颗螺丝 → 骨架 → 合缝螺丝 → 上半身。x = ±21：再往里，螺丝头会碰到充电座里浮起来的接口台。
+FRAME_SCREW_X = 21.0
+
+
 def base_plate():
     """底盘：嵌在外壳底部开口里，带四个滑垫、三个悬崖传感器窗、三个螺丝孔（M2 拧进外壳的螺丝柱）。
     滑垫分在左右两侧（x = ±24.5），中间留出一条空道：倒车上充电座时，滑垫从接口台两边走过去，不会撞上。"""
@@ -839,6 +873,8 @@ def base_plate():
     p = p - box(SW_X - 2.5, SW_X + 2.5, SW_Y - 1.3, SW_Y + 1.3, z0 - 1, z0 + 3.5)
     for a in BASE_SCREWS:              # 三个 M2 过孔，螺丝从底下穿上去拧进外壳的螺丝柱
         p = p - cyl_z(hole(1.0 + FIT, 24), z0 - 1, z0 + 4, BASE_SCREW_R * math.cos(math.radians(a)), BASE_SCREW_R * math.sin(math.radians(a)), 24)
+    for sx in (1, -1):                 # 骨架底边那 2 颗 M2 的过孔
+        p = p - cyl_z(hole(1.0 + FIT, 24), z0 - 1, z0 + 4, sx * FRAME_SCREW_X, 0, 24)
     return p
 
 
@@ -902,6 +938,12 @@ def frame():
     # （v1.4 起后面那个悬崖传感器的小板往右伸，不再从立板下面穿过去，立板上不用开缺口）
     # 走线孔
     f = f - cyl_y(7, -5, 5, 0, 48 * K, 32) - cyl_y(7, -5, 5, 0, 80 * K, 32)
+    # 骨架底边两个小凸台（6 × 7）：底面压在底盘上表面（留 0.2），顶面停在电机缺口下面 0.5；中间 Ø1.6 攻 M2，M2 × 6 从底盘下面拧上来
+    zt = AXLE_Z - 6.2 - 0.5
+    for sx in (1, -1):
+        x = sx * FRAME_SCREW_X
+        f = f + box(x - 3, x + 3, -3.5, 3.5, Y0 * K + 2.5 + 0.2, zt)
+        f = f - cyl_z(hole(TAP_M2, 24), Y0 * K + 2.5 - 1, zt - 0.8, x, 0, 24)
     return f
 
 
