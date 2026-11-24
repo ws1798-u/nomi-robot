@@ -493,6 +493,56 @@ def tof_window():
     return boss, pocket + hole + place(flare)
 
 
+# 腰部光带（v1.6，方案 A）：前后壳在离地 BELT_Z0–BELT_Z1 开一道 3 mm 高的槽，卡进一根 T 形乳白导光条（light_strip，打 2 个）：
+# 外面那条卡在槽里、和壳面齐平；里面一圈翻边（上下各比槽宽 BELT_LIP、厚 BELT_FLANGE），后面贴一段 5 mm 宽的 WS2812B 灯带（144 颗/米）。
+# 结构：槽穿透壳壁，所以壳里面沿槽做一条封闭的槽道（上筋 + 下筋 + 后墙，壁厚 BELT_RIB），把槽上下两半壳整圈连起来——
+#   槽下面那一圈（底盘螺丝柱都在上面）不会只靠几截细颈连着。槽和槽道一直开到轮舱口边上，
+#   导光条连同贴好的灯带从轮舱口那头顺着槽道推进去。后墙正中开一个小口走线。
+# 高度：后壳两侧回充红外接收头（离地 34.5，本体到约 38）在下面，槽道下沿离它 1.2；槽道上沿 46 正好等于轮舱口顶，导光条才推得进去。
+BELT_Z0, BELT_Z1 = 41.7, 44.7
+BELT_LIP, BELT_FLANGE = 1.0, 1.5
+BELT_LED_T = 2.6                  # 灯带厚（软板 + 灯珠）
+BELT_RIB = 1.6                    # 槽道的筋和后墙厚
+BELT_END = 0.0                    # 槽一直开到轮舱口边上
+
+
+def belt_wells(m):
+    """两侧轮舱口（再往外放 m）。"""
+    y = WHEEL_D / 2 + 3 + m
+    x = WHEEL_X - WHEEL_W / 2 - 2 - m
+    return box(x, 200, -y, y, -5, 80) + box(-200, -x, -y, y, -5, 80)
+
+
+def belt_slot():
+    """外壳上要挖掉的槽（穿透壳壁）。"""
+    return band(BELT_Z0, BELT_Z1, WALL + 3, 0.5, n=12) - belt_wells(BELT_END)
+
+
+def _belt_channel_z():
+    za, zb = BELT_Z0 - BELT_LIP - 0.3, BELT_Z1 + BELT_LIP + 0.3       # 槽道里面的上下边（翻边 + 灯带四周留 0.3）
+    return za, zb, BELT_FLANGE + BELT_LED_T + 0.5                    # 槽道深（从壳内壁往里量）
+
+
+def belt_ribs():
+    """壳内壁上的封闭槽道：上筋、下筋、后墙连成一体，把槽上下两半壳整圈连起来；后墙正中开一个 6 × 3 的走线口。"""
+    za, zb, depth = _belt_channel_z()
+    ch = band(za - BELT_RIB, zb + BELT_RIB, 0.5, depth + BELT_RIB, n=10) - band(za, zb, 0.0, depth, n=10)   # 槽道里面从壳内壁算起，不往壳壁里挖
+    zm = (za + zb) / 2
+    rb = inner_r(zm) - depth                                         # 后墙内表面离中心
+    for sy in (1, -1):                                               # 前后两段正中的走线口：只切后墙，不碰壳壁和槽口
+        y0, y1 = sorted((sy * (rb - BELT_RIB - 1.0), sy * (rb + 0.5)))
+        ch = ch - box(-3, 3, y0, y1, zm - 1.2, zm + 1.2)
+    return ch - belt_wells(BELT_END) - belt_slot()                    # 槽道不能把槽口又补上
+
+
+def belt_strip():
+    """导光条（前后两段，机身坐标）：外面那条四周比槽小 0.15，外表面和壳面齐平；里面翻边。两头和轮舱口切边齐平。"""
+    hs = np.linspace(BELT_Z0 + 0.15, BELT_Z1 - 0.15, 12)
+    outer = revolve([(inner_r(h) - 0.05, h) for h in hs] + [(prof(h), h) for h in hs[::-1]])
+    flange = band(BELT_Z0 - BELT_LIP, BELT_Z1 + BELT_LIP, -0.05, 0.05 + BELT_FLANGE, n=12)
+    return (outer + flange) - belt_wells(BELT_END + 0.15)
+
+
 def half(front):
     body = shell_body() - cutters()
     if front:
@@ -505,6 +555,8 @@ def half(front):
     body = body ^ (box(-big, big, 0, big, -big, big) if front else box(-big, big, -big, 0, -big, big))
     if not front:
         body = body + door_rails() + (speaker_posts() ^ solid_inside_all())
+    # 腰部光带：开槽 + 内侧两条小筋
+    body = (body - belt_slot()) + (belt_ribs() ^ (box(-big, big, 0, big, -big, big) if front else box(-big, big, -big, 0, -big, big)))
     for th in BASE_SCREWS:
         if (math.sin(math.radians(th)) > 0) == front:
             body = body + base_boss(th)
@@ -1053,6 +1105,6 @@ def clip_leg():
 
 if __name__ == "__main__":
     print(f"比例 {K:.2f}：整机约 {2 * RB * K:.0f} × {2 * RB * K:.0f} × {YTOP * K:.0f} mm，壁厚 {WALL} mm")
-    parts = {"lens": lens(), "screen_shroud": screen_shroud(), "shell_front": half(True), "shell_back": half(False), "top_cap": cap(), "base_plate": base_plate(), "frame": frame(), "ear": ear(), "ear_cup": ear_cup_placed(1), "clip_tray": clip_tray(), "clip_leg": clip_leg(), "usb_door": usb_door(), "dock_base": dock_base(), "dock_plug": dock_plug(), "dock_cap": dock_cap()}
+    parts = {"lens": lens(), "screen_shroud": screen_shroud(), "shell_front": half(True), "shell_back": half(False), "top_cap": cap(), "base_plate": base_plate(), "frame": frame(), "ear": ear(), "ear_cup": ear_cup_placed(1), "light_strip": belt_strip() ^ box(-200, 200, 0, 200, -10, 200), "clip_tray": clip_tray(), "clip_leg": clip_leg(), "usb_door": usb_door(), "dock_base": dock_base(), "dock_plug": dock_plug(), "dock_cap": dock_cap()}
     for n, m in parts.items():
         save(n, m)

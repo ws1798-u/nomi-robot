@@ -20,6 +20,9 @@ EAR_L, EAR_R = 0, 1
 
 # 灯环 WS2812，12 颗（外径约 37，平放在两只耳朵舵机顶上，透过半透明顶盖发光），数据线接 GPIO12
 RING_PIN, RING_N = 12, 12
+# 腰部光带（v1.6）：WS2812B 灯带 144 颗/米，贴在导光条后面，前后各一段 20 颗。数据线接在灯环最后一颗的 DOUT 后面，
+# 所以灯珠编号是：0–11 灯环，12–31 前段（从右往左），32–51 后段（从左往右）
+BELT_N = 40
 
 # 红外：发射 GPIO4（经三极管），接收 GPIO15。需要在 /boot/firmware/config.txt 里开 overlay
 IR_TX_DEV, IR_RX_DEV = "/dev/lirc0", "/dev/lirc1"   # 发射 GPIO4，接收 GPIO15；设备号用 ir-ctl -f -d 确认
