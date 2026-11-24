@@ -461,7 +461,8 @@ def seam_tabs(front):
 
 
 # ToF 避障窗口（VL53L1X）：窗口中心离地 22（随比例缩放），光轴上仰 10°。
-# 盖片和传感器是买来的实际尺寸，不缩放：盖片 10 × 6 × 1（样机用 1 mm 红外透光亚克力），开口 8 × 4。
+# 传感器是买来的实际尺寸，不缩放，开口 8 × 4。v1.8 起外面不再放平盖片，改成齐平的曲面长条 tof_strip()；
+# COVER_* 只用来定凸台的位置（沿用 v1.7 的位置，小板贴的地方不变）。
 TOF_Z, TOF_TILT = 28, 10          # v1.7：22 → 28（打印件离地 32.2）。原来的高度壳往里收得太厉害，小板怎么退都顶内壁，见 BOSS_BACK
 COVER_W, COVER_H, COVER_T = 10.0, 6.0, 1.0
 TOF_W, TOF_H = 8.0, 4.0
@@ -472,8 +473,7 @@ BOSS_BACK = 3.0                  # v1.7：凸台背面再往里加厚 3。凸台
 
 
 def tof_window():
-    """返回 (凸台, 盖片槽 + 开口)。局部坐标：x 向右，y 沿光轴向前，z 沿窗口向上；盖片内表面在 y=0。
-    盖片做成平的、垂直于光轴，下沿和外壳表面齐平，上沿因为外壳往外鼓，会缩进去 3 mm 多，像一道小眉檐。"""
+    """返回 (凸台, 开口)。局部坐标：x 向右，y 沿光轴向前，z 沿窗口向上；y=0 是原来平盖片内表面的位置（只用来定位）。"""
     a = math.radians(TOF_TILT)
     zc = TOF_Z * K
     # 让盖片外表面的下沿刚好落在外壳表面上
@@ -483,17 +483,83 @@ def tof_window():
         yc = prof(zb) - COVER_T * math.cos(a) - (COVER_H / 2) * math.sin(a)
     place = lambda m: m.rotate([TOF_TILT, 0, 0]).translate([0, yc, zc])
     boss = place(box(-9, 9, -BOSS_T - BOSS_BACK, 15, -6.5, 6.5))
-    pocket = place(box(-COVER_W / 2 - FIT, COVER_W / 2 + FIT, 0, 20, -COVER_H / 2 - FIT, COVER_H / 2 + FIT))
     hole = place(box(-TOF_W / 2, TOF_W / 2, -BOSS_T - BOSS_BACK - 1, 1, -TOF_H / 2, TOF_H / 2))
-    # 盖片外面的开口按光束张角做成喇叭口：上沿往上张 25°、左右各张 15°（大于光束的 18.5° / 13.5°），光束不会擦到眉檐
-    hw, hh = COVER_W / 2 + FIT, COVER_H / 2 + FIT
-    front = box(-30, 30, COVER_T, 25, -hh, 30)
-    up = box(-hw, hw, 0, 40, -40, 0).rotate([25, 0, 0]).translate([0, COVER_T, hh])
-    sides = [(box(-40, 0, 0, 40, -hh, hh) if s > 0 else box(0, 40, 0, 40, -hh, hh)).rotate([0, 0, -s * 15]).translate([s * hw, COVER_T, 0]) for s in (1, -1)]
-    flare = (up + box(-hw, hw, COVER_T, 25, -hh, hh)) ^ front
-    for sd, s in zip(sides, (1, -1)):
-        flare = flare + ((sd ^ front) ^ box(-30 if s < 0 else 0, 30 if s > 0 else 0, COVER_T, 25, -hh, hh))
-    return boss, pocket + hole + place(flare)
+    # v1.8：外面不再放平盖片，改成齐平的曲面长条（tof_strip）。壳上只按光束开通孔：从芯片两个小孔（左右 ±1.6）出发，
+    # 左右张 15.5°、上下张 20.5°（比光束 13.5° / 18.5° 各多 2°），一直开到长条背面
+    yt = -BOSS_T - BOSS_BACK + 1.56
+    L = 20.0
+    th, tv = math.tan(math.radians(15.5)), math.tan(math.radians(20.5))
+    beam = Manifold.batch_hull([box(-2.0, 2.0, yt, yt + 0.01, -0.4, 0.4),
+                                box(-2.0 - L * th, 2.0 + L * th, yt + L, yt + L + 0.01, -0.4 - L * tv, 0.4 + L * tv)])
+    return boss, hole + place(beam)
+
+
+TOF_DIV_T = 0.6                   # 隔墙厚
+
+
+def tof_divider():
+    """光束孔正中一道竖着的隔墙（v1.8）：把芯片左右的发射孔、接收孔隔开，从芯片前 0.3 到长条背面前 0.3（中间光束经过的地方斜着让开），
+    免得发射的光在孔里、或者被透明长条横着导到接收那边。隔墙前沿和长条之间贴一条 0.5 mm 黑泡棉压紧。"""
+    a = math.radians(TOF_TILT)
+    zc = TOF_Z * K
+    yc = 0.0
+    for _ in range(30):
+        zb = zc + COVER_T * math.sin(a) - (COVER_H / 2) * math.cos(a)
+        yc = prof(zb) - COVER_T * math.cos(a) - (COVER_H / 2) * math.sin(a)
+    yt = -BOSS_T - BOSS_BACK + 1.56
+    # 隔墙伸到长条背面，但把两边光锥扫到的地方挖掉：芯片上发射孔、接收孔离中线按 1.2–2.0 算，光锥左右 14.5°、上下 19.5°
+    # （比光束各多 1°）。光锥在离芯片约 3.5 mm 以后会越过中线，所以隔墙中间那段前面是斜着让开的，上下两头一直顶到长条；一条光线都不挡
+    wall = box(-TOF_DIV_T / 2, TOF_DIV_T / 2, yt + 0.3, 30, -6.5, 6.5)
+    L = 20.0
+    th, tv = math.tan(math.radians(14.5)), math.tan(math.radians(19.5))
+    for sx in (1, -1):
+        x0, x1 = sorted((sx * 1.2, sx * 2.0))
+        cone = Manifold.batch_hull([box(x0, x1, yt, yt + 0.01, -0.4, 0.4),
+                                    box(x0 - L * th, x1 + L * th, yt + L, yt + L + 0.01, -0.4 - L * tv, 0.4 + L * tv)])
+        wall = wall - cone
+    wall = wall.rotate([TOF_TILT, 0, 0]).translate([0, yc, zc])
+    z0, z1 = TOF_STRIP_ZC - TOF_STRIP_H / 2 - 3, TOF_STRIP_ZC + TOF_STRIP_H / 2 + 3
+    solid = revolve([(0.01, Y0 * K)] + [(prof(h), h) for h in np.linspace(Y0 * K, YCAP * K, 90)] + [(0.01, YCAP * K)])
+    return (wall ^ solid) - _skin(TOF_STRIP_T + 0.3, 1.0, z0, z1)
+
+
+# ToF 曲面长条（v1.8）：前壳正前方、腰部光带下面，一条两头圆的长条，外表面和壳面齐平、顺着壳面弯，看不到凹进去的盖片。
+# 用透明树脂打，外面抛光，只在内面喷红外透过黑油墨（看着是亮黑色，940 nm 能透过），ToF 隔着它测距。
+# 前壳在这里挖一个和长条一样形状的浅坑（径向深 TOF_STRIP_T），长条嵌进去粘牢；坑后面壳里补一块垫板，壁厚不变薄。
+# 光束在壳面上的范围约 8.8 宽、离地 30.2–36.8（中心 33.5），长条四周比它大 1 mm 左右。
+TOF_STRIP_W, TOF_STRIP_H, TOF_STRIP_ZC = 44.0, 8.4, 33.5   # 长度按网页 3D 里那条（约 45）
+TOF_STRIP_T = 1.5                 # 长条径向厚
+
+
+def _stadium_y(w, h, zc):
+    """沿 y 方向拉伸的两头圆的长条（正面看是跑道形），只取前面 y>0。"""
+    r = h / 2
+    return box(-w / 2 + r, w / 2 - r, 0, 200, zc - r, zc + r) + cyl_y(r, 0, 200, -w / 2 + r, zc, 48) + cyl_y(r, 0, 200, w / 2 - r, zc, 48)
+
+
+def _skin(r_in_off, r_out_off, z0, z1, n=40):
+    """壳面附近的一层：半径从 prof(h)-r_in_off 到 prof(h)+r_out_off。"""
+    hs = np.linspace(z0, z1, n)
+    return revolve([(prof(h) - r_in_off, h) for h in hs] + [(prof(h) + r_out_off, h) for h in hs[::-1]])
+
+
+def tof_strip_recess():
+    z0, z1 = TOF_STRIP_ZC - TOF_STRIP_H / 2 - 1, TOF_STRIP_ZC + TOF_STRIP_H / 2 + 1
+    return _skin(TOF_STRIP_T, 1.0, z0, z1) ^ _stadium_y(TOF_STRIP_W, TOF_STRIP_H, TOF_STRIP_ZC)
+
+
+def tof_strip_pad():
+    """坑后面的垫板：内壁往里加厚 1.5，比坑四周大 2。中间 ToF 凸台那一段不补（凸台本身够厚，背面要贴传感器小板）。"""
+    z0, z1 = TOF_STRIP_ZC - TOF_STRIP_H / 2 - 3, TOF_STRIP_ZC + TOF_STRIP_H / 2 + 3
+    hs = np.linspace(z0, z1, 40)
+    ring = revolve([(inner_r(h) - 1.5, h) for h in hs] + [(inner_r(h) + 0.3, h) for h in hs[::-1]])
+    return (ring ^ _stadium_y(TOF_STRIP_W + 4, TOF_STRIP_H + 4, TOF_STRIP_ZC)) - box(-9.5, 9.5, 0, 200, 0, TOF_STRIP_ZC + 8)
+
+
+def tof_strip():
+    """长条本体（机身坐标）：四周比坑小 0.15，外表面和壳面齐平，背面离坑底 0.05 留胶。"""
+    z0, z1 = TOF_STRIP_ZC - TOF_STRIP_H / 2 - 1, TOF_STRIP_ZC + TOF_STRIP_H / 2 + 1
+    return _skin(TOF_STRIP_T - 0.05, 0.0, z0, z1) ^ _stadium_y(TOF_STRIP_W - 0.3, TOF_STRIP_H - 0.3, TOF_STRIP_ZC)
 
 
 # 腰部光带（v1.6，方案 A）：前后壳在离地 BELT_Z0–BELT_Z1 开一道 3 mm 高的槽，卡进一根 T 形乳白导光条（light_strip，打 2 个）：
@@ -580,7 +646,7 @@ def half(front):
     if front:
         boss, cut = tof_window()
         solid = revolve([(0.01, Y0 * K)] + [(prof(h), h) for h in np.linspace(Y0 * K, YCAP * K, 90)] + [(0.01, YCAP * K)])
-        body = (body + (boss ^ solid)) - cut
+        body = (body + (boss ^ solid) + tof_strip_pad()) - tof_strip_recess() - cut + tof_divider()
         cs, cc = cam_socket()
         body = (body + (cs ^ solid)) - cc - cam_opening()
     big = 200 * K
@@ -1150,6 +1216,6 @@ def clip_leg():
 
 if __name__ == "__main__":
     print(f"比例 {K:.2f}：整机约 {2 * RB * K:.0f} × {2 * RB * K:.0f} × {YTOP * K:.0f} mm，壁厚 {WALL} mm")
-    parts = {"lens": lens(), "screen_shroud": screen_shroud(), "shell_front": half(True), "shell_back": half(False), "top_cap": cap(), "base_plate": base_plate(), "frame": frame(), "ear": ear(), "ear_cup": ear_cup_placed(1), "light_strip": belt_strip() ^ box(-200, 200, 0, 200, -10, 200), "clip_tray": clip_tray(), "clip_leg": clip_leg(), "usb_door": usb_door(), "dock_base": dock_base(), "dock_plug": dock_plug(), "dock_cap": dock_cap()}
+    parts = {"lens": lens(), "screen_shroud": screen_shroud(), "shell_front": half(True), "shell_back": half(False), "top_cap": cap(), "base_plate": base_plate(), "frame": frame(), "ear": ear(), "ear_cup": ear_cup_placed(1), "light_strip": belt_strip() ^ box(-200, 200, 0, 200, -10, 200), "tof_strip": tof_strip(), "clip_tray": clip_tray(), "clip_leg": clip_leg(), "usb_door": usb_door(), "dock_base": dock_base(), "dock_plug": dock_plug(), "dock_cap": dock_cap()}
     for n, m in parts.items():
         save(n, m)
