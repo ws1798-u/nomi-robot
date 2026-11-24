@@ -251,6 +251,7 @@ CAM_GAP = 1.2                      # 镜头座正面离盖片背面（沿光轴�
 
 CAM_HOLDER = 8.0                   # 摄像头模组的方形镜头座边长（买的时候看：8 × 8，±0.3）
 CAM_BARREL = 2.5                   # 镜头筒伸出方形镜头座顶面的最大长度
+CAM_SOCKET_R = 11.0                # 摄像头座裙边外半径（Ø22）；cam_socket() 和遮光罩的让位 cam_keepout() 都用这一个数
 CAM_LEDGE = CAM_GAP + CAM_BARREL   # 镜头座顶面（顶在摄像头座的挡边上）离盖片背面多远（沿光轴、中心处）
 
 
@@ -275,12 +276,15 @@ def cam_socket():
     """前壳里面的摄像头座（v1.3）：
     · 方孔 8.6 × 8.6、深 5：摄像头模组的方形镜头座从里面插进去，自动对准光轴（上仰 29°）；
     · 方孔前端一圈 1 mm 的挡边：镜头座顶面顶到这里就到位（离盖片背面 CAM_LEDGE），镜头筒从中间 Ø8.2 的孔伸出去；
-    · 挡边往外一圈裙边（内 Ø14.4、外 Ø18）一直连到壳壁上，从外面看就是一个整圆的窗口。
+    · 挡边往外是 60° 张开的锥孔（120° 广角全视野不被挡），外面一圈裙边（外 Ø22）一直连到壳壁上，从外面看就是一个整圆的窗口。
     摄像头板子（25 × 24）贴在方孔后端，板边用 B-7000 粘住。返回 (实体, 要挖掉的部分)。"""
     place = cam_frame()
     w = CAM_HOLDER / 2 + FIT
-    solid = cyl_z(9.0, -CAM_LEDGE, 6, seg=64) + box(-w - 1.6, w + 1.6, -w - 1.6, w + 1.6, -CAM_LEDGE - 5, -CAM_LEDGE + 1)
-    cut = cyl_z(CAM_HOLE_R, -CAM_LEDGE + 1, 30, seg=64) + cyl_z(4.1, -CAM_LEDGE - 1, -CAM_LEDGE + 2, seg=48) \
+    solid = cyl_z(CAM_SOCKET_R, -CAM_LEDGE, 6, seg=64) + box(-w - 1.6, w + 1.6, -w - 1.6, w + 1.6, -CAM_LEDGE - 5, -CAM_LEDGE + 1)
+    # 挡边往外是一个按 60° 半角张开的锥孔：镜头筒不管伸出多长（0–2.5），120° 视野边上的光线都碰不到孔壁
+    r0 = 4.1 + 0.3
+    cone = Manifold.cylinder(CAM_LEDGE + 4, r0, r0 + math.tan(math.radians(62)) * (CAM_LEDGE + 4), 64).translate([0, 0, -CAM_LEDGE + 1 - 0.01])
+    cut = cone + cyl_z(CAM_HOLE_R, -CAM_LEDGE + 1, 30, seg=64) + cyl_z(4.1, -CAM_LEDGE - 1, -CAM_LEDGE + 2, seg=48) \
         + box(-w, w, -w, w, -CAM_LEDGE - 6, -CAM_LEDGE)
     return place(solid), place(cut)
 
@@ -577,28 +581,26 @@ SHROUD_W = 1.6                    # 屏幕框四周的壁厚
 SHROUD_RIM = 3.0                  # 遮光罩前口贴壳内壁的那圈宽度（在镜片翻边外面）
 
 
-# 摄像头模组（OV5647 树莓派 Zero 款，买来的零件，不缩放）：板子 25 × 24，镜头座 8 × 8、高 6–10（120° 广角常见 8–10，两种都让开），
-# 板厚 1 + 背面元件和排线座 2.5。位置从 cam_seat() 推：镜头座正面中心在盖片背面往里 CAM_GAP（沿光轴量），沿光轴摆。
+# 摄像头模组（OV5647 树莓派 Zero 款，买来的零件，不缩放）：板子 25 × 24，方形镜头座 8 × 8、高 6–10（120° 广角常见 8–10，两种都让开），
+# 板厚 1 + 背面元件和排线座 2.5。镜头座插进前壳里的摄像头座 cam_socket()，顶面顶在挡边上（离盖片背面 CAM_LEDGE）。
 CAM_BOARD, CAM_LENS_H, CAM_BACK = (25.0, 24.0), (6.0, 10.0), 3.5
 
 
-def cam_front():
-    """镜头座正面中心（机身坐标）和光轴方向。盖片背面 = 沉台底面：过 p − CAM_SINK·n、法线 n 的平面；
-    光轴和它的交点再沿光轴往里 CAM_GAP。"""
-    ax = np.array([0, math.sin(math.radians(61)), math.cos(math.radians(61))])
-    p, n = cam_seat()
-    t0 = -CAM_SINK / float(ax @ n)
-    return p + t0 * ax - CAM_GAP * ax, ax
-
-
 def cam_keepout(margin=1.0):
-    """摄像头模组占的空间（四周再放 margin），遮光罩要让开它。局部坐标 z 沿光轴向前，原点在镜头座正面中心。"""
-    front, _ = cam_front()
+    """遮光罩要让开的空间（cam_frame() 局部坐标：原点在光轴和盖片背面的交点，z 沿光轴朝外）：
+    · 前壳里的摄像头座 cam_socket()（已经放好位置）再放大 0.5；
+    · 摄像头模组：方形镜头座占 z −CAM_LEDGE 到 −CAM_LEDGE−高，板子正面贴在镜头座底下，背面元件 CAM_BACK；四周再放 margin。"""
+    place = cam_frame()
+    # 摄像头座直接取 cam_socket() 的实体（不手抄尺寸），往 ±x、±y、±z 各挪 0.5 取并集，相当于四周放大 0.5
+    s0 = cam_socket()[0]
+    socket = s0
+    for d in ([0.5, 0, 0], [-0.5, 0, 0], [0, 0.5, 0], [0, -0.5, 0], [0, 0, 0.5], [0, 0, -0.5]):
+        socket = socket + s0.translate(d)
     bw, bh = CAM_BOARD
-    zf, zr = -CAM_LENS_H[0], -CAM_LENS_H[1]                          # 板子正面：镜头座最矮 / 最高时
-    board = box(-bw / 2 - margin, bw / 2 + margin, -bh / 2 - margin, bh / 2 + margin, zr - CAM_BACK - margin, zf)
-    lens_ = box(-4 - margin, 4 + margin, -4 - margin, 4 + margin, zf - 0.1, 0.0)    # 镜头座 8 × 8，正面贴着 CAM_GAP 的空隙
-    return (board + lens_).rotate([-(90 - 29), 0, 0]).translate(list(front))
+    zf, zr = -CAM_LEDGE - CAM_LENS_H[0], -CAM_LEDGE - CAM_LENS_H[1]   # 板子正面：镜头座最矮 / 最高时
+    board = box(-bw / 2 - margin, bw / 2 + margin, -bh / 2 - margin, bh / 2 + margin, zr - 1.6 - CAM_BACK - margin, zf + margin)   # 板厚 1.6 + 背面元件；板子正面也留 margin
+    holder = box(-CAM_HOLDER / 2 - margin, CAM_HOLDER / 2 + margin, -CAM_HOLDER / 2 - margin, CAM_HOLDER / 2 + margin, zf, -CAM_LEDGE)
+    return socket + place(board + holder)
 
 
 def _scr_place(m, ys):
@@ -855,9 +857,14 @@ PLUG_H = PLUG_DOWN - PLUG_Z0
 LIP_Z = PLUG_Z0 + PLUG_FT + (PLUG_UP - PLUG_DOWN) + 0.1     # 套筒内唇下沿：凸缘顶到这里就停（内唇厚约 1 mm）
 BEACON_Z = IR_RX_Z * K            # 信标灯高度 = 机器人接收头高度
 BEACON_SIDE = 27                  # 左右两颗信标灯斜着照的角度（度）
-# 后墙下方两块挡块：机器人倒车时外壳碰到它就停，这时机身中心正好在接口台上方（前后误差 < 0.5 mm）。
-# 挡块在轮轴附近的高度（离地 17–27），机身前后点头时这里几乎不移动；贴 1 mm 毛毡。
-STOP_X0, STOP_X1, STOP_Z0, STOP_Z1, FELT = 17.0, 25.0, 17.0, 27.0, 1.0
+# 轮子挡块（v1.3）：两条导轨的最里面各一块，机器人倒车时【轮子】顶上去就停。
+# v1.2 是外壳后背碰挡块：机身在滑垫上能前后点头 ±4°，后背是弧面，停的位置会前后差 ±3 mm，
+# 而地线弹针要落在宽 0.8 的环上（前后只能差 ±0.4），会经常充不上。轮子绕轮轴转，最后面那一点永远在轮轴正后方一个半径，
+# 停的位置和机身点不点头无关。
+# 挡块比轮轴低（高 10.5）：轮舱后面的外壳离地 12 以上才有，挡块高了会顶到外壳。轮子的胶圈顶在挡块上沿那条棱上，
+# 机身中心正好在接口台上方。要爬上 10.5 的台阶每个轮子得推约 3.2 N，N20 堵转只有约 2.6 N，爬不上去。
+WSTOP_Z1 = 10.5                   # 挡块顶面（板面以上）
+WSTOP_T = 5.0                     # 挡块前后厚（整块都在轮舱开口 ±25 以内，机身点头也碰不到外壳）
 
 
 def stadium(hx, hy, z0, z1, cut=False):
@@ -899,7 +906,7 @@ def dock_base():
     · 左右两条低导轨（高 5）做成漏斗，把轮子引到正中，最后左右各只留 2 mm 余量；
     · 中间是套筒，里面放浮动接口台（dock_plug，单独打印）：平时落下去，机器人倒车经过时碰不到；
       到位后磁铁把它吸起来、左右拉正，贴住底盘垫片，两根弹针接通 VBUS 和 GND；
-    · 后墙下方两块挡块定住前后位置：机器人倒车碰到挡块就停，正好在接口台上方；
+    · 两条导轨最里面各有一块轮子挡块，定住前后位置：机器人倒车、两个轮子顶到挡块就停，正好在接口台上方（和机身点不点头无关）；
     · 后墙正面有三颗红外信标灯（左、中、右）和状态灯缝，背面下方是 USB-C 电源口，墙里放信标小板和配重。"""
     plate = revolve([(0.01, GROUND), (DOCK_R, GROUND), (DOCK_R, GROUND + RAMP_LIP), (DOCK_R - RAMP_W, 0), (0.01, 0)])
     yf, d = DOCK_YF, DOCK_WD
@@ -910,12 +917,18 @@ def dock_base():
     wall = wall - bh
     wall = wall - box(-5, 5, yf - d - 1, yf - d + 3, 1.5, 5.5)                # 背面 USB-C 开口 10 × 4
     wall = wall - box(-15 * K, 15 * K, yf - 3, yf + 1, 70 * K, 70 * K + 3)    # 正面状态灯缝
-    # 挡块：面到机身中心的距离 = 外壳在这里的半径（按挡块内侧边、上沿算）+ 毛毡厚
-    ys = -math.sqrt(prof(STOP_Z1) ** 2 - STOP_X0 ** 2) - FELT
+    # 轮子挡块：在导轨槽里，只比轮子左右各宽 1.5；挡块面的位置让轮子（半径 wr）顶到上沿时机身中心在 y = 0
+    wr = HUB_ROOT / 2 + 3.0
+    yface = -math.sqrt(wr ** 2 - (wr - WSTOP_Z1) ** 2)
+    stops = None
     for s_ in (1, -1):
-        x0, x1 = sorted((s_ * STOP_X0, s_ * STOP_X1))
-        wall = wall + box(x0, x1, yf - 1, ys, GROUND - 0.5, STOP_Z1)
-    t = (plate + wall + rail(1) + rail(-1)) ^ box(-300, 300, -300, 300, GROUND, 300)   # 墙、导轨先往下多伸 0.5，再沿地面切平：底面是一个干净的平面
+        x0, x1 = sorted((s_ * (WHEEL_X - WHEEL_W / 2 - 1.5), s_ * (WHEEL_X + WHEEL_W / 2 + 1.5)))
+        b = box(x0, x1, yface - WSTOP_T, yface, GROUND - 0.5, WSTOP_Z1)
+        # 顶面后半段往后斜下去（到后沿只高 6）：机身后仰时轮舱后面的外壳下沿会比挡块低一点，倒车碰到斜面就顺着滑上去、被托正
+        slope = math.atan2(WSTOP_Z1 - 6.0, WSTOP_T - 1.0)
+        b = b - box(x0 - 1, x1 + 1, -20, 0, 0, 20).rotate([math.degrees(slope), 0, 0]).translate([0, yface - 1.0, WSTOP_Z1])
+        stops = b if stops is None else stops + b
+    t = (plate + wall + rail(1) + rail(-1) + stops) ^ box(-300, 300, -300, 300, GROUND, 300)   # 墙、导轨先往下多伸 0.5，再沿地面切平：底面是一个干净的平面
     # 接口台套筒：俯视是跑道形，左右长（接口台能左右滑 2 mm），顶面离底板 3.6（比机器人外壳最低处还低），
     # 上口一圈内唇在前后两边压住接口台的凸缘，吸起来也拔不出去
     fx, fy = PLUG_FL + FIT + PLUG_FLOAT, PLUG_FL + FIT
