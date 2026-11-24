@@ -7,6 +7,7 @@ from rpi_ws281x import PixelStrip, Color
 import config as C
 
 ACCENT = (18, 184, 154)
+EAR_LEVER, EAR_HORN = 11.5, 6.0     # 耳朵拨杆孔离球心、舵机摇臂孔离轴心（mm），和 make_shell.py 一致
 
 
 class Body:
@@ -18,11 +19,13 @@ class Body:
         self.ears(0)
 
     def ears(self, deg):
-        """deg：-30 到 30，正数向前。左右舵机镜像安装，所以一个加一个减。
-        外壳顶盖上的槽按 ±30° 留的，再大摆杆会顶到槽头。"""
-        deg = max(-30, min(30, deg))
-        self.kit.servo[C.EAR_L].angle = 90 + deg
-        self.kit.servo[C.EAR_R].angle = 90 - deg
+        """deg：耳朵前后摆的角度，-20 到 20，正数向前。左右舵机镜像安装，所以一个加一个减。
+        v1.5 起耳朵是球窝式：根部的球插在顶盖的球窝里，超过 ±20° 胶囊会碰到孔边。
+        舵机摇臂（孔离轴心 6）通过钢丝推耳朵的拨杆（孔离球心 11.5），所以舵机要转 asin(11.5 / 6 · sin 耳朵角)，±20° 对应约 ±41°。"""
+        deg = max(-20.0, min(20.0, deg))
+        sv = math.degrees(math.asin(max(-1.0, min(1.0, EAR_LEVER / EAR_HORN * math.sin(math.radians(deg))))))
+        self.kit.servo[C.EAR_L].angle = 90 + sv
+        self.kit.servo[C.EAR_R].angle = 90 - sv
 
     def glow(self, level, color=ACCENT):
         """level：0 到 1。"""
