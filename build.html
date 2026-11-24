@@ -92,30 +92,33 @@ pre code { background: none; padding: 0; color: inherit; }
 <g class="dm"><text x="210" y="24">前</text><text x="210" y="420">后</text>
 <line x1="103.39999999999999" y1="314.0" x2="316.6" y2="314.0"/><text x="336" y="318.0">82</text>
 <text x="210" y="300.0">底盘 Ø58</text><text x="210" y="362.0">隐藏 USB-C（滑门）</text><text x="210" y="392">回充红外接收头 ×2（在后壳侧面）</text><text x="94" y="222">滑垫 ×4</text><text x="262" y="250.0">四环触点</text><text x="316.6" y="132.0">轮 10 × 44</text><text x="132.0" y="124.2">悬崖 ×3</text></g>
-</svg><p style="font-size:14.5px;margin:10px 0 0">四个滑垫（Ø5，比轮子最低点高 1 mm）分在左右两侧，离中线 24.5、离轮轴前后各 14（打印件尺寸），中间留出约 44 mm 宽的空道：倒车开上充电座时，滑垫从接口台两边走过去，不会撞上。悬崖传感器镜头朝下，端面离地 4–8 mm，发射管和接收管前后排列。前面两个在左右 ±11、轴线前 15；后面一个在轴线后 17、往一侧偏 9（这张是从底下往上看，左右和俯视相反）。中心是 Ø27 钢环加 Ø16 四环触点板，夹座和充电座的磁铁、弹针对着它；隐藏 USB-C 在后缘，平时被滑门盖住。</p></div>
+</svg><p style="font-size:14.5px;margin:10px 0 0">四个滑垫（Ø5，比轮子最低点高 1 mm）分在左右两侧，离中线 24.5、离轮轴前后各 14（打印件尺寸），中间留出约 44 mm 宽的空道：倒车开上充电座时，滑垫从接口台两边走过去，不会撞上。悬崖传感器镜头朝下，端面离地 4–8 mm，发射管和接收管前后排列。前面两个在左右 ±11、轴线前 15；后面一个在轴线后 17、往一侧偏 9（这张是从底下往上看，左右和俯视相反）。中心是 Ø24 锰钢垫片加 Ø16 四环触点板，夹座和充电座的磁铁、弹针对着它；隐藏 USB-C 在后缘，平时被滑门盖住。</p></div>
   </div>
   <h3 id="stl">打印文件</h3>
-  <p>12 个零件（机身 7 个，显示器夹座 2 个，地面充电座 3 个），按 115% 比例生成（整机约 143 × 143 × 147 mm），壁厚 2 mm。每个文件都检查过是封闭的单个实体，可以直接导入切片软件。</p>
-  <p><a class="btn" href="cad/nomi-stl-115.zip">下载全部打印文件（zip，约 1 MB）</a><a class="btn ghost" href="cad/make_shell.py">生成脚本 make_shell.py</a></p>
+  <p>14 个零件（机身 9 个，显示器夹座 2 个，地面充电座 3 个；耳朵和轮毂各打 2 个），按 115% 比例生成（整机约 143 × 143 × 147 mm），壁厚 2 mm。每个文件都检查过是封闭的单个实体，可以直接导入切片软件。</p>
+  <p><a class="btn" href="cad/nomi-stl-115.zip">下载全部打印文件（zip，约 2 MB）</a><a class="btn ghost" href="cad/make_shell.py">生成脚本 make_shell.py</a></p>
   <div class="tbl"><table>
     <tr><th>文件</th><th>是什么</th><th class="n">外形尺寸（mm）</th><th>材料与摆放</th></tr>
     <tr><td><a href="cad/stl/shell_front.stl">shell_front.stl</a></td><td>前壳：表情窗、摄像头孔和盖片沉台（Ø16.6 × 1）、ToF 窗口（凸台 + 盖片槽 + 喇叭口）、轮舱缺口、合缝螺丝耳（4 个 Ø1.6，攻 M2）、底部正前方一根螺丝柱（Ø1.6，攻 M2）</td><td class="n">143 × 71 × 130</td><td>树脂或 PLA。合缝面朝下平放，要加支撑</td></tr>
+    <tr><td><a href="cad/stl/lens.stl">lens.stl</a></td><td>表情窗的弧面镜片：和窗口同一个四角大圆弧形状，四周比窗口小 0.3；外表面比壳面高 0.5、外沿 R0.5 圆边；背面一圈翻边（比窗口大 3 mm、厚 1.2）粘在前壳内壁上</td><td class="n">100 × 29 × 47</td><td>透明树脂光固化，内外打磨抛光，内面喷透明茶色漆</td></tr>
+    <tr><td><a href="cad/stl/screen_shroud.stl">screen_shroud.stl</a></td><td>表情屏支架 + 遮光罩：后面是放 2.4 寸屏玻璃的框（前面一圈 1 mm 的唇，开口是显示区），中间是黑色漏斗，前口贴在前壳内壁上、压住镜片翻边</td><td class="n">105 × 32 × 55</td><td>黑色不透光的料（黑色树脂或黑色 PETG）。前口朝下放，要支撑</td></tr>
     <tr><td><a href="cad/stl/shell_back.stl">shell_back.stl</a></td><td>后壳：出音孔、底部后缘的隐藏 USB-C 窗口和滑门导轨、左右两个回充红外接收头的孔（Ø5.6，离地 35）、轮舱缺口、合缝螺丝耳（4 个 Ø2.6 过孔）、底部左后和右后两根螺丝柱（Ø1.6，攻 M2）</td><td class="n">143 × 71 × 130</td><td>同上</td></tr>
     <tr><td><a href="cad/stl/top_cap.stl">top_cap.stl</a></td><td>顶盖：带向下的止口，两条槽让耳朵的摆杆穿出</td><td class="n">71 × 71 × 14</td><td>深色半透明料最好，没有就用黑色。开口朝上放</td></tr>
-    <tr><td><a href="cad/stl/base_plate.stl">base_plate.stl</a></td><td>底盘：四个滑垫（分在左右两侧）、三个悬崖传感器窗、三个螺丝过孔（M2 × 6 从底下拧进外壳的螺丝柱）；底面中心的接口槽（钢环 + 四环触点板）；后缘一块垫块放充电板；底边倒角</td><td class="n">62 × 62 × 11</td><td>PETG。滑垫朝上放</td></tr>
+    <tr><td><a href="cad/stl/base_plate.stl">base_plate.stl</a></td><td>底盘：四个滑垫（分在左右两侧）、三个悬崖传感器窗、三个螺丝过孔（M2 × 6 从底下拧进外壳的螺丝柱）；底面中心的接口槽（锰钢垫片 + 四环触点板）；后缘一块垫块放充电板；底边倒角</td><td class="n">62 × 62 × 11</td><td>PETG。滑垫朝上放</td></tr>
     <tr><td><a href="cad/stl/frame.stl">frame.stl</a></td><td>内部骨架：立板加三层搁板（电池、主板、舵机），电机缺口和扎带槽，树莓派安装孔</td><td class="n">137 × 48 × 119</td><td>PETG。立着打，搁板下面要支撑</td></tr>
     <tr><td><a href="cad/stl/ear.stl">ear.stl</a></td><td>耳朵，带摆杆。打印两个</td><td class="n">14 × 14 × 48</td><td>TPU 软料</td></tr>
-    <tr><td><a href="cad/stl/clip_tray.stl">clip_tray.stl</a></td><td>夹座上半：托盘（内径 118）、8 mm 围边、中心接口凸台（环形磁铁坑 + 4 个弹针孔 + 走线腔）、走线槽、后侧 USB-C 小板仓、64 mm 宽的夹板、前唇、铰链耳</td><td class="n">123 × 136 × 30</td><td>PETG。托盘朝上放，夹板和前唇要支撑</td></tr>
+    <tr><td><a href="cad/stl/wheel_hub.stl">wheel_hub.stl</a></td><td>轮毂：中间 3 mm D 形孔套 N20 电机轴（紧配，滴 502），一道 6.6 mm 宽的槽并排套两根 O 型圈（内径 38 × 线径 3）当轮胎，装好外径约 44、宽 10。打印 2 个</td><td class="n">43 × 43 × 10</td><td>韧性树脂或 PETG。平放，D 形孔里别留支撑</td></tr>
+    <tr><td><a href="cad/stl/clip_tray.stl">clip_tray.stl</a></td><td>夹座上半：托盘（内径 118）、8 mm 围边、中心接口凸台（6 个 Ø6 × 3 圆片磁铁坑 + 4 个弹针孔 + 走线腔）、走线槽、后侧 USB-C 小板仓、64 mm 宽的夹板、前唇、铰链耳</td><td class="n">123 × 136 × 30</td><td>PETG。托盘朝上放，夹板和前唇要支撑</td></tr>
     <tr><td><a href="cad/stl/clip_leg.stl">clip_leg.stl</a></td><td>夹座的后撑脚：80 mm 长，绕一根 M3 螺丝转</td><td class="n">41 × 14 × 85</td><td>PETG。平躺着打</td></tr>
-    <tr><td><a href="cad/stl/usb_door.stl">usb_door.stl</a></td><td>隐藏 USB-C 的弧形滑门，带一个从窗口露出来的拨片</td><td class="n">36 × 19 × 9</td><td>和外壳同料同色。凸面朝上，要支撑</td></tr>
-    <tr><td><a href="cad/stl/dock_base.stl">dock_base.stl</a></td><td>地面充电座：底板外圈一圈 7° 缓坡（边缘只有 0.6 mm 厚）、两条漏斗导轨、中间的跑道形套筒、两块定位挡块、空心后墙（正面三个红外信标孔和状态灯缝，背面 USB-C 口）、底面走线槽</td><td class="n">193 × 198 × 101</td><td>PETG。底板朝下放，后墙内腔顶面和信标孔要支撑</td></tr>
-    <tr><td><a href="cad/stl/dock_plug.stl">dock_plug.stl</a></td><td>充电座的浮动接口台：顶面环形磁铁坑、2 个弹针孔、底部凸缘。放进套筒里能上下滑 3.6 mm、左右滑 2 mm</td><td class="n">30 × 30 × 6</td><td>PETG。凸缘朝下放，不用支撑</td></tr>
-    <tr><td><a href="cad/stl/dock_cap.stl">dock_cap.stl</a></td><td>充电座的底盖环：从底面粘进沉槽，托住接口台</td><td class="n">36 × 36 × 0.8</td><td>PETG。平放</td></tr>
+    <tr><td><a href="cad/stl/usb_door.stl">usb_door.stl</a></td><td>隐藏 USB-C 的弧形滑门，带一个从窗口露出来的拨片</td><td class="n">36 × 22 × 9</td><td>和外壳同料同色。凸面朝上，要支撑</td></tr>
+    <tr><td><a href="cad/stl/dock_base.stl">dock_base.stl</a></td><td>地面充电座：底板外圈一圈 7° 缓坡（边缘只有 0.6 mm 厚）、两条漏斗导轨、中间的跑道形套筒、两块定位挡块、空心后墙（正面三个红外信标孔和状态灯缝，背面 USB-C 口）、底面走线槽、底面 4 个贴防滑垫的浅坑</td><td class="n">193 × 198 × 102</td><td>PETG。底板朝下放，后墙内腔顶面和信标孔要支撑</td></tr>
+    <tr><td><a href="cad/stl/dock_plug.stl">dock_plug.stl</a></td><td>充电座的浮动接口台：顶面 6 个 Ø6 × 3 圆片磁铁坑、2 个弹针孔、底部凸缘。放进套筒里能上下滑 3.6 mm、左右滑 2 mm</td><td class="n">33 × 33 × 6</td><td>PETG。凸缘朝下放，不用支撑</td></tr>
+    <tr><td><a href="cad/stl/dock_cap.stl">dock_cap.stl</a></td><td>充电座的底盖环：从底面粘进沉槽，托住接口台</td><td class="n">41 × 41 × 1.6</td><td>PETG。平放</td></tr>
   </table></div>
   <h3>夹座怎么装、怎么夹稳</h3>
   <ul>
-    <li><b>磁铁：</b>一颗 Ø26 / Ø18 × 3 的环形钕铁硼磁铁，胶粘进凸台顶上的环形坑。</li>
-    <li><b>钢环和触点板：</b>一片 Ø27 / Ø17 × 0.8 的钢垫圈粘进底盘底面的外圈槽，四环触点板粘进中间的槽，都和底面齐平。机器人放上托盘后，磁铁离钢环约 0.5 mm。</li>
+    <li><b>磁铁：</b>6 颗 Ø6 × 3 钕铁硼圆片磁铁，胶粘进凸台顶上的 6 个坑，朝上的一面都用同一极（拿一颗互相吸一下就分得清）。都是现货。</li>
+    <li><b>垫片和触点板：</b>一片 DIN988 锰钢调整垫片 17 × 24 × 1（现货，能被磁铁吸）粘进底盘底面的外圈槽，四环触点板粘进中间的槽，都和底面齐平。机器人放上托盘后，磁铁离垫片约 0.5 mm。</li>
     <li><b>弹针和 USB-C：</b>见下面“底部接口和三条充电路”。</li>
     <li><b>后撑脚：</b>用一根 M3 × 65 的螺丝（两个铰链耳外侧一共 58 mm 宽，60 的拧不上螺母）穿过两个铰链耳和撑脚，两头各垫一个 M3 垫片，加一个防松螺母，拧到撑脚能转但不晃。</li>
     <li><b>夹紧力：</b>在撑脚的两个钩槽和夹板之间套两根橡皮筋，或者装一个 M3 轴径的扭簧，让撑脚始终往屏幕背面压。</li>
@@ -125,38 +128,38 @@ pre code { background: none; padding: 0; color: inherit; }
   <h3 id="charge">底部接口和三条充电路</h3>
   <p>机器人底部中心是 4 圈同心触点，夹座和充电座上是对着它的弹针，转到任何角度都接得上。从里到外：中心圆点 VBUS（5 V）、第 1 圈 D+、第 2 圈 D−、第 3 圈 GND。夹座 4 根针都装（供电 + USB 数据），地面充电座只装 VBUS 和 GND 两根。</p>
   <ul>
-    <li><b>四环触点板：</b>画一块 Ø16 的圆板：中心圆点 Ø2.6，三圈环的中心半径 3.4、5.4、7.3 mm，环宽 1 mm，背面 4 个焊盘。嘉立创打样选沉金。线从底盘中心的孔穿上去。</li>
+    <li><b>四环触点板：</b>画一块 Ø16 的圆板：中心圆点 Ø2，三圈环的中心半径 3.2、4.7、6.2 mm，环宽 0.8 mm，背面 4 个焊盘（v1.2 从 3.4 / 5.4 / 7.3 改过来，让座子上的弹针孔离磁铁坑远一点，不那么脆）。嘉立创打样选沉金。线从底盘中心的孔穿上去。</li>
     <li><b>弹针：</b>Ø1.5 × 8 mm 的弹簧顶针，从凸台顶上的小孔插下去，针头露出凸台 1.2 mm，尾巴在凸台下面的走线腔里焊线，再用胶固定。GND 那根多露 0.3 mm，保证先接地。</li>
     <li><b>夹座接电脑：</b>托盘后侧的小仓里放一块 USB-C 母座转接板，要选<b>引出 D+ / D− 并且带两个 5.1 kΩ CC 电阻</b>的（只有两根电源线的不行；没有 CC 电阻的话，C 对 C 的线不给电）。4 根线顺着走线槽进到凸台下面，焊到弹针上，槽上贴胶带。</li>
     <li><b>机器人里面：</b>VBUS 先过一个肖特基二极管（SS34）再接充电板的输入正极，GND 接输入负极；D+ / D− 用一根剪开的 micro-USB 线接到树莓派 Zero 的 <b>USB 数据口</b>（标着 USB 的那个，不是 PWR），这根线的红线（5 V）剪掉不接，不然电脑的 5 V 会和机器人自己的 5 V 顶上。</li>
     <li><b>让电脑认出摄像头：</b>在 <code>config.txt</code> 加 <code>dtoverlay=dwc2,dr_mode=peripheral</code>，用 Linux 的 USB gadget（configfs 里的 UVC 功能）加开源的 uvc-gadget 程序，把 CSI 摄像头的画面送给电脑。开源项目 showmewebcam 就是用树莓派 Zero 这样做的，可以照着改。这一步我没有实物验证过。</li>
     <li><b>地面充电座：</b>见下面“地面充电座怎么装”。只接 VBUS、GND 两根针。</li>
-    <li><b>隐藏 USB-C：</b>USB-C 输入的 2 串升压充电板粘在底盘后缘的垫块上，口朝后、对准后壳底部的窗口，口的端面离外壳外表面约 8 mm，所以要用插头比较短的线。装后壳之前，把滑门从导轨一端推进去，拨片卡进窗口；用指甲把拨片往右推就露出接口。样机这个口只充电，不走数据。</li>
+    <li><b>隐藏 USB-C：</b>USB-C 输入的 2 串升压充电板粘在底盘后缘的垫块上，口朝后、对准后壳底部的窗口，口的端面离外壳外表面约 14 mm（在口的中心高度量；再往外会顶到滑门），所以要用金属头 10 mm 以上的“加长头”Type-C 线。装后壳之前，把滑门从导轨一端推进去，拨片卡进窗口；用指甲把拨片往右推就露出接口。样机这个口只充电，不走数据。</li>
   </ul>
   <h3 id="dock">地面充电座怎么装</h3>
   <ol>
-    <li><b>接口台：</b>环形磁铁胶粘进 <code>dock_plug</code> 顶上的环形坑；两根 Ø1.5 × 8 弹针从顶上插下去，中心一根是 VBUS，离中心 7.3 mm 那根是 GND（GND 多露 0.3 mm），针头露出 1 mm。针尾焊两根 0.1 mm² 的细软线，各留 12 cm。</li>
+    <li><b>接口台：</b>6 颗 Ø6 × 3 圆片磁铁胶粘进 <code>dock_plug</code> 顶上的 6 个坑；两根 Ø1.5 × 8 弹针从顶上插下去，中心一根是 VBUS，离中心 6.2 mm 那根是 GND（GND 多露 0.3 mm），针头露出 1 mm。针尾焊两根 0.1 mm² 的细软线，各留 12 cm。</li>
     <li><b>装进套筒：</b>把接口台从充电座<b>底面</b>塞进套筒（凸缘朝下），线顺着底面的走线槽穿进后墙，再把 <code>dock_cap</code> 底盖环粘进沉槽（缺口对着走线槽）。翻过来试一下：接口台能自由上下、左右滑动，平时落在最低处。</li>
     <li><b>信标板：</b>一块 Digispark ATtiny85 小板（或 Arduino Nano）烧上 <a href="firmware/dock_beacon/dock_beacon.ino">dock_beacon.ino</a>。三颗 5 mm 940 nm 红外灯从后墙里面插进信标块的三个孔，中间那颗插到底，各用一颗 S8050 三极管驱动（基极 1 kΩ，灯串 33 Ω 接 5 V）。正面状态灯缝后面放一颗绿色 LED 加 1 kΩ 电阻接 5 V，通电就亮。</li>
     <li><b>供电：</b>后墙底部放 USB-C 转接板，5 V 同时给信标板和两根弹针。线全部走墙里，背面的口接 5 V / 3 A 充电器。</li>
-    <li><b>挡块和防滑：</b>两块挡块正面各贴一片 1 mm 毛毡；后墙内腔底部放 150 g 左右的配重（钢片或几颗 M8 螺母，用胶固定）；底面四角贴 2 mm 硅胶脚垫（底盖环下面要留空，弹针尾巴会露出一点）。</li>
+    <li><b>挡块和防滑：</b>两块挡块正面各贴一片 1 mm 毛毡；后墙内腔底部放 150 g 左右的配重（钢片或几颗 M8 螺母，用胶固定）；底面 4 个 1 mm 深的浅坑里各贴一片 1 mm 硅胶垫（剪成 Ø16），贴好和底面齐平。不要垫高充电座：缓坡边缘必须比机器人滑垫离地的 1 mm 低，垫了脚垫倒车会顶住。</li>
     <li><b>摆放：</b>后墙贴着墙根放，前面留出 1 米以上的空地；不要放在地毯边上（缓坡边缘只有 0.6 mm，压在地毯上会翘）。</li>
   </ol>
-  <figure style="margin:18px 0 0"><img src="img/cad-usb.jpg?v=20261121d" alt="隐藏 USB-C 的打印件怎么用：关着时窗口里是滑门；推开后露出 USB-C；从里面看上下两道导轨夹住滑门；滑门零件本身" style="display:block;width:100%;border-radius:12px;border:1px solid var(--line);background:#fff" loading="lazy"><figcaption style="font-size:13px;color:var(--mute,#777);margin-top:6px">隐藏 USB-C 是这样打印和组装的：后壳 shell_back.stl 底部后缘开窗口、内壁带上下导轨；滑门 usb_door.stl 单独打印，装壳前从导轨一端推进去。</figcaption></figure>
-  <figure style="margin:18px 0 0"><img src="img/cad-charge.jpg?v=20261122" alt="充电相关零件预览：底盘底面的钢环槽、触点板和四个滑垫，夹座的接口凸台和后侧 USB-C 仓，后壳的隐藏 USB-C 滑门和两个红外接收头孔，地面充电座" style="display:block;width:100%;border-radius:12px;border:1px solid var(--line);background:#fff" loading="lazy"></figure>
-  <figure style="margin:18px 0 0"><img src="img/cad-dock.jpg?v=20261122" alt="地面充电座细节：正面的三个信标孔、两块挡块和漏斗导轨；剖开看套筒、浮动接口台和底盖环；侧面剖开看机器人停到位，接口台被磁铁吸起贴住底盘" style="display:block;width:100%;border-radius:12px;border:1px solid var(--line);background:#fff" loading="lazy"><figcaption style="font-size:13px;color:var(--mute);margin-top:6px">充电座三个打印件：底座、浮动接口台、底盖环。右边是从中间剖开的侧面：轮子顺着缓坡开上来，挡块定住前后，接口台被磁铁吸起来贴住底盘。</figcaption></figure>
-  <figure style="margin:18px 0 0"><img src="img/cad-clip.jpg?v=20261121c" alt="夹座零件预览：托盘俯视、接口凸台特写（环形磁铁坑和 4 个弹针孔）、装上撑脚的侧面、后侧 USB-C 小板仓" style="display:block;width:100%;border-radius:12px;border:1px solid var(--line);background:#fff" loading="lazy"></figure>
-  <figure style="margin:18px 0 0"><img src="img/cad-preview.jpg?v=20261122" alt="生成的零件预览：装配后的外壳正面、背面、底面，以及前壳内侧、骨架、顶盖、底盘" style="display:block;width:100%;border-radius:12px;border:1px solid var(--line);background:#fff" loading="lazy"></figure>
+  <figure style="margin:18px 0 0"><img src="img/cad-usb.jpg?v=20261125" alt="隐藏 USB-C 的打印件怎么用：关着时窗口里是滑门；推开后露出 USB-C；从里面看上下两道导轨夹住滑门；滑门零件本身" style="display:block;width:100%;border-radius:12px;border:1px solid var(--line);background:#fff" loading="lazy"><figcaption style="font-size:13px;color:var(--mute,#777);margin-top:6px">隐藏 USB-C 是这样打印和组装的：后壳 shell_back.stl 底部后缘开窗口、内壁带上下导轨；滑门 usb_door.stl 单独打印，装壳前从导轨一端推进去。</figcaption></figure>
+  <figure style="margin:18px 0 0"><img src="img/cad-charge.jpg?v=20261125" alt="充电相关零件预览：底盘底面的垫片槽、触点板和四个滑垫，夹座的接口凸台和后侧 USB-C 仓，后壳的隐藏 USB-C 滑门和两个红外接收头孔，地面充电座" style="display:block;width:100%;border-radius:12px;border:1px solid var(--line);background:#fff" loading="lazy"></figure>
+  <figure style="margin:18px 0 0"><img src="img/cad-dock.jpg?v=20261125" alt="地面充电座细节：正面的三个信标孔、两块挡块和漏斗导轨；剖开看套筒、浮动接口台和底盖环；侧面剖开看机器人停到位，接口台被磁铁吸起贴住底盘" style="display:block;width:100%;border-radius:12px;border:1px solid var(--line);background:#fff" loading="lazy"><figcaption style="font-size:13px;color:var(--mute);margin-top:6px">充电座三个打印件：底座、浮动接口台、底盖环。右边是从中间剖开的侧面：轮子顺着缓坡开上来，挡块定住前后，接口台被磁铁吸起来贴住底盘。</figcaption></figure>
+  <figure style="margin:18px 0 0"><img src="img/cad-clip.jpg?v=20261125" alt="夹座零件预览：托盘俯视、接口凸台特写（6 个磁铁坑和 4 个弹针孔）、装上撑脚的侧面、后侧 USB-C 小板仓" style="display:block;width:100%;border-radius:12px;border:1px solid var(--line);background:#fff" loading="lazy"></figure>
+  <figure style="margin:18px 0 0"><img src="img/cad-preview.jpg?v=20261126" alt="生成的零件预览：装配后的外壳正面、背面、底面，以及前壳内侧、骨架、顶盖、底盘" style="display:block;width:100%;border-radius:12px;border:1px solid var(--line);background:#fff" loading="lazy"></figure>
   <div class="note"><b>这些文件的可靠程度不一样：</b><br>
   · <b>外壳、顶盖、底盘</b>是按轮廓公式直接算出来的，壁厚垂直于壳面处处 2 mm（底口是一圈 2 mm 宽的实心平底），尺寸我用程序核对过（骨架离内壁最近处 1 mm、离合缝螺丝耳 0.3 mm，底盘和外壳之间至少 0.3 mm），可以直接打印。<br>
   · <b>骨架是起步版。</b>搁板位置和电机缺口按常见零件尺寸留的，但我没有实物可以试装。它目前没有设计固定到外壳上的结构，样机可以先用热熔胶粘在后壳里，或者自己加螺丝柱。<br>
   · <b>夹座也是起步版。</b>托盘尺寸是按轮子转一圈扫过的范围算的（留了 2.5 mm 余量），但夹得稳不稳取决于你的显示器，一定要先在低处试。只适合上沿平直、厚 8–45 mm 的台式显示器。<br>
-  · <b>没有包含的：</b>轮毂（建议直接买 N20 配套的 Ø43–44 橡胶轮）、舵机支架、表情屏和摄像头的固定卡扣、充电板和 USB-C 转接板的卡扣（样机用热熔胶）。这些要按你买到的具体零件再画。<br>
+  · <b>没有包含的：</b>舵机支架、摄像头的固定卡扣、充电板和 USB-C 转接板的卡扣（样机用热熔胶）。这些要按你买到的具体零件再画。<br>
   · <b>地面充电座按“机器人自己倒车开上来”设计，用程序核对过：</b>机器人沿中线倒车进来，不管机身平着、往前点头还是往后仰（压在前面或后面一对滑垫上），左右偏 2 mm 以内，外壳、底盘、轮子都不碰导轨、套筒和接口台；只有滑垫在底板上滑。接口台平时落在离底板 3.6 mm，弹针头 4.6 mm，比机身后仰时外壳最低处（4.7 mm）还低。到位后挡块顶住外壳，接口台被磁铁吸起 3.3 mm 贴住底盘。缓坡、导轨和磁铁吸力还要实物试。<br>
   · <b>滑门和导轨是起步版。</b>间隙按 0.3 mm 留的（门和壳壁、门和导轨内唇，按垂直于壁面算），用程序核对过关上、推开到底都不碰壳体和底盘；打印精度差的话把门的边缘磨一下。<br>
-  · <b>配合间隙统一每边 0.3 mm：</b>滑门、接口台、顶盖、底盘、骨架，以及买来的零件（磁铁、弹针、钢环、触点板、M2 / M3 螺丝、红外头、盖片）放进打印件的孔和槽，都按 0.3 mm 留，用程序逐处核对过。这是打印商家通常要求的下限；切片时不要再加孔补偿或 XY 补偿。想改就改 <code>make_shell.py</code> 开头的 <code>FIT</code>。<br>
+  · <b>配合间隙统一每边 0.3 mm：</b>滑门、接口台、顶盖、底盘、骨架，以及买来的零件（磁铁、弹针、垫片、触点板、M2 / M3 螺丝、红外头、盖片）放进打印件的孔和槽，都按 0.3 mm 留，用程序逐处核对过。这是打印商家通常要求的下限；切片时不要再加孔补偿或 XY 补偿。想改就改 <code>make_shell.py</code> 开头的 <code>FIT</code>。<br>
   · <b>螺丝和攻牙：</b>前后壳合缝用 4 颗 M2 × 10，从后壳的过孔穿过去拧进前壳；底盘用 3 颗 M2 × 6，从底下穿过底盘拧进外壳底部的三根螺丝柱。前壳 5 个、后壳 2 个 Ø1.6 的孔打印后<b>攻 M2 牙</b>（位置见下图红圈），其余孔都是过孔：夹座铰链用 M3 × 65 加防松螺母和两个垫片（要能转，不能攻牙），树莓派用 M2.5 加螺母。三根螺丝柱的位置是用程序在一圈里扫出来的，避开了轮子、电机、骨架、滑门推开的范围、悬崖传感器和滑垫。<br>
-  <img src="img/cad-tap.jpg" alt="攻牙位置：前壳 5 处、后壳 2 处" style="width:100%;margin:6px 0 4px;border-radius:8px"><br>
+  <img src="img/cad-tap.jpg?v=20261126" alt="攻牙位置：前壳 5 处、后壳 2 处" style="width:100%;margin:6px 0 4px;border-radius:8px"><br>
   · <b>想改比例或尺寸</b>：装好 Python 后运行 <code>pip install manifold3d numpy trimesh</code>，再 <code>python make_shell.py 1.0</code> 就能生成 1:1 的版本；所有尺寸都在脚本开头。</div>
 
   <h3>外壳轮廓数据</h3>
@@ -164,14 +167,18 @@ pre code { background: none; padding: 0; color: inherit; }
   <div class="tbl"><table><tr><th class="n">离地高度</th><th class="n">半径</th><th class="n">直径</th></tr><tr><td class=n>6</td><td class=n>29.1</td><td class=n>58.2</td></tr><tr><td class=n>10</td><td class=n>41.0</td><td class=n>81.9</td></tr><tr><td class=n>20</td><td class=n>53.3</td><td class=n>106.6</td></tr><tr><td class=n>30</td><td class=n>58.6</td><td class=n>117.3</td></tr><tr><td class=n>40</td><td class=n>61.0</td><td class=n>122.1</td></tr><tr><td class=n>50</td><td class=n>61.9</td><td class=n>123.8</td></tr><tr><td class=n>60</td><td class=n>62.0</td><td class=n>124.0</td></tr><tr><td class=n>70</td><td class=n>61.3</td><td class=n>122.7</td></tr><tr><td class=n>80</td><td class=n>59.3</td><td class=n>118.5</td></tr><tr><td class=n>90</td><td class=n>55.6</td><td class=n>111.3</td></tr><tr><td class=n>100</td><td class=n>50.1</td><td class=n>100.3</td></tr><tr><td class=n>110</td><td class=n>42.0</td><td class=n>84.0</td></tr><tr><td class=n>120</td><td class=n>29.2</td><td class=n>58.4</td></tr><tr><td class=n>128</td><td class=n>0.0</td><td class=n>0.0</td></tr></table></div>
   <ul>
     <li><b>公式：</b>最宽处在离地 60 mm，半径 62。往下 <code>r = 62 × ∛(1 − t³)</code>，<code>t = (60 − y) / 56</code>；往上 <code>r = 62 × √(1 − t²)</code>，<code>t = (y − 60) / 68</code>。</li>
-    <li><b>前壳开口：</b>表情窗在离地 58–96、左右各 46°的范围；摄像头孔 Ø13 在离地 104；ToF 避障窗口中心在离地 22（1:1 数值，打印件按比例放大），就在灯环正上方。</li>
+    <li><b>前壳开口：</b>表情窗在离地 59–95、左右各约 45°的范围，四角是大圆弧（和 3D 模型的镜片同一个形状）；摄像头孔 Ø13 在离地 104；ToF 避障窗口中心在离地 22（1:1 数值，打印件按比例放大），就在灯环正上方。</li>
     <li><b>ToF 窗口（样机做法）：</b>前壳内侧有一块加厚的凸台，凸台上是一个光轴上仰 10° 的平面安装位：外面一个 10.6 × 6.6、深 1 mm 的盖片槽，中间 8 × 4 的通孔，槽外面是往上张 25°、左右张 15° 的喇叭口。盖片用 <b>1 mm 厚的红外透光亚克力</b>（淘宝搜“红外透光亚克力”或“IR 透过黑色亚克力”，看上去是黑的、940 nm 能透过），切成 10 × 6，放进槽里用 UV 胶或 502 点四角。盖片必须是平的，不要烤弯。量产的完整要求见<a href="make.html#sensors">制造页的传感器窗口</a>。</li>
     <li><b>ToF 模块怎么装：</b>VL53L1X 模块贴在凸台背面，芯片对准 8 × 4 的通孔中心，芯片顶面到盖片约 0.4 mm（凸台厚 2 mm，芯片高 1.56 mm）。发射孔和接收孔之间、四周贴一圈薄的黑色泡棉（或黑胶带剪成小条）当隔挡，防止盖片反射的光直接进接收端。有的模块出厂在芯片上贴了保护膜，装之前撕掉。最后用热熔胶固定模块。</li>
     <li><b>悬崖传感器怎么装：</b>底盘上三个 6.4 × 10.8 的窗口刚好放下 TCRT5000 本体，长边前后方向。模块的电路板在底盘上面，用垫高柱或热熔胶把它垫起来，让传感器端面和底盘底面齐平或缩进 1 mm，不要伸出去（会刮地）。窗口不加盖片。</li>
     <li><b>后壳开口：</b>出音孔在离地 66–102、左右各 24°，打一片 Ø3 的小孔。</li>
     <li><b>顶部：</b>离地 119 以上单独做成顶盖，用深色半透明材料，红外和触摸都在它下面。</li>
     <li><b>耳朵的传动：</b>舵机横放在最上面一层搁板上，摇臂朝外；耳朵的摆杆从顶盖的槽里穿下来，锁在摇臂上，舵机一转耳朵就前后摆。</li>
-    <li><b>表情窗的镜片：</b>样机用 1 mm 厚的茶色亚克力片，热风枪稍微烤弯贴在内侧；或者先不装镜片，直接露出屏幕。</li>
+    <li><b>表情窗是怎么做的：</b>表情屏是一块<b>平的</b> 2.4 寸方形屏，装在镜片后面；弧面镜片只是一扇深色的窗，不显示东西。屏幕画面的背景全黑，和茶色镜片融成一片，看不出屏幕的方框，只有发光的眼睛透出来，看上去像表情显示在曲面上。屏幕两边的窗后面是遮光罩的黑色内壁，看不到里面的线和骨架。</li>
+    <li><b>镜片 <code>lens.stl</code>：</b>透明树脂光固化。刚打出来是半透明发雾的，要用砂纸 400 → 800 → 1500 → 2000 目磨平层纹，再抛光或喷透明光油，才会透亮（跟商家说“全透明抛光”）。然后<b>只在内面</b>喷透明茶色（烟灰色）漆，透光压到 30% 左右：熄屏时一片黑，亮屏时只透出眼睛；外面保持抛光的亮面。也可以不喷漆，在内面贴一张 35% 的汽车茶色膜，颜色更均匀。</li>
+    <li><b>贴合和缝隙：</b>镜片从里往外塞进窗口，背面翻边顶住前壳内壁就推不出去了，所以镜片露出来的高度由翻边定住，不用手去对。镜片外表面比壳面<b>高 0.5 mm，外沿是 R0.5 的圆边</b>（3D 模型里是高 0.7）：摸过去是一道圆滑的小台阶，不会摸到沟；打印 ±0.1–0.2 mm 的误差也藏在这道台阶里。四周和窗口留 0.3 mm 缝，装好是一圈均匀的细线。两个零件拼在一起不可能完全没缝，量产的手机玻璃也有 0.1–0.2 mm；塞不进去就用砂纸修镜片的边，不要修壳。</li>
+    <li><b>屏幕支架 + 遮光罩 <code>screen_shroud.stl</code>：</b>外壳越往上越收，平屏的四个角会先碰到壳壁，所以屏幕上沿往后仰 13°、比表情窗中心低 5 mm，玻璃中心在镜片背面后面约 22 mm。这段距离由黑色漏斗包住：后口正好是显示区，前口是整个表情窗。眼睛看上去在镜片后面一点点，侧面看也不漏光。屏幕尺寸按常见 2.4 寸 8 针模块写的（玻璃 60.3 × 42.7、PCB 77 × 43、排针在右边）；买到的不一样，量一下改 <code>make_shell.py</code> 里 <code>SCR_</code> 开头的几个数，重新生成。想让屏幕再靠前，可以换不带 PCB 的 2.4 寸裸屏（FPC 排线 + 转接板），四个角小一圈，能往前挪约 5 mm。</li>
+    <li><b>装的顺序：</b>① 前壳正面朝下垫在软布上，镜片从里面放进窗口，翻边上薄薄涂一圈 B-7000（不要用 UV 胶：茶色镜片和不透光的壳体照不透紫外，胶不固化），用泡棉块从里面压住；② 屏幕玻璃朝前放进遮光罩的框里，PCB 背面用两条胶带或几点热熔胶固定；③ 遮光罩前口一圈涂 B-7000，扣到镜片后面：里圈压在镜片翻边上，外圈贴在壳内壁上。一圈都要涂满，不然屏幕边上会漏光；④ 压 24 小时再接线。正面溢出来的胶用酒精棉擦掉。<br><img src="img/cad-face.jpg?v=20261125" alt="表情窗：装好后的正面、从中间剖开的侧面、镜片上沿特写、遮光罩和屏幕" style="width:100%;margin:8px 0 2px;border-radius:8px;border:1px solid var(--line);background:#fff" loading="lazy"><br><img src="img/cad-lens.jpg?v=20261126" alt="表情窗镜片：正面、背面翻边、装在前壳里" style="width:100%;margin:8px 0 2px;border-radius:8px;border:1px solid var(--line);background:#fff" loading="lazy"><br><img src="img/cad-hub.jpg?v=20261125" alt="轮毂和 O 型圈轮胎" style="width:100%;margin:8px 0 2px;border-radius:8px;border:1px solid var(--line);background:#fff" loading="lazy"></li>
   </ul>
 </div></section>
 
@@ -218,7 +225,7 @@ pre code { background: none; padding: 0; color: inherit; }
     <li><b>桌沿检测</b><i>半天</i><p>在遥控网页打开桌面模式，把它放在桌上往桌边开，应该在轮子出去之前停住。<b>第一次测试用手在桌边接着。</b>深色或玻璃桌面要重新调电位器。还要试一次<b>贴着桌沿斜着开</b>：前面两个传感器在 ±11，轮子在 ±41，夹角太小时轮子可能先出去。</p></li>
     <li><b>电量和自动回充</b><i>1–2 天</i><p>先在电脑上跑 <code>python3 sim_dock.py</code> 看一遍模拟。接上 ADS1115，遥控网页底部应该显示电量；把机器人放上充电座，显示“正在充电”。再把它放在座子前面 1 米、背对或侧对座子，按网页上的“回去充电”：它会原地转着找信号、掉头、倒车上座，通电就停。<b>前几次在旁边看着</b>，记下没对上的情况；信标灯太亮太暗、接收头角度都会影响，最常调的是 <code>dock.py</code> 开头的速度和 <code>beacon.py</code> 里的时长范围。</p></li>
     <li><b>红外家电</b><i>半天</i><p>用程序里的 <code>ir.learn("空调开")</code> 对着它按遥控器，录下来之后对话时说“开空调”它就会发出去。</p></li>
-    <li><b>装进外壳</b><i>1–2 天</i><p>电池放最下面，主板在中间，屏幕和摄像头固定在前壳，喇叭在后壳。先用热熔胶临时固定，确认都能工作再上螺丝。</p></li>
+    <li><b>装进外壳</b><i>1–2 天</i><p>电池放最下面，主板在中间，喇叭在后壳；镜片、屏幕和遮光罩按上面“装的顺序”先粘在前壳里，摄像头也固定在前壳。先用热熔胶临时固定，确认都能工作再上螺丝。</p></li>
   </ol>
   <h3>这份样机没有做的</h3>
   <ul>
@@ -308,7 +315,7 @@ const PARTS = [
   ['表情屏', '2.4 寸 SPI 屏，ST7789，240×320', 1, 22, '画眼睛'],
   ['驱动电机', 'N20 减速电机 6 V 150 rpm', 2, 12, '走动'],
   ['电机驱动', 'DRV8833 模块', 1, 5, '控制两个电机'],
-  ['轮胎', 'N20 配套橡胶轮 Ø43–44，3 mm D 型轴孔', 2, 3, '直接套在电机轴上'],
+  ['轮胎', 'O 型圈 内径 38 × 线径 3（套在打印轮毂上，每个轮子 2 根）', 4, 1, '市面上 N20 的 D 孔轮只有 43 × 19（太宽）和 34 × 7（太小），所以打印轮毂'],
   ['耳朵舵机', 'SG90 或更小的 3.7 g 舵机', 2, 7, '耳朵摆动'],
   ['舵机板', 'PCA9685 16 路 PWM 模块', 1, 12, '稳定驱动舵机'],
   ['灯环', 'WS2812 16 颗环形', 1, 9, '氛围灯'],
@@ -327,21 +334,22 @@ const PARTS = [
   ['电池盒与保护板', '2 节串联电池盒 + 2 串保护板', 1, 10, '保护电池'],
   ['降压模块', '5 V 3 A 降压模块', 1, 6, '给主板和舵机供电'],
   ['充电模块', 'USB-C 输入 2 串升压充电板（5 V 进、8.4 V 充）+ 5 V 3 A USB-C 充电器', 1, 28, '充电，口就是底部隐藏口'],
-  ['触点板与钢环', 'Ø16 四环沉金小板（打样）+ Ø27 / Ø17 × 0.8 钢垫圈（铁或 430 不锈铁，要能被磁铁吸，不要 304）', 1, 12, '机器人底部接口'],
+  ['触点板与钢环', 'Ø16 四环沉金小板（打样）+ DIN988 锰钢调整垫片 17 × 24 × 1（现货，能被磁铁吸）', 1, 12, '机器人底部接口'],
   ['弹簧顶针', 'Ø1.5 × 8 mm', 6, 0.8, '夹座 4 根，充电座 2 根'],
   ['回充信标', 'Digispark ATtiny85 小板 + 940 nm 5 mm 红外灯 ×3 + S8050 ×3 + 电阻 + 绿色 LED', 1, 15, '充电座发左、中、右三路信号'],
-  ['充电座五金', '1 mm 毛毡、2 mm 硅胶脚垫 ×4、150 g 配重（钢片或 M8 螺母）', 1, 8, '挡块缓冲、防滑、压住座子'],
+  ['充电座五金', '1 mm 毛毡、1 mm 硅胶垫（剪 4 片 Ø16 贴进底面浅坑）、150 g 配重（钢片或 M8 螺母）', 1, 8, '挡块缓冲、防滑、压住座子'],
   ['USB-C 转接板', '引出 D+ / D−、带 5.1 kΩ CC 电阻', 2, 4, '夹座和充电座各一块'],
   ['二极管与数据线', 'SS34 肖特基 + 一根 micro-USB 线（剪开接树莓派数据口）', 1, 6, '触点供电防倒灌、USB 摄像头数据'],
   ['开关与线材', '船型开关、杜邦线、硅胶线、洞洞板', 1, 20, '接线'],
   ['外壳打印', '前后壳、顶盖、底盘、骨架、滑门（代打印，含 7 处攻 M2 牙）', 1, 200, '树脂打外壳，PETG 打骨架'],
   ['耳朵', 'TPU 软料打印', 2, 8, '摸着是软的'],
-  ['镜片', '1 mm 茶色亚克力片', 1, 8, '表情窗'],
+  ['镜片', '打印件 lens.stl（透明树脂，内面喷茶色）+ 遮光罩 screen_shroud.stl + B-7000 胶', 1, 12, '表情窗'],
+  ['加长头充电线', 'Type-C 加长头数据线（金属头 10 mm 以上）', 1, 12, '底部隐藏口凹进约 14 mm'],
   ['摄像头盖片', 'Ø16 × 1 mm 透明亚克力圆片（激光切）', 1, 3, '粘进前额沉台，镜头不凸出'],
-  ['环形磁铁', '钕铁硼 Ø26 / Ø18 × 3', 2, 5, '夹座和充电座各一颗'],
+  ['圆片磁铁', '钕铁硼 Ø6 × 3', 12, 0.3, '夹座和充电座各 6 颗'],
   ['夹座五金', 'M3 × 65 螺丝 + M3 防松螺母 + M3 垫片 ×2、扭簧或橡皮筋、1 mm 硅胶垫', 1, 8, '夹座的铰链和防滑'],
   ['螺丝螺母', 'M2 × 10 ×4（前后壳合缝）、M2 × 6 ×3（底盘）、M2.5 × 8 + M2.5 螺母 ×4（树莓派），圆头内六角', 1, 6, '前壳和外壳螺丝柱已攻 M2 牙，不用螺母'],
-  ['胶水与扎带', '502 胶、UV 胶（带紫外灯）、热熔胶棒、2.5 mm 宽小扎带', 1, 15, '粘磁铁、钢环、盖片；电机用扎带绑在骨架上'],
+  ['胶水与扎带', '502 胶、UV 胶（带紫外灯）、热熔胶棒、2.5 mm 宽小扎带', 1, 15, '粘磁铁、垫片、盖片、轮毂；电机用扎带绑在骨架上'],
   ['夹座打印', '托盘和撑脚（代打印）', 1, 45, '夹在显示器上'],
   ['充电座打印', '底座、浮动接口台、底盖环（代打印）', 1, 45, '地面充电'],
 ];
