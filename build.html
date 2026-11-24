@@ -107,7 +107,7 @@ pre code { background: none; padding: 0; color: inherit; }
     <tr><td><a href="cad/stl/ear.stl">ear.stl</a></td><td>耳朵，带摆杆。打印两个</td><td class="n">14 × 14 × 48</td><td>TPU 软料</td></tr>
     <tr><td><a href="cad/stl/clip_tray.stl">clip_tray.stl</a></td><td>夹座上半：托盘（内径 118）、8 mm 围边、中心接口凸台（环形磁铁坑 + 4 个弹针孔 + 走线腔）、走线槽、后侧 USB-C 小板仓、64 mm 宽的夹板、前唇、铰链耳</td><td class="n">123 × 136 × 30</td><td>PETG。托盘朝上放，夹板和前唇要支撑</td></tr>
     <tr><td><a href="cad/stl/clip_leg.stl">clip_leg.stl</a></td><td>夹座的后撑脚：80 mm 长，绕一根 M3 螺丝转</td><td class="n">41 × 14 × 85</td><td>PETG。平躺着打</td></tr>
-    <tr><td><a href="cad/stl/usb_door.stl">usb_door.stl</a></td><td>隐藏 USB-C 的弧形滑门，带一个从窗口露出来的拨片</td><td class="n">36 × 16 × 9</td><td>和外壳同料同色。凸面朝上，要支撑</td></tr>
+    <tr><td><a href="cad/stl/usb_door.stl">usb_door.stl</a></td><td>隐藏 USB-C 的弧形滑门，带一个从窗口露出来的拨片</td><td class="n">36 × 19 × 9</td><td>和外壳同料同色。凸面朝上，要支撑</td></tr>
     <tr><td><a href="cad/stl/dock_base.stl">dock_base.stl</a></td><td>地面充电座：底板外圈一圈 7° 缓坡（边缘只有 0.6 mm 厚）、两条漏斗导轨、中间的跑道形套筒、两块定位挡块、空心后墙（正面三个红外信标孔和状态灯缝，背面 USB-C 口）、底面走线槽</td><td class="n">193 × 198 × 101</td><td>PETG。底板朝下放，后墙内腔顶面和信标孔要支撑</td></tr>
     <tr><td><a href="cad/stl/dock_plug.stl">dock_plug.stl</a></td><td>充电座的浮动接口台：顶面环形磁铁坑、2 个弹针孔、底部凸缘。放进套筒里能上下滑 3.6 mm、左右滑 2 mm</td><td class="n">30 × 30 × 6</td><td>PETG。凸缘朝下放，不用支撑</td></tr>
     <tr><td><a href="cad/stl/dock_cap.stl">dock_cap.stl</a></td><td>充电座的底盖环：从底面粘进沉槽，托住接口台</td><td class="n">36 × 36 × 0.8</td><td>PETG。平放</td></tr>
@@ -148,7 +148,7 @@ pre code { background: none; padding: 0; color: inherit; }
   <figure style="margin:18px 0 0"><img src="img/cad-clip.jpg?v=20261121c" alt="夹座零件预览：托盘俯视、接口凸台特写（环形磁铁坑和 4 个弹针孔）、装上撑脚的侧面、后侧 USB-C 小板仓" style="display:block;width:100%;border-radius:12px;border:1px solid var(--line);background:#fff" loading="lazy"></figure>
   <figure style="margin:18px 0 0"><img src="img/cad-preview.jpg?v=20261122" alt="生成的零件预览：装配后的外壳正面、背面、底面，以及前壳内侧、骨架、顶盖、底盘" style="display:block;width:100%;border-radius:12px;border:1px solid var(--line);background:#fff" loading="lazy"></figure>
   <div class="note"><b>这些文件的可靠程度不一样：</b><br>
-  · <b>外壳、顶盖、底盘</b>是按轮廓公式直接算出来的，尺寸我用程序核对过（骨架离内壁最近处 1 mm、离合缝螺丝耳 0.3 mm，底盘和外壳之间至少 0.3 mm），可以直接打印。<br>
+  · <b>外壳、顶盖、底盘</b>是按轮廓公式直接算出来的，壁厚垂直于壳面处处 2 mm（底口是一圈 2 mm 宽的实心平底），尺寸我用程序核对过（骨架离内壁最近处 1 mm、离合缝螺丝耳 0.3 mm，底盘和外壳之间至少 0.3 mm），可以直接打印。<br>
   · <b>骨架是起步版。</b>搁板位置和电机缺口按常见零件尺寸留的，但我没有实物可以试装。它目前没有设计固定到外壳上的结构，样机可以先用热熔胶粘在后壳里，或者自己加螺丝柱。<br>
   · <b>夹座也是起步版。</b>托盘尺寸是按轮子转一圈扫过的范围算的（留了 2.5 mm 余量），但夹得稳不稳取决于你的显示器，一定要先在低处试。只适合上沿平直、厚 8–45 mm 的台式显示器。<br>
   · <b>没有包含的：</b>轮毂（建议直接买 N20 配套的 Ø43–44 橡胶轮）、舵机支架、表情屏和摄像头的固定卡扣、充电板和 USB-C 转接板的卡扣（样机用热熔胶）。这些要按你买到的具体零件再画。<br>

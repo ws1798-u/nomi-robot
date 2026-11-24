@@ -47,6 +47,36 @@ def prof(h):
     return K * (RB * (1 - t ** 3) ** (1 / 3) if y < YC else RB * math.sqrt(max(0.0, 1 - t * t)))
 
 
+# 内壁：沿壳面的法向往里收 WALL（之前是沿半径收，底部和顶部壳面很斜，垂直于壳面只剩 0.4–1 mm）。
+# 最底下按法向收会把底口收得太小，所以底口保持原来的半径 R_OPEN（底盘照样放得进去），
+# 这一段变成一圈 2 mm 宽的实心平底，往上再接法向等厚的内壁。
+R_OPEN = None
+_IN_H = _IN_R = None
+
+
+def _inner_table():
+    global _IN_H, _IN_R, R_OPEN
+    hs = np.linspace(4.05 * K, 127.9 * K, 6000)
+    r = np.array([prof(h) for h in hs])
+    dr = np.gradient(r, hs)
+    n = np.sqrt(1 + dr * dr)
+    _IN_R, _IN_H = r - WALL / n, hs + WALL * dr / n          # 外壁点沿法向往里挪 WALL
+    R_OPEN = prof(Y0 * K) - WALL
+
+
+def inner_off(h):
+    """外壁沿法向往里 WALL 的那条曲线在离地 h 处的半径（不管底口）。"""
+    if _IN_H is None:
+        _inner_table()
+    return float(np.interp(h, _IN_H, _IN_R))
+
+
+def inner_r(h):
+    """离地 h 处的内壁半径：垂直于壳面处处 WALL 厚，底口不小于 R_OPEN。"""
+    v = inner_off(h)
+    return max(R_OPEN, v)
+
+
 # 实际零件尺寸（不缩放）
 WHEEL_D, WHEEL_W = 44.0, 10.0
 # 底部接口（夹座、充电座、机器人共用，买来的零件，不缩放）：
@@ -96,7 +126,8 @@ def shell_body():
     """离地 Y0..YCAP 的空心壳体，上下都开口。"""
     hs = np.linspace(Y0 * K, YCAP * K, 90)
     outer = [(prof(h), h) for h in hs]
-    inner = [(max(prof(h) - WALL, 0.5), h) for h in hs[::-1]]
+    his = np.linspace(Y0 * K, YCAP * K, 240)                   # 内壁底部有个拐点，取密一点
+    inner = [(inner_r(h), h) for h in his[::-1]]
     return revolve(outer + inner)
 
 
@@ -156,19 +187,17 @@ DOOR_OPEN = 0.45                  # 滑开的角度
 DOOR_T = 1.5                      # 门厚
 
 
-def inner_r(h):
-    return prof(h) - WALL
 
 
 def nfit(z0, z1):
     """壳壁是斜的：沿半径方向留 FIT，垂直于壁面的实际间隙只有 FIT × cos(倾角)。
     按 z0..z1 这一段最斜的地方放大，保证垂直于壁面也有 FIT。"""
     dh = 0.05
-    worst = max(abs(prof(h + dh) - prof(h - dh)) / (2 * dh) for h in np.linspace(z0, z1, 40))
+    worst = max(abs(inner_r(h + dh) - inner_r(h - dh)) / (2 * dh) for h in np.linspace(z0, z1, 40))   # 门贴着的是内壁，按内壁的斜度算
     facet = prof(z1) * (1 - math.cos(math.pi / SEG))                # 圆周分成 SEG 段平面，平面中间比圆凹进去这么多
-    hs = np.linspace(Y0 * K, YCAP * K, 90)                           # 壳体轮廓的取样点（和 shell_body 一样），点之间是直线
+    hs = np.linspace(Y0 * K, YCAP * K, 240)                          # 内壁的取样点（和 shell_body 一样），点之间是直线
     zs = np.linspace(z0, z1, 200)
-    chord = max(abs(np.interp(zs, hs, [prof(h) for h in hs]) - np.array([prof(z) for z in zs])))
+    chord = max(abs(np.interp(zs, hs, [inner_r(h) for h in hs]) - np.array([inner_r(z) for z in zs])))
     return FIT * math.sqrt(1 + worst * worst) + 2 * facet + chord
 
 
@@ -185,12 +214,18 @@ def door_rails():
     hi0, hi1 = (WIN_Z1 + 0.6) * K, (WIN_Z1 + 1.6) * K
     dz0, dz1 = lo1 + FIT, hi0 - FIT                              # 门的上下沿
     g = nfit(dz0, dz1)                                           # 门和壳壁、门和内唇的间隙（沿半径）
-    rails = band(lo0 - 1.2, lo0, 0.5, DOOR_T + 1.6) + band(hi1, hi1 + 1.2, 0.5, DOOR_T + 4)     # 托条（上面那条要伸到内唇）
     # 内唇做成等半径的一圈：壳在这里很斜，跟着壳面走的唇会顶到门。唇比门的内表面再往里 FIT，压住门沿 0.6 mm
-    for za, zb, href in ((lo0 - 0.6, dz0 + 0.6, dz0), (dz1 - 0.6, hi1 + 0.6, dz1 - 0.6)):
-        r1 = inner_r(href) - g - DOOR_T - g
+    r1l = inner_r(dz0) - g - DOOR_T - g
+    r1u = inner_r(dz1 - 0.6) - g - DOOR_T - g
+    # 托条：贴壁的一条，往里伸到内唇里 0.6，和内唇连成一体
+    rails = band(lo0 - 1.2, lo0, 0.5, max(DOOR_T + 1.6, inner_r(lo0) - (r1l - 1.2) + 0.6)) \
+        + band(hi1, hi1 + 1.2, 0.5, max(DOOR_T + 4, inner_r(hi1 + 1.2) - (r1u - 1.2) + 0.6))
+    for za, zb, r1 in ((lo0 - 0.6, dz0 + 0.6, r1l), (dz1 - 0.6, hi1 + 0.6, r1u)):
         rails = rails + (cyl_z(r1, za, zb, seg=SEG) - cyl_z(r1 - 1.2, za - 1, zb + 1, seg=SEG))
-    return rails ^ sector(a0, a1, 1, 200, 0, 60 * K, 48)
+    rails = rails ^ sector(a0, a1, 1, 200, 0, 60 * K, 48)
+    # 壁加厚以后下托条落到了底盘上方：让开底盘（半径 R_OPEN、到底盘上表面再加 FIT）
+    inner_r(Y0 * K)
+    return rails - cyl_z(R_OPEN + 0.5, Y0 * K - 1, Y0 * K + 2.5 + FIT, seg=SEG)   # 半径多 0.5，切口不和底口内壁重合
 
 
 def usb_door():
@@ -199,7 +234,8 @@ def usb_door():
     g = nfit(z0, z1)
     d = band(z0, z1, -g, g + DOOR_T) ^ sector(math.pi - DOOR_HALF, math.pi + DOOR_HALF, 1, 200, 0, 60 * K, 48)
     zk = (WIN_Z0 + WIN_Z1) / 2 * K
-    knob = band(zk - 2.5, zk + 2.5, 1.7, 0.5) ^ sector(math.pi - 0.22 - 0.025, math.pi - 0.22 + 0.025, 1, 200, 0, 60 * K, 8)
+    # 拨片：端面在壳面下 0.3，往里伸进门板 0.8，和门连成一体
+    knob = band(zk - 2.5, zk + 2.5, prof(zk) - inner_r(zk) - 0.3, g + 0.8) ^ sector(math.pi - 0.22 - 0.025, math.pi - 0.22 + 0.025, 1, 200, 0, 60 * K, 8)
     return d + knob
 
 
@@ -208,7 +244,7 @@ def seam_tabs(front):
     tabs, holes = [], []
     for zz in (30 * K, 100 * K):
         for s in (1, -1):
-            r = prof(zz) - WALL
+            r = inner_r(zz)
             x0, x1 = sorted((s * (r - 9), s * (r + 0.5)))
             y0, y1 = (0, 6) if front else (-6, 0)
             tabs.append(box(x0, x1, y0, y1, zz - 4, zz + 4))
@@ -281,7 +317,8 @@ def base_boss(th):
     t = math.radians(th)
     x, y = BASE_SCREW_R * math.cos(t), BASE_SCREW_R * math.sin(t)
     boss = cyl_z(2.75, zb0, zb1, x, y, 32)
-    inside = revolve([(0.01, zb0), (prof(zb0), zb0), (prof(zb1), zb1), (0.01, zb1)])
+    # 筋伸到壁里、但停在外表面里面 0.5（壁厚 2，照样连牢）；上下各多 1，不和柱顶、柱底共面
+    inside = revolve([(0.01, zb0 - 1)] + [(prof(h) - 0.5, h) for h in np.linspace(zb0 - 1, zb1 + 1, 24)] + [(0.01, zb1 + 1)])
     rib = (box(BASE_SCREW_R, 80, -2, 2, zb0, zb1).rotate([0, 0, th])) ^ inside
     return (boss + rib) - cyl_z(hole(TAP_M2, 24), zb0 - 1, zb1 + 1, x, y, 24)
 
@@ -290,10 +327,15 @@ def cap():
     """顶盖：离地 119 以上，带一圈向下的止口；两条槽让耳朵的摆杆穿出来。"""
     hs = np.linspace(YCAP * K, YTOP * K - 0.01, 40)
     outer = [(prof(h), h) for h in hs] + [(0.0, YTOP * K)]
-    inner = [(0.0, YTOP * K - 1.8)] + [(max(prof(h) - 1.8, 0.0), max(h - 0.9, YCAP * K)) for h in hs[::-1][3:]]
+    # 内表面也沿法向往里 WALL（和外壳一样），盖子边缘不会变成薄片
+    top_in = YTOP * K - WALL
+    his = [h for h in np.linspace(YCAP * K, top_in, 60) if inner_off(h) > 0.2]
+    inner = [(0.0, top_in)] + [(inner_off(h), h) for h in his[::-1]]
     dome = revolve(outer + inner)
-    r = prof(YCAP * K) - WALL - FIT
-    lip = revolve([(r - 1.6, (YCAP - 3) * K), (r, (YCAP - 3) * K), (r, YCAP * K + 0.5), (r - 1.6, YCAP * K + 0.5)])
+    r = min(inner_r(h) for h in np.linspace((YCAP - 3) * K, YCAP * K, 40)) - FIT
+    # 止口往上伸进盖子里，直到碰到盖子内壁（多伸 0.5），和盖子连成一体
+    join = next(h for h in np.linspace(YCAP * K, top_in, 400) if inner_off(h) <= r - 0.8) + 0.5
+    lip = revolve([(r - 1.6, (YCAP - 3) * K), (r, (YCAP - 3) * K), (r, join), (r - 1.6, join)])
     part = dome + lip
     for s in (1, -1):
         x0, x1 = sorted((s * 16.5 * K, s * 23.5 * K))        # 耳朵摆杆的槽，中心在 ±20 × 比例
@@ -305,7 +347,8 @@ def base_plate():
     """底盘：嵌在外壳底部开口里，带四个滑垫、三个悬崖传感器窗、三个螺丝孔（M2 拧进外壳的螺丝柱）。
     滑垫分在左右两侧（x = ±24.5），中间留出一条空道：倒车上充电座时，滑垫从接口台两边走过去，不会撞上。"""
     z0 = Y0 * K
-    r = prof(z0) - WALL - FIT
+    inner_r(z0)
+    r = R_OPEN - FIT
     p = revolve([(0.01, z0), (r - 0.8, z0), (r, z0 + 0.8), (r, z0 + 2.5), (0.01, z0 + 2.5)])   # 下沿倒角 0.8，过板边更顺
     for x, y in PADS:
         p = p + cyl_z(PAD_R, 1.0, z0 + 0.1, x, y, 32)            # 滑垫底面比轮子最低点高 1 mm
@@ -325,7 +368,10 @@ def frame():
     """内部骨架：一块立板（在左右方向的平面里）加三层搁板，电池、主板、舵机都放在上面。
     电机卡在立板下方的两个缺口里。这是起步版，孔位请按你买到的零件核对后再打印。"""
     hs = np.linspace(Y0 * K + 3, 112 * K, 70)
-    outline = [(prof(h) - WALL - 1.0, h) for h in hs]
+    def gap(h):                       # 离内壁：沿半径 1 mm，壁很斜的地方再放大，保证垂直于壁面至少 FIT
+        sl = abs(inner_r(h + 0.05) - inner_r(h - 0.05)) / 0.1
+        return max(1.0, (FIT + 0.05) * math.sqrt(1 + sl * sl))
+    outline = [(inner_r(h) - gap(h), h) for h in hs]
     pts = outline + [(-r, h) for r, h in outline[::-1]]
     plate = Manifold.extrude(CrossSection([ccw(pts)]), 3).translate([0, 0, -1.5]).rotate([90, 0, 0])   # XZ 平面的立板，厚 3
     inside = revolve([(0.01, Y0 * K + 3)] + outline + [(0.01, 112 * K)])
@@ -352,7 +398,7 @@ def frame():
     # 让开前后壳合缝处的螺丝耳（M2 螺丝从这里穿过）
     for zz in (30 * K, 100 * K):
         for s in (1, -1):
-            r = prof(zz) - WALL
+            r = inner_r(zz)
             x0, x1 = sorted((s * (r - 9 - FIT), s * (r + 1)))
             f = f - box(x0, x1, -6 - FIT, 6 + FIT, zz - 4 - FIT, zz + 4 + FIT)
     # 走线孔
