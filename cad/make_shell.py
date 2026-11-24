@@ -83,7 +83,11 @@ WIN_A, WIN_Z0F, WIN_Z1F = 0.781, 59.19, 94.81
 WIN_RA, WIN_RH = 0.2625, 16.6
 
 # 实际零件尺寸（不缩放）
-WHEEL_D, WHEEL_W = 44.0, 10.0
+# 轮子（v1.4）：淘宝现成的“N20 减速电机 + D 字轴橡胶轮 + 支架”套装，轮胎外径 43、宽 19，3 mm D 孔直接套电机轴。
+# 电机的减速箱有一截缩在轮胎里：减速箱正面离轮胎内侧面 WHEEL_INSET（按商品图估的，到货用卡尺量一下改这里再重新生成）。
+WHEEL_D, WHEEL_W = 43.0, 19.0
+WHEEL_INSET = 5.0
+MOTOR_L = 25.5                   # N20 减速箱 9 + 电机 15 + 尾部端子 1.5
 # 底部接口（夹座、充电座、机器人共用，买来的零件，不缩放）：
 #   机器人底面：DIN988 锰钢垫片 17 × 24 × 1（现货，能被磁铁吸），中间一块 Ø16 × 1.6 的四环触点板（嘉立创打样，沉金）
 #   座子凸台：6 颗 Ø6 × 3 钕铁硼圆片磁铁排成一圈（现货）。v1.2 之前用 Ø26 / Ø18 × 3 环形磁铁和 Ø27 / Ø17 × 0.8 钢环，都没现货
@@ -100,6 +104,8 @@ WHEEL_X = 41 * K                 # 轮子中心到机身中心
 # 滑垫：四个 Ø5，分在左右两侧（x = ±24.5，y = ±14），中间留一条约 44 宽的空道给充电座的接口台
 PAD_R = 2.5
 PADS = [(sx * 24.5, sy * 14.0) for sx in (1, -1) for sy in (1, -1)]
+# 三个悬崖传感器探头的位置（× 比例）：前面两个，后面一个。后面那个 v1.3 是 (9, −17)，v1.4 挪到 (7, −16.35)
+CLIFF = ((-11, 15), (11, 15), (7, -16.35))
 # 回充红外接收头：后壳上左右各一个（VS1838B，Ø5 圆头），离地 30 × 比例，偏离正后方 ±0.55 弧度
 IR_RX_Z, IR_RX_A = 30, 0.55
 # 电源开关（v1.3）：底盘上一个 SS12D00 微型拨动开关，只控制 MOS 电子开关模块的触发脚，大电流走模块
@@ -307,7 +313,7 @@ def cutters():
     c = []
     # 轮舱：轮子从两侧下方露出
     for s in (1, -1):
-        c.append(box(min(s * (WHEEL_X - 7), s * (WHEEL_X + 9)), max(s * (WHEEL_X - 7), s * (WHEEL_X + 9)),
+        c.append(box(min(s * (WHEEL_X - WHEEL_W / 2 - 2), s * (WHEEL_X + WHEEL_W / 2 + 4)), max(s * (WHEEL_X - WHEEL_W / 2 - 2), s * (WHEEL_X + WHEEL_W / 2 + 4)),
                      -WHEEL_D / 2 - 3, WHEEL_D / 2 + 3, -1, AXLE_Z * 2 + 3))
     # 表情窗：四角大圆弧的圆角矩形，见 win_prism()
     c.append(win_prism(0.0, 1.0))
@@ -415,11 +421,15 @@ def usb_door():
     return d + knob
 
 
+# 前后壳合缝螺丝耳的高度。v1.4 下面那对从离地 30 × 比例挪到 43 × 比例：轮子宽到 19 以后，轮子外侧面会顶到原来那对螺丝耳
+SEAM_Z = (43 * K, 100 * K)
+
+
 def seam_tabs(front):
     """前后壳合缝处的螺丝耳：四颗 M2 × 14 从后壳耳朵穿过来，穿过骨架立板，拧进前壳耳朵的攻牙孔（拧进约 5 mm）。
     骨架就靠这四颗螺丝夹在前后壳中间，不用热熔胶。"""
     tabs, holes = [], []
-    for zz in (30 * K, 100 * K):
+    for zz in SEAM_Z:
         for s in (1, -1):
             r = inner_r(zz)
             x0, x1 = sorted((s * (r - 9), s * (r + 0.5)))
@@ -700,9 +710,10 @@ def base_plate():
     p = revolve([(0.01, z0), (r - 0.8, z0), (r, z0 + 0.8), (r, z0 + 2.5), (0.01, z0 + 2.5)])   # 下沿倒角 0.8，过板边更顺
     for x, y in PADS:
         p = p + cyl_z(PAD_R, 1.0, z0 + 0.1, x, y, 32)            # 滑垫底面比轮子最低点高 1 mm
-    # 悬崖传感器窗：放得下 TCRT5000 本体（10.2 × 5.8），长边前后方向；后面那个往右偏 9
-    for x, y in ((-11, 15), (11, 15), (9, -17)):
-        p = p - box(x * K - 2.9 - FIT, x * K + 2.9 + FIT, y * K - 5.1 - FIT, y * K + 5.1 + FIT, z0 - 1, z0 + 4)
+    # 悬崖传感器窗：放得下 TCRT5000 本体（10.2 × 5.8）。前面两个长边前后方向；
+    # 后面那个（v1.4）横过来、长边左右方向：它的小板改成往右（+x）伸，不再从立板下面穿到前面（会顶到加长了的电机）
+    for (x, y), (hx, hy) in zip(CLIFF, ((2.9, 5.1), (2.9, 5.1), (5.1, 2.9))):
+        p = p - box(x * K - hx - FIT, x * K + hx + FIT, y * K - hy - FIT, y * K + hy + FIT, z0 - 1, z0 + 4)
     p = p - cyl_z(hole(12 + FIT, 64), z0 - 1, z0 + 1.0, seg=64)                   # 垫片槽：DIN988 17 × 24 × 1 锰钢垫片，和底面齐平，给座子的磁铁吸
     p = p - cyl_z(hole(8 + FIT, 48), z0 - 1, z0 + 1.6, seg=48)                  # 触点板槽：Ø16 × 1.6 的四环触点板，和底面齐平
     p = p + cyl_z(10.5, z0 + 2.4, z0 + 2.5 + 1.0, seg=64)          # 中间加厚 1 mm：触点板槽（深 1.6）上方从 0.9 变成 1.9 mm
@@ -739,7 +750,8 @@ def frame():
     hi = np.linspace(FB, sv_shelf + 1, 70)
     inside = revolve([(0.01, FB)] + [(inner_r(h) - gap(h), h) for h in hi] + [(0.01, sv_shelf + 1)])
     shelves = [
-        box(-40 * K, 40 * K, -22.5, 22.5, 35 * K - 2, 35 * K),      # 电池搁板：前后各放一个 18650 单节电池盒（约 77 × 21）
+        box(-40 * K, 40 * K, -36, 36, 35 * K - 2, 35 * K),          # 电池搁板：前后各放一个 18650 单节电池盒（约 82 × 22 × 21）。
+        # v1.4 轮子宽到 19，轮顶会顶到电池盒两头：两个电池盒往前后挪开，放在 y = ±13.5 到 ±35.5（轮顶在电池盒底面高度只占 ±12.4）
         box(-36, 36, -30, 34, MID - 2, MID),                        # 主板搁板：前侧树莓派 Zero（65 × 30），后侧小模块
         box(-42, 42, -26, 20, sv_shelf - 2, sv_shelf),              # 舵机搁板：前面放两只舵机，后面一条放电量检测和功放小板
     ]
@@ -747,14 +759,16 @@ def frame():
     for sh in shelves:
         f = f + (sh ^ inside)
     for s in (1, -1):
-        # 电机缺口（N20：截面 10 × 12，含减速箱长约 24）和两条扎带槽
-        x0, x1 = sorted((s * (WHEEL_X - 32), s * (WHEEL_X - 5)))
+        # 电机缺口（N20：截面 10 × 12，长 MOTOR_L）和两条扎带槽。缺口前后各多留 4：WHEEL_INSET 量出来和估的不一样，电机能前后挪
+        mf = WHEEL_X - WHEEL_W / 2 + WHEEL_INSET                     # 减速箱正面
+        x0, x1 = sorted((s * (mf - MOTOR_L - 4), s * (mf + 4)))
         f = f - box(x0, x1, -5, 5, AXLE_Z - 6.2, AXLE_Z + 6.2)
+        xt = s * (mf - 16)                                           # 扎带绑在电机机身中间
         for zz in (AXLE_Z - 10, AXLE_Z + 8):
-            f = f - box(min(x0, x1) + 8, min(x0, x1) + 12, -5, 5, zz, zz + 2)
-        # 给轮子让位
-        xa, xb = sorted((s * (WHEEL_X - 7), s * 200))
-        f = f - box(xa, xb, -30, 30, -1, AXLE_Z * 2 + 4)
+            f = f - box(xt - 2, xt + 2, -5, 5, zz, zz + 2)
+        # 给轮子让位：按轮子的圆柱让（四周 2 mm），不再整块切掉，电池搁板在轮子前后还能伸出去托住电池盒
+        xa, xb = sorted((s * (WHEEL_X - WHEEL_W / 2 - 2), s * 200))
+        f = f - cyl_x(WHEEL_D / 2 + 2, xa, xb, 0, AXLE_Z, 96)
         # 树莓派 Zero 的四个安装孔：58 × 23，M2.5；板子整块在立板前侧（y 1.8–31.8）
         for dy in (5.3, 28.3):
             f = f - cyl_z(hole(1.25 + FIT, 24), MID - 4, MID + 1, s * 29, dy, 24)
@@ -763,16 +777,14 @@ def frame():
         for yy in (-SV_SHAFT - 2.6, SV_L - SV_SHAFT + 0.6):
             f = f - box(xm - 2, xm + 2, yy, yy + 2, sv_shelf - 3, sv_shelf + 1)
     # 合缝螺丝：立板夹在前后壳的螺丝耳中间，螺丝从这里穿过（M2 过孔）；搁板在螺丝耳前后让开
-    for zz in (30 * K, 100 * K):
+    for zz in SEAM_Z:
         for s in (1, -1):
             r = inner_r(zz)
             f = f - cyl_y(hole(1.0 + FIT, 24), -3, 3, s * (r - 5), zz, 24)
             x0, x1 = sorted((s * (r - 9 - FIT), s * (r + 1)))
             for y0, y1 in ((1.5, 7.5 + FIT), (-7.5 - FIT, -1.5)):
                 f = f - box(x0, x1, y0, y1, zz - 4 - FIT, zz + 4 + FIT)
-    # 后面那个悬崖传感器（x = 9 × 比例）的小板从立板下方穿过去：小板离地 15.5–26.1，缺口只开这一段，
-    # 下面留一条立板连着电机下方那一块（那里有绑电机的扎带槽）
-    f = f - box(9 * K - 8, 9 * K + 8, -5, 5, 15.0, 26.6)
+    # （v1.4 起后面那个悬崖传感器的小板往右伸，不再从立板下面穿过去，立板上不用开缺口）
     # 走线孔
     f = f - cyl_y(7, -5, 5, 0, 48 * K, 32) - cyl_y(7, -5, 5, 0, 80 * K, 32)
     return f
@@ -864,6 +876,7 @@ BEACON_SIDE = 27                  # 左右两颗信标灯斜着照的角度（�
 # 挡块比轮轴低（高 10.5）：轮舱后面的外壳离地 12 以上才有，挡块高了会顶到外壳。轮子的胶圈顶在挡块上沿那条棱上，
 # 机身中心正好在接口台上方。要爬上 10.5 的台阶每个轮子得推约 3.2 N，N20 堵转只有约 2.6 N，爬不上去。
 WSTOP_Z1 = 10.5                   # 挡块顶面（板面以上）
+WSTOP_IN = 2.0                    # 挡块里侧边在轮心往里多少（v1.4）
 WSTOP_T = 5.0                     # 挡块前后厚（整块都在轮舱开口 ±25 以内，机身点头也碰不到外壳）
 
 
@@ -918,11 +931,12 @@ def dock_base():
     wall = wall - box(-5, 5, yf - d - 1, yf - d + 3, 1.5, 5.5)                # 背面 USB-C 开口 10 × 4
     wall = wall - box(-15 * K, 15 * K, yf - 3, yf + 1, 70 * K, 70 * K + 3)    # 正面状态灯缝
     # 轮子挡块：在导轨槽里，只比轮子左右各宽 1.5；挡块面的位置让轮子（半径 wr）顶到上沿时机身中心在 y = 0
-    wr = HUB_ROOT / 2 + 3.0
+    wr = WHEEL_D / 2
     yface = -math.sqrt(wr ** 2 - (wr - WSTOP_Z1) ** 2)
     stops = None
     for s_ in (1, -1):
-        x0, x1 = sorted((s_ * (WHEEL_X - WHEEL_W / 2 - 1.5), s_ * (WHEEL_X + WHEEL_W / 2 + 1.5)))
+        # v1.4 轮子宽 19：挡块只挡轮胎靠外的一半（轮心往里 WSTOP_IN 起），里侧那段外壳离地低，机身后仰倒车时会擦到
+        x0, x1 = sorted((s_ * (WHEEL_X - WSTOP_IN), s_ * (WHEEL_X + WHEEL_W / 2 + 1.5)))
         b = box(x0, x1, yface - WSTOP_T, yface, GROUND - 0.5, WSTOP_Z1)
         # 顶面后半段往后斜下去（到后沿只高 6）：机身后仰时轮舱后面的外壳下沿会比挡块低一点，倒车碰到斜面就顺着滑上去、被托正
         slope = math.atan2(WSTOP_Z1 - 6.0, WSTOP_T - 1.0)
@@ -964,24 +978,6 @@ def dock_cap():
     return c - box(-1.6, 1.6, -CAP_R - 1, -8, -1, CAP_T + 1)   # 缺口对着底面走线槽
 
 
-# 轮子：打印轮毂 + 两根并排的标准 O 型圈（内径 38、线径 3）当轮胎，套上后外径约 44、宽 10，和 WHEEL_D / WHEEL_W 一样。
-# 市面上配 N20 的 D 孔轮只有 43 × 19（太宽，塞不进轮舱）和 34 × 7（太小），所以自己打印轮毂。
-HUB_ROOT, HUB_GROOVE_W, HUB_FLANGE = 38.4, 6.6, 2.3   # 槽底直径、槽宽、挡边比槽底高多少
-
-
-def wheel_hub():
-    """轮毂：中间 3 mm D 形孔套 N20 电机轴（平边离轴心 1.0），孔只留 0.05，紧配后滴 502。打印 2 个。"""
-    W = WHEEL_W
-    rr, rf = HUB_ROOT / 2, HUB_ROOT / 2 + HUB_FLANGE
-    e = (W - HUB_GROOVE_W) / 2                                    # 两边挡边各宽 1.7
-    hub = revolve([(0.01, 0), (rf, 0), (rf, e), (rr, e), (rr, W - e), (rf, W - e), (rf, W), (0.01, W)])
-    for k in range(6):                                            # 6 个减重孔
-        a = math.radians(30 + 60 * k)
-        hub = hub - cyl_z(3.5, -1, W + 1, 11.5 * math.cos(a), 11.5 * math.sin(a), 32)
-    d = cyl_z(1.5 + 0.05, -1, W + 1, seg=48) - box(1.0 + 0.05, 5, -5, 5, -2, W + 2)   # D 形孔：Ø3.1，平边在 x = 1.05
-    return hub - d
-
-
 def clip_leg():
     """夹座的后撑脚：绕 M3 螺丝转，靠扭簧或橡皮筋压在屏幕背面。铰链轴心在原点，撑脚向下。"""
     leg = cyl_x(4.5, -20.5, 20.5, 0, 0, 32) + box(-20.5, 20.5, -3, 3, -80, 0)
@@ -994,6 +990,6 @@ def clip_leg():
 
 if __name__ == "__main__":
     print(f"比例 {K:.2f}：整机约 {2 * RB * K:.0f} × {2 * RB * K:.0f} × {YTOP * K:.0f} mm，壁厚 {WALL} mm")
-    parts = {"lens": lens(), "screen_shroud": screen_shroud(), "shell_front": half(True), "shell_back": half(False), "top_cap": cap(), "base_plate": base_plate(), "frame": frame(), "ear": ear(), "clip_tray": clip_tray(), "clip_leg": clip_leg(), "usb_door": usb_door(), "dock_base": dock_base(), "dock_plug": dock_plug(), "dock_cap": dock_cap(), "wheel_hub": wheel_hub()}
+    parts = {"lens": lens(), "screen_shroud": screen_shroud(), "shell_front": half(True), "shell_back": half(False), "top_cap": cap(), "base_plate": base_plate(), "frame": frame(), "ear": ear(), "clip_tray": clip_tray(), "clip_leg": clip_leg(), "usb_door": usb_door(), "dock_base": dock_base(), "dock_plug": dock_plug(), "dock_cap": dock_cap()}
     for n, m in parts.items():
         save(n, m)

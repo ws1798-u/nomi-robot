@@ -5,7 +5,7 @@ from gpiozero import Motor, DigitalInputDevice
 import config as C
 from motion import Ramp
 
-V_MAX = C.RPM_MAX / 60 * math.pi * C.WHEEL_D     # 约 345 mm/s
+V_MAX = C.RPM_MAX / 60 * math.pi * C.WHEEL_D     # 约 450 mm/s（43 mm 轮、200 rpm）
 DANCE_S = 16.0                                   # 跳一次两轮，共 16 秒
 
 
