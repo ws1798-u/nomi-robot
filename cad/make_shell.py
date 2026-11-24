@@ -440,6 +440,26 @@ SHROUD_W = 1.6                    # 屏幕框四周的壁厚
 SHROUD_RIM = 3.0                  # 遮光罩前口贴壳内壁的那圈宽度（在镜片翻边外面）
 
 
+# 摄像头模组（OV5647 树莓派 Zero 款，买来的零件，不缩放）：板子 25 × 24，镜头座高 6–10（120° 广角常见 8–10，两种都让开），
+# 板厚 1 + 背面元件和排线座 2.5；镜头前端离盖片沉台内表面 0.5，沿光轴摆。光轴从 (0, 18K, 93K) 往前上方 29°。
+CAM_BOARD, CAM_LENS_H, CAM_BACK = (25.0, 24.0), (6.0, 10.0), 3.5
+
+
+def cam_keepout(margin=1.0):
+    """摄像头模组占的空间（四周再放 margin），遮光罩要让开它。局部坐标 z 沿光轴向前，原点在光轴穿过沉台内表面的地方。"""
+    ax = np.array([0, math.sin(math.radians(61)), math.cos(math.radians(61))])
+    o = np.array([0, 18 * K, 93 * K])
+    d = 0.0
+    while math.hypot(*(o + d * ax)[:2]) < prof((o + d * ax)[2]):
+        d += 0.05
+    seat_in = d - 1.0                                              # 沉台底面（盖片内表面）离 o 的距离
+    bw, bh = CAM_BOARD
+    zf, zr = -(0.5 + CAM_LENS_H[0]), -(0.5 + CAM_LENS_H[1])       # 板子正面：镜头座最矮 / 最高时
+    board = box(-bw / 2 - margin, bw / 2 + margin, -bh / 2 - margin, bh / 2 + margin, zr - CAM_BACK - margin, zf)
+    lens_ = box(-4 - margin, 4 + margin, -4 - margin, 4 + margin, zf - 0.1, 0.5)   # 镜头座 8 × 8
+    return (board + lens_).translate([0, 0, seat_in]).rotate([-(90 - 29), 0, 0]).translate(list(o))
+
+
 def _scr_place(m, ys):
     """屏幕局部坐标（x 右，y 沿屏幕法线向前，z 上；玻璃正面中心是原点）→ 机身坐标。"""
     zc = (WIN_Z0F + WIN_Z1F) / 2 * K + SCR_DZ
@@ -496,9 +516,8 @@ def screen_shroud():
     body = body - Manifold.batch_hull([front, back])
     body = body - _scr_place(box(-aw / 2 - 0.5, aw / 2 + 0.5, -1, lip + 0.5, -ah / 2 - 0.5, ah / 2 + 0.5), ys)   # 唇上的开口
     body = body - _scr_place(box(-gw / 2 - 0.3, gw / 2 + 0.3, -gt - 5, 0, -gh / 2 - 0.3, gh / 2 + 0.3), ys)   # 放玻璃的框
-    # 让开摄像头（孔、沉台和后面的模组）
-    camk = Manifold.cylinder(60, 10, 10, 48).translate([0, 0, -30]).rotate([-(90 - 29), 0, 0]).translate([0, 18 * K, 93 * K])
-    body = body - camk     # 不能减 cutters()：里面的表情窗切口沿半径一直伸到壳里，会把整个漏斗切掉
+    # 让开摄像头模组（不能减 cutters()：里面的表情窗切口沿半径一直伸到壳里，会把整个漏斗切掉）
+    body = body - cam_keepout()
     body = max(body.decompose(), key=lambda p: p.volume())    # 裁切边上会剩下体积为 0 的碎片，只留主体
     return body.simplify(0.01)    # 去掉存成 STL 后会变成零面积的细小三角形（否则切片软件报“问题边”）
 
