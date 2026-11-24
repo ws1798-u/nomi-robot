@@ -462,10 +462,13 @@ def seam_tabs(front):
 
 # ToF 避障窗口（VL53L1X）：窗口中心离地 22（随比例缩放），光轴上仰 10°。
 # 盖片和传感器是买来的实际尺寸，不缩放：盖片 10 × 6 × 1（样机用 1 mm 红外透光亚克力），开口 8 × 4。
-TOF_Z, TOF_TILT = 22, 10
+TOF_Z, TOF_TILT = 28, 10          # v1.7：22 → 28（打印件离地 32.2）。原来的高度壳往里收得太厉害，小板怎么退都顶内壁，见 BOSS_BACK
 COVER_W, COVER_H, COVER_T = 10.0, 6.0, 1.0
 TOF_W, TOF_H = 8.0, 4.0
 BOSS_T = 2.0                     # 凸台厚度：VL53L1X 芯片高 1.56，模块板贴在凸台背面，芯片顶面离盖片约 0.44
+BOSS_BACK = 3.0                  # v1.7：凸台背面再往里加厚 3。凸台背面是仰 10° 的平面、壳下半截往里收，原来 18 × 13 的小板下面约 3.5 会顶进内壁（v1.6.1 起就有）；
+                                 # 现在小板贴在局部 y = -5，8 × 4 开孔变成 5 深的小隧道（光束张角 ±13.5° / ±18.5°，芯片顶面离盖片 3.44，光束到盖片处半宽 2.6、半高 1.7，不挡光），
+                                 # 固件里要做一次串扰校准
 
 
 def tof_window():
@@ -479,9 +482,9 @@ def tof_window():
         zb = zc + COVER_T * math.sin(a) - (COVER_H / 2) * math.cos(a)
         yc = prof(zb) - COVER_T * math.cos(a) - (COVER_H / 2) * math.sin(a)
     place = lambda m: m.rotate([TOF_TILT, 0, 0]).translate([0, yc, zc])
-    boss = place(box(-9, 9, -BOSS_T, 15, -6.5, 6.5))
+    boss = place(box(-9, 9, -BOSS_T - BOSS_BACK, 15, -6.5, 6.5))
     pocket = place(box(-COVER_W / 2 - FIT, COVER_W / 2 + FIT, 0, 20, -COVER_H / 2 - FIT, COVER_H / 2 + FIT))
-    hole = place(box(-TOF_W / 2, TOF_W / 2, -BOSS_T - 1, 1, -TOF_H / 2, TOF_H / 2))
+    hole = place(box(-TOF_W / 2, TOF_W / 2, -BOSS_T - BOSS_BACK - 1, 1, -TOF_H / 2, TOF_H / 2))
     # 盖片外面的开口按光束张角做成喇叭口：上沿往上张 25°、左右各张 15°（大于光束的 18.5° / 13.5°），光束不会擦到眉檐
     hw, hh = COVER_W / 2 + FIT, COVER_H / 2 + FIT
     front = box(-30, 30, COVER_T, 25, -hh, 30)
