@@ -244,6 +244,60 @@ def win_prism(d, r_ref, r0=30 * K, r1=80 * K, nc=24):
     return Manifold(Mesh(vert_properties=np.asarray(tm.vertices, np.float32), tri_verts=np.asarray(tm.faces, np.uint32)))
 
 
+CAM_SINK = 1.3                     # 沉台深（沿法线，从光轴穿出点量）：盖片厚 1，中心再低 0.3
+CAM_HOLE_R = 7.2                   # 镜头孔半径（沿光轴的通孔）；沉台 Ø16.6，盖片托在两者之间 1.1 mm 宽的一圈上
+CAM_GAP = 1.2                      # 镜头座正面离盖片背面（沿光轴、在中心量）：盖片和光轴斜 12.8°，0.5 会顶到盖片，至少 1.0
+
+
+CAM_HOLDER = 8.0                   # 摄像头模组的方形镜头座边长（买的时候看：8 × 8，±0.3）
+CAM_BARREL = 2.5                   # 镜头筒伸出方形镜头座顶面的最大长度
+CAM_LEDGE = CAM_GAP + CAM_BARREL   # 镜头座顶面（顶在摄像头座的挡边上）离盖片背面多远（沿光轴、中心处）
+
+
+def cam_frame():
+    """摄像头局部坐标的变换：原点在光轴和盖片背面的交点 C，z 沿光轴朝外。返回一个把局部零件放到位的函数。"""
+    p, n = cam_seat()
+    ax = np.array([0, math.sin(math.radians(61)), math.cos(math.radians(61))])
+    c = p - CAM_SINK * n / float(np.dot(ax, n))                   # 沿光轴走到盖片背面
+    return lambda m: m.rotate([-(90 - 29), 0, 0]).translate(list(c))
+
+
+def cam_opening():
+    """盖片沉台（沿壳面法线，Ø16.6、深 CAM_SINK）+ 沉台口 45° 倒角（120° 广角最边上的光线不擦到棱）。"""
+    p_, n_ = cam_seat()
+    rot = [-(90 - math.degrees(math.atan2(n_[2], n_[1]))), 0, 0]
+    seat = Manifold.cylinder(12, hole(8 + FIT, 64), hole(8 + FIT, 64), 64).translate([0, 0, -CAM_SINK]).rotate(rot)
+    bevel = Manifold.cylinder(3.0, hole(8 + FIT, 64), hole(8 + FIT, 64) + 3.0, 64).translate([0, 0, -(CAM_SINK - 1.0) - 0.6]).rotate(rot)
+    return (seat + bevel).translate(list(p_))
+
+
+def cam_socket():
+    """前壳里面的摄像头座（v1.3）：
+    · 方孔 8.6 × 8.6、深 5：摄像头模组的方形镜头座从里面插进去，自动对准光轴（上仰 29°）；
+    · 方孔前端一圈 1 mm 的挡边：镜头座顶面顶到这里就到位（离盖片背面 CAM_LEDGE），镜头筒从中间 Ø8.2 的孔伸出去；
+    · 挡边往外一圈裙边（内 Ø14.4、外 Ø18）一直连到壳壁上，从外面看就是一个整圆的窗口。
+    摄像头板子（25 × 24）贴在方孔后端，板边用 B-7000 粘住。返回 (实体, 要挖掉的部分)。"""
+    place = cam_frame()
+    w = CAM_HOLDER / 2 + FIT
+    solid = cyl_z(9.0, -CAM_LEDGE, 6, seg=64) + box(-w - 1.6, w + 1.6, -w - 1.6, w + 1.6, -CAM_LEDGE - 5, -CAM_LEDGE + 1)
+    cut = cyl_z(CAM_HOLE_R, -CAM_LEDGE + 1, 30, seg=64) + cyl_z(4.1, -CAM_LEDGE - 1, -CAM_LEDGE + 2, seg=48) \
+        + box(-w, w, -w, w, -CAM_LEDGE - 6, -CAM_LEDGE)
+    return place(solid), place(cut)
+
+
+def cam_seat():
+    """摄像头光轴（离地 93 × 比例处起、上仰 29°）穿出外壳的那一点 p，和那里的壳面外法线 n（在 YZ 平面里）。"""
+    ax = np.array([0, math.sin(math.radians(61)), math.cos(math.radians(61))])
+    o = np.array([0, 18 * K, 93 * K])
+    d = 0.0
+    while math.hypot(*(o + d * ax)[:2]) < prof((o + d * ax)[2]):
+        d += 0.01
+    p = o + d * ax
+    dr = (prof(p[2] + 0.05) - prof(p[2] - 0.05)) / 0.1
+    n = np.array([0.0, 1.0, -dr])
+    return p, n / np.linalg.norm(n)
+
+
 def cutters():
     """外壳上所有的开口。"""
     c = []
@@ -254,17 +308,14 @@ def cutters():
     # 表情窗：四角大圆弧的圆角矩形，见 win_prism()
     c.append(win_prism(0.0, 1.0))
     # 摄像头孔：离地 104，朝前上方 29°
-    cam = Manifold.cylinder(40 * K, 6.8, 6.8, 48).translate([0, 0, 20 * K]).rotate([-(90 - 29), 0, 0])
+    cam = Manifold.cylinder(40 * K, CAM_HOLE_R, CAM_HOLE_R, 48).translate([0, 0, 20 * K]).rotate([-(90 - 29), 0, 0])   # v1.3：Ø13.6 → Ø14.4，镜头往里缩了 1 mm，120° 视野边缘不被孔壁挡
     c.append(cam.translate([0, 18 * K, 93 * K]))
-    # 摄像头盖片沉台：光轴穿出外壳的地方，沿光轴往里铣一个 Ø16.4、深 1 mm 的平底台，
-    # 放一片 Ø16 × 1 的平面盖片（透明亚克力或玻璃），盖片外表面中心和壳面齐平，镜头不凸出来
-    ax = np.array([0, math.sin(math.radians(61)), math.cos(math.radians(61))])
-    o = np.array([0, 18 * K, 93 * K])
-    d = 0.0
-    while math.hypot(*(o + d * ax)[:2]) < prof((o + d * ax)[2]):
-        d += 0.05
-    seat = Manifold.cylinder(12, hole(8 + FIT, 64), hole(8 + FIT, 64), 64).translate([0, 0, d - 1.0]).rotate([-(90 - 29), 0, 0])
-    c.append(seat.translate(list(o)))
+    # 摄像头盖片沉台（v1.3 改）：光轴穿出外壳的那一点，沿【壳面法线】往里铣一个 Ø16.6、深 1.3 mm 的平底台，
+    # 放一片 Ø16 × 1 的平面盖片。前额是外凸的弧面：盖片中心比壳面低 0.3，四周比壳面高约 0.3（和 3D 模型里盖片 + 指示灯圈
+    # 微微凸起的样子一样）；托台下面还剩 1 mm 以上的壁。
+    # v1.2 是沿光轴铣的：壳面在这里朝上仰 41.8°、光轴只仰 29°，平盖片一边会翘出壳面 3.3 mm、托台还会切穿。
+    # 摄像头本身照样上仰 29°，在盖片后面斜着看出去（见 cam_seat()）
+    c.append(cam_opening())
     # 避障传感器（ToF）窗口另外做，见 tof_window()
     # 出音孔：背面一片 Ø3 的小孔
     for gz in np.arange(69, 101, 6.0):
@@ -416,6 +467,8 @@ def half(front):
         boss, cut = tof_window()
         solid = revolve([(0.01, Y0 * K)] + [(prof(h), h) for h in np.linspace(Y0 * K, YCAP * K, 90)] + [(0.01, YCAP * K)])
         body = (body + (boss ^ solid)) - cut
+        cs, cc = cam_socket()
+        body = (body + (cs ^ solid)) - cc - cam_opening()
     big = 200 * K
     body = body ^ (box(-big, big, 0, big, -big, big) if front else box(-big, big, -big, 0, -big, big))
     if not front:
@@ -524,24 +577,28 @@ SHROUD_W = 1.6                    # 屏幕框四周的壁厚
 SHROUD_RIM = 3.0                  # 遮光罩前口贴壳内壁的那圈宽度（在镜片翻边外面）
 
 
-# 摄像头模组（OV5647 树莓派 Zero 款，买来的零件，不缩放）：板子 25 × 24，镜头座高 6–10（120° 广角常见 8–10，两种都让开），
-# 板厚 1 + 背面元件和排线座 2.5；镜头前端离盖片沉台内表面 0.5，沿光轴摆。光轴从 (0, 18K, 93K) 往前上方 29°。
+# 摄像头模组（OV5647 树莓派 Zero 款，买来的零件，不缩放）：板子 25 × 24，镜头座 8 × 8、高 6–10（120° 广角常见 8–10，两种都让开），
+# 板厚 1 + 背面元件和排线座 2.5。位置从 cam_seat() 推：镜头座正面中心在盖片背面往里 CAM_GAP（沿光轴量），沿光轴摆。
 CAM_BOARD, CAM_LENS_H, CAM_BACK = (25.0, 24.0), (6.0, 10.0), 3.5
 
 
-def cam_keepout(margin=1.0):
-    """摄像头模组占的空间（四周再放 margin），遮光罩要让开它。局部坐标 z 沿光轴向前，原点在光轴穿过沉台内表面的地方。"""
+def cam_front():
+    """镜头座正面中心（机身坐标）和光轴方向。盖片背面 = 沉台底面：过 p − CAM_SINK·n、法线 n 的平面；
+    光轴和它的交点再沿光轴往里 CAM_GAP。"""
     ax = np.array([0, math.sin(math.radians(61)), math.cos(math.radians(61))])
-    o = np.array([0, 18 * K, 93 * K])
-    d = 0.0
-    while math.hypot(*(o + d * ax)[:2]) < prof((o + d * ax)[2]):
-        d += 0.05
-    seat_in = d - 1.0                                              # 沉台底面（盖片内表面）离 o 的距离
+    p, n = cam_seat()
+    t0 = -CAM_SINK / float(ax @ n)
+    return p + t0 * ax - CAM_GAP * ax, ax
+
+
+def cam_keepout(margin=1.0):
+    """摄像头模组占的空间（四周再放 margin），遮光罩要让开它。局部坐标 z 沿光轴向前，原点在镜头座正面中心。"""
+    front, _ = cam_front()
     bw, bh = CAM_BOARD
-    zf, zr = -(0.5 + CAM_LENS_H[0]), -(0.5 + CAM_LENS_H[1])       # 板子正面：镜头座最矮 / 最高时
+    zf, zr = -CAM_LENS_H[0], -CAM_LENS_H[1]                          # 板子正面：镜头座最矮 / 最高时
     board = box(-bw / 2 - margin, bw / 2 + margin, -bh / 2 - margin, bh / 2 + margin, zr - CAM_BACK - margin, zf)
-    lens_ = box(-4 - margin, 4 + margin, -4 - margin, 4 + margin, zf - 0.1, 0.5)   # 镜头座 8 × 8
-    return (board + lens_).translate([0, 0, seat_in]).rotate([-(90 - 29), 0, 0]).translate(list(o))
+    lens_ = box(-4 - margin, 4 + margin, -4 - margin, 4 + margin, zf - 0.1, 0.0)    # 镜头座 8 × 8，正面贴着 CAM_GAP 的空隙
+    return (board + lens_).rotate([-(90 - 29), 0, 0]).translate(list(front))
 
 
 def _scr_place(m, ys):
