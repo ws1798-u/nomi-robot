@@ -18,8 +18,9 @@ class Body:
         self.ears(0)
 
     def ears(self, deg):
-        """deg：-35 到 35，正数向前。左右舵机镜像安装，所以一个加一个减。"""
-        deg = max(-35, min(35, deg))
+        """deg：-30 到 30，正数向前。左右舵机镜像安装，所以一个加一个减。
+        外壳顶盖上的槽按 ±30° 留的，再大摆杆会顶到槽头。"""
+        deg = max(-30, min(30, deg))
         self.kit.servo[C.EAR_L].angle = 90 + deg
         self.kit.servo[C.EAR_R].angle = 90 - deg
 

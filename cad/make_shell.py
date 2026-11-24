@@ -103,6 +103,57 @@ PADS = [(sx * 24.5, sy * 14.0) for sx in (1, -1) for sy in (1, -1)]
 # 回充红外接收头：后壳上左右各一个（VS1838B，Ø5 圆头），离地 30 × 比例，偏离正后方 ±0.55 弧度
 IR_RX_Z, IR_RX_A = 30, 0.55
 
+# 耳朵和舵机（v1.3）：耳朵中心离中线 24 × 比例，和 3D 模型一样（v1.2 是 20，摆杆会撞骨架立板、槽太短只能摆 ±18°）。
+# 舵机用 3.7 g 小舵机（两只 SG90 横放加摇臂要 53 mm，耳朵之间放不下）：轴沿左右方向，机身朝里平躺在最上层搁板上。
+# 买之前确认的外形上限：机身长 ≤ 21（不含安装耳，安装耳总长 ≤ 28）、宽 ≤ 9、高（底面到顶面，不含输出轴）≤ 19。
+EAR_X = 24 * K
+EAR_STEM = 22 * K                 # 摆杆长（ear() 里胶囊下半球球心到摆杆底）
+EAR_DX = 1.0                      # 摆杆比胶囊中心往里（往机身中线）偏 1 mm：摆到 ±35° 时摆杆外侧离后壳顶口内壁还有间隙
+SV_L, SV_W, SV_H = 21.0, 9.0, 19.0
+SV_SHAFT = 5.0                    # 输出轴离机身一头
+SV_TOP = 4.0                      # 顶面到摇臂外表面：输出轴 + 摇臂
+EAR_RH = 6.0                      # 摆杆孔在摇臂上离轴心（小舵机摇臂的孔一般在 5–9）
+EAR_SWING = 30.0                  # 程序里耳朵摆 ±30°（v1.3 从 35 改小：槽太长会切到顶盖边，30° 时槽外角离顶盖外沿还有约 2.7 mm）
+
+
+def ear_mount():
+    """耳朵和舵机的高度。胶囊下半球绕舵机轴摆 ±EAR_SWING 的整个过程中，离顶盖外表面都至少 1 mm；
+    由此推出摆杆孔、舵机轴和最上层搁板的高度。返回 (球心高, 孔高, 轴高, 搁板顶)。"""
+    hs = np.linspace(YCAP * K, YTOP * K, 3000)
+    rr = np.array([prof(h) for h in hs])
+    R = EAR_STEM - 4 + EAR_RH                                    # 球心离舵机轴
+    def worst(zc):
+        za = zc - R
+        g = 1e9
+        for th in np.radians(np.linspace(0, EAR_SWING, 36)):
+            y, z = R * math.sin(th), za + R * math.cos(th)
+            rho = math.hypot(EAR_X, y)
+            g = min(g, float(np.min(np.hypot(rr - rho, hs - z))) - 6 * K)
+        return g
+    zc = YTOP * K
+    while worst(zc) < 1.0:
+        zc += 0.05
+    hole = zc - EAR_STEM + 4
+    axis = hole - EAR_RH
+    return zc, hole, axis, axis - SV_W / 2
+
+
+def ear_slot_hy():
+    """顶盖上耳朵槽的半长：摆杆（截面 4 × 7）绕舵机轴摆 ±EAR_SWING 时，在顶盖厚度范围里扫过的最远处，再加 1.0。"""
+    zc, hole, axis, _ = ear_mount()
+    hs = np.linspace(YCAP * K, YTOP * K, 2000)
+    hy = 0.0
+    for th in np.radians(np.linspace(0, EAR_SWING, 36)):
+        for d in np.linspace(2, zc - axis, 60):
+            for e in (-3.5, 3.5):
+                y = d * math.sin(th) + e * math.cos(th)
+                z = axis + d * math.cos(th) - e * math.sin(th)
+                rho = math.hypot(EAR_X - EAR_DX - 2, y)          # 摆杆靠里那条边：那里顶盖最高、最厚
+                top = max((h for h in hs if prof(h) >= rho), default=YCAP * K)
+                if (YCAP - 4) * K <= z <= top + 0.5:
+                    hy = max(hy, abs(y))
+    return hy + 1.0
+
 
 def box(x0, x1, y0, y1, z0, z1):
     return Manifold.cube([x1 - x0, y1 - y0, z1 - z0]).translate([x0, y0, z0])
@@ -308,18 +359,19 @@ def usb_door():
 
 
 def seam_tabs(front):
-    """前后壳合缝处的螺丝耳：四颗 M2 × 10 从后壳穿过来，拧进前壳的攻牙孔。"""
+    """前后壳合缝处的螺丝耳：四颗 M2 × 14 从后壳耳朵穿过来，穿过骨架立板，拧进前壳耳朵的攻牙孔（拧进约 5 mm）。
+    骨架就靠这四颗螺丝夹在前后壳中间，不用热熔胶。"""
     tabs, holes = [], []
     for zz in (30 * K, 100 * K):
         for s in (1, -1):
             r = inner_r(zz)
             x0, x1 = sorted((s * (r - 9), s * (r + 0.5)))
-            y0, y1 = (0, 6) if front else (-6, 0)
+            y0, y1 = (1.5, 7.5) if front else (-7.5, -1.5)   # v1.3：前后耳之间空 3 mm，骨架立板夹在中间，螺丝一起穿过
             tabs.append(box(x0, x1, y0, y1, zz - 4, zz + 4))
             if front:      # 前壳这侧攻 M2 牙：螺丝从后壳穿过来，直接拧进前壳，不用在壳里塞螺母
-                holes.append(cyl_y(hole(TAP_M2, 24), -8, 8, s * (r - 5), zz, 24))
+                holes.append(cyl_y(hole(TAP_M2, 24), -9, 9, s * (r - 5), zz, 24))
             else:          # 后壳这侧是 M2 过孔
-                holes.append(cyl_y(hole(1.0 + FIT, 24), -8, 8, s * (r - 5), zz, 24))
+                holes.append(cyl_y(hole(1.0 + FIT, 24), -9, 9, s * (r - 5), zz, 24))
     return tabs, holes
 
 
@@ -365,7 +417,7 @@ def half(front):
     big = 200 * K
     body = body ^ (box(-big, big, 0, big, -big, big) if front else box(-big, big, -big, 0, -big, big))
     if not front:
-        body = body + door_rails()
+        body = body + door_rails() + (speaker_posts() ^ solid_inside_all())
     for th in BASE_SCREWS:
         if (math.sin(math.radians(th)) > 0) == front:
             body = body + base_boss(th)
@@ -376,6 +428,36 @@ def half(front):
     for h in holes:
         body = body - h
     return body
+
+
+SPK_Z = 84                        # 出音孔中心离地（未缩放）
+
+
+def solid_inside_all():
+    return revolve([(0.01, Y0 * K)] + [(prof(h) - 0.5, h) for h in np.linspace(Y0 * K, YCAP * K, 90)] + [(0.01, YCAP * K)])
+
+
+def speaker_y():
+    """喇叭（Ø36 或 Ø40）纸盆面所在的平面 y（负数，在后壳里）：壳面在这里上下左右都弯，平的喇叭只能放在离出音孔中心约 9 mm 的平面上，
+    外圈刚好不碰壳。"""
+    zc = SPK_Z * K
+    ys = []
+    for ph in np.linspace(0, 2 * math.pi, 72, endpoint=False):
+        x, z = 21 * math.cos(ph), zc + 21 * math.sin(ph)
+        ys.append(math.sqrt(max(inner_r(z) ** 2 - x * x, 0)))
+    return -(min(ys) - 0.3)
+
+
+def speaker_posts():
+    """后壳内壁上的喇叭座：4 根 Ø4 小柱，在半径 19 的圆上（Ø36 和 Ø40 的喇叭框都压得到），内端齐在同一个平面上，喇叭用热熔胶或 B-7000 粘上去。"""
+    y = speaker_y()
+    zc = SPK_Z * K
+    posts = None
+    for a in (30, 150, 210, 330):
+        x, z = 19 * math.cos(math.radians(a)), zc + 19 * math.sin(math.radians(a))
+        p = cyl_y(2.0, -90, y, x, z, 24)
+        posts = p if posts is None else posts + p
+    return posts
 
 
 def base_boss(th):
@@ -535,11 +617,17 @@ def cap():
     # 止口往上伸进盖子里，直到碰到盖子内壁（多伸 0.5），和盖子连成一体
     join = next(h for h in np.linspace(YCAP * K, top_in, 400) if inner_off(h) <= r - 0.8) + 0.5
     lip = revolve([(r - 1.6, (YCAP - 3) * K), (r, (YCAP - 3) * K), (r, join), (r - 1.6, join)])
+    hy = ear_slot_hy()
+    for s_ in (1, -1):                # 耳朵槽附近的止口整段让开（比槽每边再宽 1.5），不留被槽切出来的薄尖角
+        x0, x1 = sorted((s_ * (EAR_X - EAR_DX - 4.5), s_ * 60))
+        lip = lip - box(x0, x1, -hy - 1.5, hy + 1.5, (YCAP - 5) * K, (YTOP + 2) * K)
     part = dome + lip
+    # 耳朵摆杆的槽：跟着摆杆，宽 6（摆杆 4）；长度按摆杆绕舵机轴摆 ±EAR_SWING 时扫过的范围再加 1.0
     for s in (1, -1):
-        x0, x1 = sorted((s * 16.5 * K, s * 23.5 * K))        # 耳朵摆杆的槽，中心在 ±20 × 比例
-        part = part - box(x0, x1, -9 * K, 9 * K, (YCAP - 4) * K, (YTOP + 2) * K)
-    return part
+        x0, x1 = sorted((s * (EAR_X - EAR_DX - 3), s * (EAR_X - EAR_DX + 3)))   # 摆杆宽 4，两边各留 1
+        part = part - box(x0, x1, -hy, hy, (YCAP - 4) * K, (YTOP + 2) * K)
+    # 槽把止口切断，槽外侧会剩两小片止口悬空，去掉，只留顶盖本体
+    return max(part.decompose(), key=lambda b: b.volume())
 
 
 def base_plate():
@@ -558,28 +646,38 @@ def base_plate():
     p = p - cyl_z(hole(8 + FIT, 48), z0 - 1, z0 + 1.6, seg=48)                  # 触点板槽：Ø16 × 1.6 的四环触点板，和底面齐平
     p = p + cyl_z(10.5, z0 + 2.4, z0 + 2.5 + 1.0, seg=64)          # 中间加厚 1 mm：触点板槽（深 1.6）上方从 0.9 变成 1.9 mm
     p = p - cyl_z(2.5, z0 - 1, z0 + 5, seg=24)                    # 触点板背面的 4 根线从这里穿上去
-    p = p + box(-9, 9, -(r - 1), -(r - 9), z0 + 2.4, z0 + 5.5)    # 后缘垫块：USB-C 充电板粘在上面，口朝后对准窗口（往下压 0.1 和底盘连成一体）
+    # 后缘垫块：一块 USB-C 母座转接板（不超过 13 × 10）粘在上面，口朝后对准窗口（往下压 0.1 和底盘连成一体）。
+    # v1.3：充电板不再放这里（会和后面那个悬崖传感器挤在一起），改成贴在后面那个电池盒顶上，转接板用线接过去；
+    # 垫块从 18 宽收到 14 宽，后面那个悬崖传感器的探头就在垫块右边
+    p = p + box(-7, 7, -(r - 1), -(r - 9), z0 + 2.4, z0 + 5.5)
     for a in BASE_SCREWS:              # 三个 M2 过孔，螺丝从底下穿上去拧进外壳的螺丝柱
         p = p - cyl_z(hole(1.0 + FIT, 24), z0 - 1, z0 + 4, BASE_SCREW_R * math.cos(math.radians(a)), BASE_SCREW_R * math.sin(math.radians(a)), 24)
     return p
 
 
 def frame():
-    """内部骨架：一块立板（在左右方向的平面里）加三层搁板，电池、主板、舵机都放在上面。
-    电机卡在立板下方的两个缺口里。这是起步版，孔位请按你买到的零件核对后再打印。"""
+    """内部骨架：一块立板（在左右方向的平面里，正好在前后壳合缝上）加三层搁板。
+    · 立板被前后壳合缝处的 4 颗 M2 × 14 螺丝夹住（螺丝穿过立板），装好后不会晃；
+    · 最下层：立板前后各放一个 18650 单节电池盒（两节串联）；
+    · 中间层：前侧放树莓派 Zero 2 W（四个 M2.5 孔都在立板前侧），后侧放舵机板、降压、功放、电量检测等小板；
+    · 最上层：两只 3.7 g 小舵机平躺，输出轴朝外，摇臂上锁耳朵摆杆。立板只做到这层搁板为止，上面留给摆杆和舵机；
+    · 电机卡在立板下方的两个缺口里，用扎带绑；后面那个悬崖传感器的小板从立板下方的缺口穿过去。"""
     FB = Y0 * K + 2.5 + 1.0 + 0.5                                # 骨架底边：底盘中间圆台顶再往上 0.5
-    hs = np.linspace(FB, 112 * K, 70)
+    MID = 60 * K + 2.5                                           # 中间层搁板顶面（v1.3 抬高 2.5：电池盒高 21 + 上面贴的降压板 / 充电板 6 也放得下）
+    _, _, axis, sv_shelf = ear_mount()                           # 最上层搁板顶面
+    hs = np.linspace(FB, sv_shelf - 0.5, 70)                      # 立板顶面埋进最上层搁板 0.5，不和搁板顶面共面
     def gap(h):                       # 离内壁：沿半径 1 mm，壁很斜的地方再放大，保证垂直于壁面至少 FIT
         sl = abs(inner_r(h + 0.05) - inner_r(h - 0.05)) / 0.1
         return max(1.0, (FIT + 0.05) * math.sqrt(1 + sl * sl))
     outline = [(inner_r(h) - gap(h), h) for h in hs]
     pts = outline + [(-r, h) for r, h in outline[::-1]]
     plate = Manifold.extrude(CrossSection([ccw(pts)]), 3).translate([0, 0, -1.5]).rotate([90, 0, 0])   # XZ 平面的立板，厚 3
-    inside = revolve([(0.01, FB)] + outline + [(0.01, 112 * K)])
+    hi = np.linspace(FB, sv_shelf + 1, 70)
+    inside = revolve([(0.01, FB)] + [(inner_r(h) - gap(h), h) for h in hi] + [(0.01, sv_shelf + 1)])
     shelves = [
-        box(-40 * K, 40 * K, -22, 22, 35 * K - 2, 35 * K),          # 电池盒搁板
-        box(-36, 36, -16, 26, 60 * K - 2, 60 * K),                  # 主板搁板（树莓派 Zero 65 × 30）
-        box(-42, 42, -15, 15, 97 * K - 2, 97 * K),                  # 舵机搁板
+        box(-40 * K, 40 * K, -22.5, 22.5, 35 * K - 2, 35 * K),      # 电池搁板：前后各放一个 18650 单节电池盒（约 77 × 21）
+        box(-36, 36, -30, 34, MID - 2, MID),                        # 主板搁板：前侧树莓派 Zero（65 × 30），后侧小模块
+        box(-42, 42, -26, 20, sv_shelf - 2, sv_shelf),              # 舵机搁板：前面放两只舵机，后面一条放电量检测和功放小板
     ]
     f = plate
     for sh in shelves:
@@ -593,26 +691,36 @@ def frame():
         # 给轮子让位
         xa, xb = sorted((s * (WHEEL_X - 7), s * 200))
         f = f - box(xa, xb, -30, 30, -1, AXLE_Z * 2 + 4)
-        # 树莓派 Zero 的四个安装孔：58 × 23，M2.5
-        for dy in (-6.5, 16.5):
-            f = f - cyl_z(hole(1.25 + FIT, 24), 60 * K - 4, 60 * K + 1, s * 29, dy, 24)
-    # 让开前后壳合缝处的螺丝耳（M2 螺丝从这里穿过）
+        # 树莓派 Zero 的四个安装孔：58 × 23，M2.5；板子整块在立板前侧（y 1.8–31.8）
+        for dy in (5.3, 28.3):
+            f = f - cyl_z(hole(1.25 + FIT, 24), MID - 4, MID + 1, s * 29, dy, 24)
+        # 舵机：机身平躺（宽 SV_W 朝上），每只两条扎带槽（扎带 2.5 宽），槽在机身前后两头外面
+        xm = s * (EAR_X - EAR_DX - 2 - SV_TOP - SV_H / 2)
+        for yy in (-SV_SHAFT - 2.6, SV_L - SV_SHAFT + 0.6):
+            f = f - box(xm - 2, xm + 2, yy, yy + 2, sv_shelf - 3, sv_shelf + 1)
+    # 合缝螺丝：立板夹在前后壳的螺丝耳中间，螺丝从这里穿过（M2 过孔）；搁板在螺丝耳前后让开
     for zz in (30 * K, 100 * K):
         for s in (1, -1):
             r = inner_r(zz)
+            f = f - cyl_y(hole(1.0 + FIT, 24), -3, 3, s * (r - 5), zz, 24)
             x0, x1 = sorted((s * (r - 9 - FIT), s * (r + 1)))
-            f = f - box(x0, x1, -6 - FIT, 6 + FIT, zz - 4 - FIT, zz + 4 + FIT)
+            for y0, y1 in ((1.5, 7.5 + FIT), (-7.5 - FIT, -1.5)):
+                f = f - box(x0, x1, y0, y1, zz - 4 - FIT, zz + 4 + FIT)
+    # 后面那个悬崖传感器（x = 9 × 比例）的小板从立板下方穿过去：小板离地 15.5–26.1，缺口只开这一段，
+    # 下面留一条立板连着电机下方那一块（那里有绑电机的扎带槽）
+    f = f - box(9 * K - 8, 9 * K + 8, -5, 5, 15.0, 26.6)
     # 走线孔
     f = f - cyl_y(7, -5, 5, 0, 48 * K, 32) - cyl_y(7, -5, 5, 0, 80 * K, 32)
     return f
 
 
 def ear():
-    """耳朵：胶囊形，下面带一根摆杆，摆杆末端的孔锁在舵机摇臂上。用 TPU 软料打印。"""
+    """耳朵：胶囊形，下面带一根摆杆（截面 4 × 7），摆杆末端的孔用舵机摇臂自带的小螺丝锁在摇臂上。用 TPU 软料打印，打 2 个。
+    摆杆比胶囊中心往 −X 偏 EAR_DX：装在右边时 −X 朝机身中线；装左边时把耳朵转 180°，摆杆同样偏向中线。"""
     r, h = 6 * K, 14 * K
     cap_ = cyl_z(r, 0, h, seg=48) + Manifold.sphere(r, 48) + Manifold.sphere(r, 48).translate([0, 0, h])
-    stem = box(-2, 2, -3.5, 3.5, -22 * K, 0)
-    return (cap_ + stem - cyl_x(hole(1.0 + FIT, 20), -4, 4, 0, -22 * K + 4, 20)).translate([0, 0, 22 * K])
+    stem = box(-2 - EAR_DX, 2 - EAR_DX, -3.5, 3.5, -EAR_STEM, 0)
+    return (cap_ + stem - cyl_x(hole(1.0 + FIT, 20), -6, 4, 0, -EAR_STEM + 4, 20)).translate([0, 0, EAR_STEM])
 
 
 def save(name, m):
