@@ -101,9 +101,11 @@ PINS_USB = ((0.0, 0), (3.2, 90), (4.7, 180), (6.2, 270))
 PINS_POWER = ((0.0, 0), (6.2, 270))       # 地面充电座只要 VBUS 和 GND
 AXLE_Z = WHEEL_D / 2             # 轮轴离地
 WHEEL_X = 41 * K                 # 轮子中心到机身中心
-# 滑垫：四个 Ø5，分在左右两侧（x = ±24.5，y = ±14），中间留一条约 44 宽的空道给充电座的接口台
+# 滑垫：四个 Ø5。后面一对在 x = ±24.5、y = −14，中间留一条约 44 宽的空道：倒车上充电座时从接口台两边走过去。
+# 前面一对（v1.5）挪到 x = ±19、y = +20：整机重心在轮轴前面约 3 mm，静止时压在前面这对滑垫上，
+# 离轮轴越远，机身往前点头越少（14 → 20：4.1° → 2.9°），刹车和下坡也更不容易往前翻。前面这对到停稳都不会经过接口台。
 PAD_R = 2.5
-PADS = [(sx * 24.5, sy * 14.0) for sx in (1, -1) for sy in (1, -1)]
+PADS = [(sx * 19.0, 20.0) for sx in (1, -1)] + [(sx * 24.5, -14.0) for sx in (1, -1)]
 # 三个悬崖传感器探头的位置（× 比例）：前面两个，后面一个。后面那个 v1.3 是 (9, −17)，v1.4 挪到 (7, −16.35)
 CLIFF = ((-11, 15), (11, 15), (7, -16.35))
 # 回充红外接收头：后壳上左右各一个（VS1838B，Ø5 圆头），离地 30 × 比例，偏离正后方 ±0.55 弧度
@@ -676,6 +678,7 @@ def screen_shroud():
     frame_out = _scr_place(box(-gw / 2 - SHROUD_W, gw / 2 + SHROUD_W, -gt - 0.3, lip, -gh / 2 - SHROUD_W, gh / 2 + SHROUD_W), ys)
     inside = revolve([(0.01, z0 - 5)] + [(inner_r(h) - 0.1, h) for h in np.linspace(z0 - 5, z1 + 5, 120)] + [(0.01, z1 + 5)])
     body = Manifold.batch_hull([rim, frame_out]) ^ inside
+    hull0 = body
     # 让开镜片翻边（+0.35 胶缝）
     keep = band(z0, z1, 1.0, LENS_LIP_T + 0.05 + 0.35, n=120) ^ win_prism(LENS_LIP + 0.35, rf)
     body = body - keep
@@ -686,7 +689,17 @@ def screen_shroud():
     body = body - _scr_place(box(-aw / 2 - 0.5, aw / 2 + 0.5, -1, lip + 0.5, -ah / 2 - 0.5, ah / 2 + 0.5), ys)   # 唇上的开口
     body = body - _scr_place(box(-gw / 2 - 0.3, gw / 2 + 0.3, -gt - 5, 0, -gh / 2 - 0.3, gh / 2 + 0.3), ys)   # 放玻璃的框
     # 让开摄像头模组（不能减 cutters()：里面的表情窗切口沿半径一直伸到壳里，会把整个漏斗切掉）
-    body = body - cam_keepout()
+    ko = cam_keepout()
+    # 摄像头板子的让位切到漏斗上沿内壁旁边，只剩 0.2–0.8 mm 的一层皮（一碰就破）。在让位外面补一圈 1.2 mm 厚的料，
+    # 只补在原来的外形以内、往漏斗里补；补的地方在漏斗最上沿，屏幕那里是黑底，不挡显示区，也不碰镜片翻边和屏幕框
+    sk = ko
+    for d in ([1.2, 0, 0], [-1.2, 0, 0], [0, 1.2, 0], [0, -1.2, 0], [0, 0, 1.2], [0, 0, -1.2],
+              [0, 0.85, 0.85], [0, -0.85, 0.85], [0, 0.85, -0.85], [0, -0.85, -0.85]):
+        sk = sk + ko.translate(d)
+    patch = (sk ^ hull0) - keep                   # 先并进本体、再统一减掉让位：补料和本体融成一体，不会只碰一条边（切片软件报问题边）
+    patch = patch - _scr_place(box(-aw / 2 - 0.5, aw / 2 + 0.5, -1, lip + 0.5, -ah / 2 - 0.5, ah / 2 + 0.5), ys)
+    patch = patch - _scr_place(box(-gw / 2 - 0.3, gw / 2 + 0.3, -gt - 5, 0, -gh / 2 - 0.3, gh / 2 + 0.3), ys)
+    body = (body + patch) - ko
     body = max(body.decompose(), key=lambda p: p.volume())    # 裁切边上会剩下体积为 0 的碎片，只留主体
     return body.simplify(0.01)    # 去掉存成 STL 后会变成零面积的细小三角形（否则切片软件报“问题边”）
 
