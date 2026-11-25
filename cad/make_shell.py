@@ -439,16 +439,19 @@ def door_path():
 
 
 def _knob(e=0.0):
-    """拨片（门在关闭位置）：端面在壳面下 0.3，往里伸进门板 1.4（插槽深 1.4，门板还剩 1.2 以上）。e：四周放大（给门上的插槽用）。"""
+    """拨片（门在关闭位置）：端面在壳面下 0.3，往里伸进门板 1.0（沿半径量）。e：四周放大（给门上的插槽用）。
+    v1.9.1：壳壁在这里很斜（斜率 1.2–2.1），插槽底是斜面，沿半径多挖 e 只等于垂直于槽底 e / 2.4；
+    所以槽底沿半径多挖 e × sqrt(1 + 斜率²)，垂直于槽底也是 e。插槽沿半径深 1.0 + 0.47，门板还剩约 1.1（沿半径）。"""
     z0, z1 = _door_z()
     g = nfit(z0, z1)
     zk = (WIN_Z0 + WIN_Z1) / 2 * K
-    da = 0.025 + e / inner_r(zk)
-    return band(zk - 2.5 - e, zk + 2.5 + e, prof(zk) - inner_r(zk) - 0.3, g + 1.4 + e) ^ sector(math.pi - 0.22 - da, math.pi - 0.22 + da, 1, 200, 0, 60 * K, 8)
+    sl = max(abs(inner_r(h + 0.05) - inner_r(h - 0.05)) / 0.1 for h in np.linspace(zk - 2.5 - e, zk + 2.5 + e, 30))
+    da = 0.025 + e / (inner_r(zk) - g - DOOR_T)     # 按门板内表面的半径换算角度，侧边的缝也不小于 e
+    return band(zk - 2.5 - e, zk + 2.5 + e, prof(zk) - inner_r(zk) - 0.3, g + 1.0 + e * math.sqrt(1 + sl * sl)) ^ sector(math.pi - 0.22 - da, math.pi - 0.22 + da, 1, 200, 0, 60 * K, 8)
 
 
 def usb_door():
-    """滑门本体（v1.9 起不带拨片）。门在关闭位置（居中对着正后方）。门外表面有一个 1.4 深的小槽（四周比拨片大 0.2，留胶），拨片 usb_knob() 插进去粘牢。
+    """滑门本体（v1.9 起不带拨片）。门在关闭位置（居中对着正后方）。门外表面有一个小插槽（四周和槽底都比拨片大 0.2，留胶），拨片 usb_knob() 插进去粘牢。
     v1.8 以前拨片和门是一体的：拨片一离开窗口就卡在壳壁里，门根本推不进导轨。现在先把门从导轨一头转进去，再从窗口把拨片粘上。"""
     z0, z1 = _door_z()
     g = nfit(z0, z1)
@@ -550,6 +553,20 @@ def tof_window():
 
 
 TOF_DIV_T = 0.6                   # 隔墙厚
+
+
+def tof_board_relief():
+    """凸台背面下方的让位（v1.9.1）：VL53L1X 小板（18 × 13，板厚 1.6 + 背面元件 2）贴在凸台背面，芯片在板子正中时，
+    板子下沿的两个角会顶进前壳内壁约 0.3 mm。这里按“芯片在板子正中、再往下偏 1 mm 也放得下”留一块 18.6 × 14.6 的空间（四周 0.3），
+    只挖凸台背面往后 1.9（板厚 1.6 + 0.3）那一层里的壳壁（只有板子下沿两个角那里碰得到壁，挖掉不到 0.5），凸台本身不动。"""
+    a = math.radians(TOF_TILT)
+    zc = TOF_Z * K
+    yc = 0.0
+    for _ in range(30):
+        zb = zc + COVER_T * math.sin(a) - (COVER_H / 2) * math.cos(a)
+        yc = prof(zb) - COVER_T * math.cos(a) - (COVER_H / 2) * math.sin(a)
+    yb = -BOSS_T - BOSS_BACK
+    return box(-9.3, 9.3, yb - 1.9, yb - 0.01, -7.8, 7.3).rotate([TOF_TILT, 0, 0]).translate([0, yc, zc])
 
 
 def tof_divider():
@@ -696,7 +713,7 @@ def half(front):
     if front:
         boss, cut = tof_window()
         solid = revolve([(0.01, Y0 * K)] + [(prof(h), h) for h in np.linspace(Y0 * K, YCAP * K, 90)] + [(0.01, YCAP * K)])
-        body = (body + (boss ^ solid) + tof_strip_pad()) - tof_strip_recess() - cut + tof_divider()
+        body = (body + (boss ^ solid) + tof_strip_pad()) - tof_strip_recess() - cut + tof_divider() - tof_board_relief()
         cs, cc = cam_socket()
         body = (body + (cs ^ solid)) - cc - cam_opening()
     big = 200 * K
@@ -825,7 +842,8 @@ def cam_keepout(margin=1.0):
     # 摄像头座直接取 cam_socket() 的实体（不手抄尺寸），往 ±x、±y、±z 各挪 0.5 取并集，相当于四周放大 0.5
     s0 = cam_socket()[0]
     socket = s0
-    for d in ([0.5, 0, 0], [-0.5, 0, 0], [0, 0.5, 0], [0, -0.5, 0], [0, 0, 0.5], [0, 0, -0.5]):
+    # v1.9.1：只沿 ±x、±y、±z 挪的话，方块的棱角那里没放大（遮光罩会贴着摄像头座的棱），所以 26 个方向都挪
+    for d in [[0.5 * a, 0.5 * b, 0.5 * c] for a in (-1, 0, 1) for b in (-1, 0, 1) for c in (-1, 0, 1) if (a, b, c) != (0, 0, 0)]:
         socket = socket + s0.translate(d)
     bw, bh = CAM_BOARD
     zf, zr = -CAM_LEDGE - CAM_LENS_H[0], -CAM_LEDGE - CAM_LENS_H[1]   # 板子正面：镜头座最矮 / 最高时
