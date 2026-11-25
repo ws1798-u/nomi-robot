@@ -152,12 +152,13 @@ pre code { background: none; padding: 0; color: inherit; }
   <figure style="margin:18px 0 0"><img src="img/cad-charge.jpg?v=20261125w" alt="充电相关零件预览：底盘底面的垫片槽、触点板和四个滑垫，夹座的接口凸台和后侧 USB-C 仓，后壳的隐藏 USB-C 滑门和两个红外接收头孔，地面充电座" style="display:block;width:100%;border-radius:12px;border:1px solid var(--line);background:#fff" loading="lazy"></figure>
   <figure style="margin:18px 0 0"><img src="img/cad-dock.jpg?v=20261125w" alt="地面充电座细节：正面的三个信标孔、两块挡块和漏斗导轨；剖开看套筒、浮动接口台和底盖环；侧面剖开看机器人停到位，接口台被磁铁吸起贴住底盘" style="display:block;width:100%;border-radius:12px;border:1px solid var(--line);background:#fff" loading="lazy"><figcaption style="font-size:13px;color:var(--mute);margin-top:6px">充电座三个打印件：底座、浮动接口台、底盖环。右边是从中间剖开的侧面：轮子顺着缓坡开上来，挡块定住前后，接口台被磁铁吸起来贴住底盘。</figcaption></figure>
   <figure style="margin:18px 0 0"><img src="img/cad-clip.jpg?v=20261125" alt="夹座零件预览：托盘俯视、接口凸台特写（6 个磁铁坑和 4 个弹针孔）、装上撑脚的侧面、后侧 USB-C 小板仓" style="display:block;width:100%;border-radius:12px;border:1px solid var(--line);background:#fff" loading="lazy"></figure>
-  <figure style="margin:18px 0 0"><img src="img/cad-preview.jpg?v=20261125v195" alt="生成的零件预览：装配后的外壳正面、背面、底面，以及前壳内侧、骨架、顶盖、底盘" style="display:block;width:100%;border-radius:12px;border:1px solid var(--line);background:#fff" loading="lazy"></figure>
+  <figure style="margin:18px 0 0"><img src="img/cad-preview.jpg?v=20261125v196" alt="生成的零件预览：装配后的外壳正面、背面、底面，以及前壳内侧、骨架、顶盖、底盘" style="display:block;width:100%;border-radius:12px;border:1px solid var(--line);background:#fff" loading="lazy"></figure>
   <div class="note"><b>这些文件的可靠程度不一样：</b><br>
   · <b>外壳、顶盖、底盘</b>是按轮廓公式直接算出来的，壁厚垂直于壳面处处 2 mm（底口是一圈 2 mm 宽的实心平底），尺寸我用程序核对过（骨架离内壁最近处 1 mm，底盘和外壳之间至少 0.3 mm），可以直接打印。<br>
   · <b>整机装配核对过：</b>把所有打印件按装好的位置放在一起，再把买来的零件按清单里写的尺寸上限放进去（电池盒、树莓派、舵机、电机、各个小模块、喇叭、摄像头、悬崖传感器），用程序逐个算过互相不碰；耳朵在 ±20° 全程摆动，不碰顶盖、托碗、外壳、骨架和舵机，和顶盖之间最窄的缝 0.2 mm（摆到头时），平时 0.3 mm。v1.9 又按装配顺序把每一步的移动路径和螺丝刀能不能够到都模拟了一遍（底盘先拧在骨架上 → 合前壳 → 拧前壳合缝螺丝 → 合后壳 → 拧底盘和顶口螺丝 → 盖顶盖），改掉了上一版装不上的四处：导光条推不进去、合缝螺丝拧不到、滑门推不进导轨、带托碗的顶盖放不进顶口。<br>
   · <b>夹座也是起步版。</b>托盘尺寸是按轮子转一圈扫过的范围算的（留了 2.5 mm 余量），但夹得稳不稳取决于你的显示器，一定要先在低处试。只适合上沿平直、厚 8–45 mm 的台式显示器。<br>
   · <b>小模块放哪：</b>树莓派用 M2.5 螺丝装在中间层前侧；舵机板 PCA9685 放中间层后侧；两只舵机平躺在最上层，各用两根扎带绑住；电量检测 ADS1115 和功放 MAX98357A 放最上层后面那一条；前面那个电池盒顶上并排贴两块降压模块和 2 串保护板（保护板在中间）；后面那个电池盒顶上并排贴充电板、电机驱动 DRV8833 和 MOS 电子开关模块（v1.9.6 改：MOS 模块原来写的“竖着贴在立板背面左边”放不下，会撞上电池搁板和左边电机；现在平贴在电池盒顶上，电池盒顶到中层搁板只有 8.25 mm，模块要 34 × 17 以内、厚 7 以内，不带接线端子、直接焊线）；拨动开关粘在底盘上面左后方，拨杆对准底盘的小槽；12 颗灯环平放粘在两只舵机顶上，4 颗红外发射管朝四个斜角（避开两只耳朵）、往上仰 30°，用热熔胶把灯头粘在顶盖内侧、离顶盖约 0.5 mm，光透过顶盖出去（拆顶盖时线要留长一点）；触摸模块和学习遥控用的红外接收头贴在顶盖里面正中间；电机驱动 DRV8833 在后面那个电池盒顶上、充电板和 MOS 模块中间（v1.4 轮子加宽后电机变长，立板下面放不下了）；喇叭粘在后壳的 4 根小柱上；麦克风贴在顶盖里面后侧那 7 个小孔正下方（声音从小孔进来）。这些小板用双面胶或热熔胶固定，摄像头用热熔胶粘在前额沉台后面。<br>
+  <img src="img/cad-inner.jpg?v=20261125v196" alt="外壳拿掉后的内部：骨架、电池盒、树莓派、舵机板、舵机、灯环、喇叭、屏幕、摄像头，以及电池盒顶上的电源小板（降压①、保护板、降压②；充电板、DRV8833、MOS 开关）" style="width:100%;margin:6px 0 4px;border-radius:8px;border:1px solid var(--line);background:#fff" loading="lazy"><br>
   · <b>地面充电座按“机器人自己倒车开上来”设计，用程序核对过：</b>机器人沿中线倒车进来，不管机身平着、往前点头还是往后仰（压在前面或后面一对滑垫上），左右偏 2 mm 以内，外壳、底盘、轮子都不碰导轨、套筒和接口台；只有滑垫在底板上滑。接口台平时落在离底板 3.6 mm，弹针头 4.6 mm，比机身后仰时外壳最低处（4.7 mm）还低。到位时<b>两个轮子顶住导轨里的挡块</b>（v1.3 改：原来是外壳后背碰挡块，机身在滑垫上前后点头 ±4° 时停的位置会差 ±3 mm，地线弹针就落不到触点环上）。轮子绕轮轴转，最后面那一点永远在轮轴正后方，所以不管机身点不点头都停在同一个位置（模拟：后仰 0°、2°、4.2° 都停在接口台中心 0.05 mm 以内）；斜着倒进来时一个轮子先顶到，另一个继续倒直。挡块高 10.5（比轮轴低，避开轮舱后面的外壳），要爬上去每个轮子得推约 3.2 N，N20 堵转只有约 2.6 N。接口台被磁铁吸起 3.3 mm 贴住底盘。缓坡、导轨和磁铁吸力还要实物试。<br>
   · <b>滑门和导轨是起步版。</b>间隙按 0.3 mm 留的（门和壳壁、门和导轨内唇，按垂直于壁面算），用程序核对过关上、推开到底都不碰壳体和底盘；打印精度差的话把门的边缘磨一下。<br>
   · <b>配合间隙统一每边 0.3 mm：</b>滑门、接口台、顶盖、底盘、骨架，以及买来的零件（磁铁、弹针、垫片、触点板、M2 / M3 螺丝、红外头、盖片）放进打印件的孔和槽，都按 0.3 mm 留，用程序逐处核对过。这是打印商家通常要求的下限；切片时不要再加孔补偿或 XY 补偿。想改就改 <code>make_shell.py</code> 开头的 <code>FIT</code>。<br>
@@ -196,9 +197,9 @@ pre code { background: none; padding: 0; color: inherit; }
     <tr><td rowspan="2"><b>电机驱动 DRV8833</b></td><td>IN1、IN2（左轮）</td><td>GPIO5、GPIO6</td><td rowspan="2">VM 接电池（7.2 V，满电 8.4 V），不要接 5 V。左右轮转反了就把那个电机的两根线对调</td></tr>
     <tr><td>IN3、IN4（右轮）</td><td>GPIO13、GPIO26</td></tr>
     <tr><td><b>表情屏 ST7789</b></td><td>SDA、SCL、CS、DC、RST</td><td>GPIO10、GPIO11、GPIO8、GPIO25、GPIO24</td><td>VCC 和背光 BL 接 3.3 V</td></tr>
-    <tr><td><b>舵机板 PCA9685</b></td><td>SDA、SCL</td><td>GPIO2、GPIO3</td><td>逻辑电 VCC 接 3.3 V，舵机电 V+ 接 5 V。左耳插 0 号，右耳插 1 号</td></tr>
-    <tr><td><b>灯环 WS2812</b></td><td>DIN</td><td>GPIO12</td><td>电源接 5 V。灯乱闪就在数据线上加一个 3.3 V 转 5 V 的电平转换</td></tr>
-    <tr><td><b>功放 MAX98357A</b></td><td>BCLK、LRC、DIN</td><td>GPIO18、GPIO19、GPIO21</td><td>电源接 5 V，输出接喇叭</td></tr>
+    <tr><td><b>舵机板 PCA9685</b></td><td>SDA、SCL</td><td>GPIO2、GPIO3</td><td>逻辑电 VCC 接 3.3 V，舵机电 V+ 接<b>降压 ②</b> 的 5 V。左耳插 0 号，右耳插 1 号</td></tr>
+    <tr><td><b>灯环 WS2812</b></td><td>DIN</td><td>GPIO12</td><td>电源接<b>降压 ②</b> 的 5 V（腰部灯带串在灯环后面，同一路）。灯乱闪就在数据线上加一个 3.3 V 转 5 V 的电平转换</td></tr>
+    <tr><td><b>功放 MAX98357A</b></td><td>BCLK、LRC、DIN</td><td>GPIO18、GPIO19、GPIO21</td><td>电源接<b>降压 ②</b> 的 5 V，输出接喇叭</td></tr>
     <tr><td><b>麦克风 INMP441</b></td><td>SCK、WS、SD</td><td>GPIO18、GPIO19、GPIO20</td><td>电源接 3.3 V，L/R 接地。时钟两根线和功放共用</td></tr>
     <tr><td><b>ToF 测距 VL53L1X</b></td><td>SDA、SCL</td><td>GPIO2、GPIO3</td><td>和舵机板共用 I2C（地址 0x29 和 0x40 不冲突），VIN 接 3.3 V；XSHUT 可以不接</td></tr>
     <tr><td><b>悬崖传感器 ×3</b></td><td>DO</td><td>前左 GPIO17、前右 GPIO27、后 GPIO22</td><td>电源接 3.3 V。用模块上的电位器调到“对着桌面灭、悬空亮”</td></tr>
@@ -214,7 +215,7 @@ pre code { background: none; padding: 0; color: inherit; }
   <ul>
     <li><b>电源开关：</b>大电流走一块“MOS 管触发开关模块”：电池（经保护板）接模块的电源输入，两路负载接模块的输出；底盘上那个 SS12D00 微型拨动开关接在电池正极和模块的触发端之间（只过很小的电流）。机器人翻过来，拨杆就在左后方滑垫旁边。充电板的输出直接接电池（在开关前面），关着机也能充电。</li>
     <li><b>一路直接给电机驱动</b>的 VM（7.2 V）。</li>
-    <li><b>一路进降压模块 ①（5 V 3 A）</b>，只给树莓派（从 5 V 针脚供电）和小电流的东西：屏幕、摄像头、麦克风、ToF、悬崖传感器、ADS1115、PCA9685 的逻辑电源（VCC）。树莓派的 5 V 和 GND 上并一颗 1000 µF 电解电容。</li>
+    <li><b>一路进降压模块 ①（5 V 3 A）</b>，只给树莓派（从 5 V 针脚供电）和小电流的东西：屏幕、摄像头、麦克风、ToF、悬崖传感器、ADS1115、PCA9685 的逻辑电源（VCC，接树莓派的 3.3 V）。树莓派的 5 V 和 GND 上并一颗 1000 µF 电解电容（注意正负极）。</li>
     <li><b>一路进降压模块 ②（5 V 3 A）</b>，给大电流、会突然抽电的东西：PCA9685 的舵机电源（V+）、灯环 + 腰部灯带、功放 MAX98357A。两块降压的 GND 接在一起。（v1.9.6 改：原来一块 3 A 全带，说话、摆耳朵、亮灯同时来时高峰约 3.5–4 A，电压掉下去树莓派会重启。）先用万用表确认两块都是 5.0–5.2 V 再接。</li>
     <li><b>充电：</b>用 USB-C 输入的 2 串升压充电板（5 V 进，升到 8.4 V 给两节电池充电，IP2326 一类），它的输入接底部隐藏口那块 USB-C 转接板的 VBUS / GND（充电板自己的 USB-C 口不用）。夹座、充电座的触点经过一个肖特基二极管接到同一块板的输入端。板子不带均衡的话，两节电池要用同一批、电压相差不到 0.05 V 的。</li>
   </ul>
