@@ -1,2 +1,5 @@
 .taste-skill/
 firmware/creator.json
+firmware/settings.json
+firmware/memory/
+firmware/models/

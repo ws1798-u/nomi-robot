@@ -1,39 +1,46 @@
-"""对话：摸着头说话 → 语音转文字 → 大模型（可调用工具）→ 文字转语音 → 播放。
+"""声音：录音、听写（语音转文字）、说话（文字转语音）。对话本身在 brain.py / llm.py。
 
-用的是 OpenAI 格式的三个接口：/audio/transcriptions、/chat/completions、/audio/speech。
-国内外很多服务商都兼容这个格式，换服务商只改环境变量。
+听写和说话用 OpenAI 格式的两个接口：/audio/transcriptions、/audio/speech。DeepSeek 和 Claude 没有这两个接口，
+所以语音服务在后台单独配（settings.json 的 voice）；没单独配时，借用对话服务的地址和 key（只在对话服务也是 OpenAI 格式时有用）。
+说话也可以指到自己的 tts_server.py（CosyVoice 2 合成那个女孩声音）。
+
+两种录音：
+  start() / stop()  摸着头说话，松开结束
+  listen(seconds)   主动问候或回答之后开着耳朵等一会儿：有人说话就录下来，没人说话就返回 None（体面散场）
 """
-import json
-import re
+import array
+import math
 import subprocess
 import tempfile
+import time
+import wave
 import requests
-import config as C
 
-TOOLS = [
-    {"type": "function", "function": {
-        "name": "set_device", "description": "用红外控制家电。name 是之前学习遥控器时起的名字，例如 空调开、空调关、电视开关",
-        "parameters": {"type": "object", "properties": {"name": {"type": "string"}}, "required": ["name"]}}},
-    {"type": "function", "function": {
-        "name": "move", "description": "让机器人自己动一下。主人让你跳舞、转圈圈时用 跳舞；让你去充电、说你没电了时用 去充电",
-        "parameters": {"type": "object", "properties": {"action": {"type": "string", "enum": ["转一圈", "跳舞", "前进", "后退", "停", "去充电"]}}, "required": ["action"]}}},
-]
+RATE = 16000
+CHUNK = 480                     # 30 ms 一块
 
 
 class Voice:
-    def __init__(self, on_tool):
-        self.on_tool = on_tool          # 回调：on_tool(name, args) -> 结果文字
-        self.history = []
+    def __init__(self, settings):
+        self.cfg = settings
         self.rec = None
         self.wav = None
 
-    def _headers(self):
-        return {"Authorization": f"Bearer {C.API_KEY}"}
+    def _svc(self, tts=False):
+        v, c = self.cfg["voice"], self.cfg["chat"]
+        borrow = c.get("provider") == "openai"
+        base = (v.get("tts_base") if tts else "") or v.get("base") or (c.get("base") if borrow else "")
+        key = v.get("key") or (c.get("key") if borrow else "")
+        return base.rstrip("/"), {"Authorization": f"Bearer {key}"} if key else {}
 
-    # 录音：摸头开始，松开结束
+    def ready(self):
+        v = self.cfg["voice"]
+        return bool(self._svc()[0] and v.get("asr_model") and self._svc(True)[0])
+
+    # ---------- 录音 ----------
     def start(self):
         self.wav = tempfile.NamedTemporaryFile(suffix=".wav", delete=False).name
-        self.rec = subprocess.Popen(["arecord", "-q", "-f", "S16_LE", "-r", "16000", "-c", "1", self.wav])
+        self.rec = subprocess.Popen(["arecord", "-q", "-f", "S16_LE", "-r", str(RATE), "-c", "1", self.wav])
 
     def stop(self):
         if self.rec:
@@ -42,39 +49,65 @@ class Voice:
             self.rec = None
         return self.wav
 
+    def listen(self, seconds=6.0, max_s=12.0, tail=0.8, stop_flag=None):
+        """先用 0.3 秒量一下环境噪声，之后音量连续几块高过噪声 3 倍就算开口，停顿 tail 秒算说完。
+        seconds 内没人开口返回 None；stop_flag() 为真时（比如有人摸头了）立刻放弃。"""
+        p = subprocess.Popen(["arecord", "-q", "-t", "raw", "-f", "S16_LE", "-r", str(RATE), "-c", "1"], stdout=subprocess.PIPE)
+        frames, floor, loud, quiet_n, started, t0 = [], [], 0, 0, False, time.time()
+        try:
+            while True:
+                buf = p.stdout.read(CHUNK * 2)
+                if not buf or (stop_flag and stop_flag()):
+                    return None
+                rms = rms_of(buf)
+                el = time.time() - t0
+                if el < 0.3:
+                    floor.append(rms)
+                    continue
+                thr = max(400.0, 3 * (sum(floor) / len(floor)))
+                if not started:
+                    frames = (frames + [buf])[-10:]              # 留 0.3 秒开口前的声音
+                    loud = loud + 1 if rms > thr else 0
+                    if loud >= 3:
+                        started = True
+                    elif el > seconds:
+                        return None
+                else:
+                    frames.append(buf)
+                    quiet_n = quiet_n + 1 if rms < thr * 0.6 else 0
+                    if quiet_n * CHUNK / RATE > tail or el > max_s:
+                        break
+        finally:
+            p.terminate()
+            p.wait()
+        path = tempfile.NamedTemporaryFile(suffix=".wav", delete=False).name
+        with wave.open(path, "wb") as w:
+            w.setnchannels(1)
+            w.setsampwidth(2)
+            w.setframerate(RATE)
+            w.writeframes(b"".join(frames))
+        return path
+
+    # ---------- 听写和说话 ----------
     def transcribe(self, wav):
+        base, h = self._svc()
         with open(wav, "rb") as f:
-            r = requests.post(f"{C.API_BASE}/audio/transcriptions", headers=self._headers(),
-                              files={"file": f}, data={"model": C.ASR_MODEL}, timeout=30)
+            r = requests.post(f"{base}/audio/transcriptions", headers=h, files={"file": f},
+                              data={"model": self.cfg["voice"]["asr_model"]}, timeout=30)
         r.raise_for_status()
         return r.json().get("text", "").strip()
 
-    def chat(self, text):
-        """返回 (要说的话, 情绪)。模型要用工具时先执行，再让它把话说完。"""
-        self.history.append({"role": "user", "content": text})
-        self.history = self.history[-16:]
-        for _ in range(3):
-            r = requests.post(f"{C.API_BASE}/chat/completions", headers=self._headers(), timeout=60, json={
-                "model": C.CHAT_MODEL, "tools": TOOLS,
-                "messages": [{"role": "system", "content": C.PERSONA}] + self.history})
-            r.raise_for_status()
-            msg = r.json()["choices"][0]["message"]
-            self.history.append(msg)
-            calls = msg.get("tool_calls") or []
-            if not calls:
-                break
-            for c in calls:
-                args = json.loads(c["function"]["arguments"] or "{}")
-                result = self.on_tool(c["function"]["name"], args)
-                self.history.append({"role": "tool", "tool_call_id": c["id"], "content": str(result)})
-        say = msg.get("content") or ""
-        m = re.search(r"\[情绪:(\w+)\]", say)
-        return re.sub(r"\[情绪:\w+\]", "", say).strip(), (m.group(1) if m else "normal")
-
     def speak(self, text):
-        r = requests.post(f"{C.TTS_BASE}/audio/speech", headers=self._headers(), timeout=60, json={
-            "model": C.TTS_MODEL, "voice": C.TTS_VOICE, "input": text, "response_format": "wav"})
+        base, h = self._svc(True)
+        v = self.cfg["voice"]
+        r = requests.post(f"{base}/audio/speech", headers=h, timeout=60, json={
+            "model": v.get("tts_model", ""), "voice": v.get("tts_voice", ""), "input": text, "response_format": "wav"})
         r.raise_for_status()
         with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as f:
             f.write(r.content)
         subprocess.run(["aplay", "-q", f.name])
+
+
+def rms_of(buf):
+    a = array.array("h", buf)
+    return math.sqrt(sum(x * x for x in a) / max(1, len(a)))

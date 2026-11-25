@@ -8,3 +8,6 @@ flask
 requests
 adafruit-circuitpython-ads1x15
 adafruit-blinka
+anthropic
+numpy
+opencv-python-headless   # 认人用；树莓派上也可以 sudo apt install python3-opencv

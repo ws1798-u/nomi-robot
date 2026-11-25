@@ -286,27 +286,31 @@ dtoverlay=gpio-ir,gpio_pin=15         <u># 红外接收</u>
 enable_uart=0                         <u># 关掉串口，GPIO14 给回充接收头用</u></code></pre>
   <h3>安装和运行</h3>
 <pre><code>sudo apt update
-sudo apt install -y python3-pip python3-picamera2 v4l-utils alsa-utils git
+sudo apt install -y python3-pip python3-picamera2 python3-opencv v4l-utils alsa-utils git
 git clone https://github.com/ws1798-u/nomi-robot.git
 cd nomi-robot/firmware
 sudo pip3 install --break-system-packages -r requirements.txt
 
-<u># 对话服务：任何兼容 OpenAI 接口格式的服务商都行，把这几项换成你自己的</u>
-export NOMI_API_BASE=https://你的服务商地址/v1
-export NOMI_API_KEY=你的密钥
-export NOMI_ASR_MODEL=语音识别模型名
-export NOMI_CHAT_MODEL=对话模型名
-export NOMI_TTS_MODEL=语音合成模型名
-export NOMI_TTS_VOICE=音色名
-export NOMI_TTS_BASE=http://你的电脑地址:8090/v1   <u># 用自己的 tts_server.py 时才设，见下面“机器人的声音”</u>
+<u># 认人用的两个小模型（OpenCV 官方，约 40 MB），下载一次就行；不下也能跑，只是认不出谁是谁</u>
+mkdir -p models && cd models
+wget https://github.com/opencv/opencv_zoo/raw/main/models/face_detection_yunet/face_detection_yunet_2023mar.onnx
+wget https://github.com/opencv/opencv_zoo/raw/main/models/face_recognition_sface/face_recognition_sface_2021dec.onnx
+cd ..
 
 sudo -E python3 main.py</code></pre>
-  <p>然后用手机浏览器打开 <code>http://树莓派的地址:8080</code>。不设置对话服务的那几项也能运行，只是不会对话，摸头时改为显示爱心。</p>
+  <p>然后用手机浏览器打开 <code>http://树莓派的地址:8080/setup</code>，这是它的后台：</p>
+  <ul>
+    <li><b>对话模型：</b>选 DeepSeek、GPT、Claude 或其他兼容 OpenAI 格式的服务，填你自己的 API key，点“试一句”确认能用。key 只存在树莓派上的 <code>settings.json</code> 里，不进仓库、网页上也不会再显示。按你自己的 key 计费，不用订阅。</li>
+    <li><b>语音：</b>DeepSeek 和 Claude 没有语音识别、语音合成接口，要另配一个兼容 OpenAI 格式的语音服务（也可以指向自己的 <code>tts_server.py</code>）；对话用 GPT 时可以借用同一个。</li>
+    <li><b>家人和记忆：</b>添加家人、点“录脸”对着它站 4 秒；填上手机的局域网 IP，它就知道谁回家了。它记住的每一条都能在这里看、改、删，也可以直接对它说“把那件事忘了”。</li>
+    <li><b>主动开口：</b>回家迎接、早安、睡前提醒、到日子的事。可以整个关掉、设免打扰时段、限制每天次数；说完没人接话它就安静收住，也可以对它说“安静一会儿”。</li>
+  </ul>
+  <p>还没配好对话时也能运行，只是不会说话，摸头时改为显示爱心。以前用环境变量（<code>NOMI_API_BASE</code> 等）配置的，没有 <code>settings.json</code> 时照样生效。电脑上可以先跑 <code>python3 test_brain.py</code>（记忆、心情、主动问候的测试）和 <code>python3 sim_web.py</code>（打开后台网页看看）。</p>
   <h3>机器人的声音</h3>
   <p>网站上机器人说话用的是一个固定的声音：开源语音模型 CosyVoice 2，模型自带的女声，加“活泼可爱”的语气。<audio controls preload="none" src="voice/sample.mp3" style="display:block;margin-top:10px;width:min(100%,420px)"></audio></p>
   <ul>
-    <li><b>想让真机用同一个声音：</b>在一台有显卡的电脑或云主机上运行 <code>tts_server.py</code>，然后把 <code>NOMI_TTS_BASE</code> 指向它。机器人说的每一句话都会用这个声音合成。树莓派 Zero 自己跑不动这个模型。</li>
-    <li><b>不想自己架服务：</b>不设 <code>NOMI_TTS_BASE</code>，语音合成就和对话走同一家服务商。请在对方的音色列表里挑一个最接近的活泼女声，填进 <code>NOMI_TTS_VOICE</code>。声音不会和网站上完全一样。</li>
+    <li><b>想让真机用同一个声音：</b>在一台有显卡的电脑或云主机上运行 <code>tts_server.py</code>，然后在后台“语音”里把“说话单独的服务地址”填成它。机器人说的每一句话都会用这个声音合成。树莓派 Zero 自己跑不动这个模型。</li>
+    <li><b>不想自己架服务：</b>“说话单独的服务地址”留空，语音合成就走后台配的语音服务。请在对方的音色列表里挑一个最接近的活泼女声，填进“音色”。声音不会和网站上完全一样。</li>
     <li><b>要卖产品时：</b>参考音请换成你有授权的配音演员录音。现在用的是模型仓库自带的样本，做演示可以，商用前需要确认它的使用权。</li>
   </ul>
   <div class="note"><b>最可能要调的地方：</b>声卡配置（<code>arecord -l</code> 看不到设备时检查 overlay 和接线）；红外设备号（用 <code>ir-ctl -f -d /dev/lirc0</code> 看哪个是发射）；灯环需要 root 权限；屏幕方向不对就改 <code>face.py</code> 里的 <code>rotate</code>。大模型服务要支持“工具调用”，否则它不会替你开空调。密钥不要写进代码或传到公开仓库。</div>

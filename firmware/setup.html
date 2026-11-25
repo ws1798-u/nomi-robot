@@ -1,0 +1,163 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>糯米 · 后台</title>
+<style>
+:root{--acc:#0c8f79;--bg:#eef0f3;--card:#fff;--ink:#0b0c0e;--mute:#667}
+*{box-sizing:border-box}
+body{margin:0;font:15px/1.5 system-ui,-apple-system,"PingFang SC",sans-serif;background:var(--bg);color:var(--ink)}
+main{max-width:640px;margin:0 auto;padding:16px}
+h1{font-size:22px;margin:8px 0 4px}h2{font-size:17px;margin:0 0 10px}
+.sub{color:var(--mute);margin:0 0 16px;font-size:13px}
+section{background:var(--card);border-radius:16px;padding:16px;margin-bottom:14px}
+label{display:block;margin:10px 0 4px;font-size:13px;color:var(--mute)}
+input,select,textarea{width:100%;padding:10px 12px;border:1px solid #d6d9de;border-radius:10px;font:inherit;background:#fff}
+.row{display:flex;gap:8px;flex-wrap:wrap}.row>*{flex:1;min-width:120px}
+button{border:0;border-radius:10px;padding:9px 14px;font:inherit;font-weight:600;background:#e7eaee;color:var(--ink);cursor:pointer}
+button.p{background:var(--acc);color:#fff}button.on{background:var(--acc);color:#fff}
+.seg{display:flex;gap:6px;flex-wrap:wrap}.seg button{flex:1}
+.note{font-size:12px;color:var(--mute);margin-top:8px}
+.chk{display:flex;align-items:center;gap:8px;margin:8px 0}.chk input{width:auto}
+.fact{display:flex;gap:6px;align-items:flex-start;padding:6px 0;border-top:1px solid #eef0f3}
+.fact span{flex:1}.fact small{color:var(--mute)}.fact button{padding:4px 9px;font-size:12px}
+.person{border:1px solid #e3e6ea;border-radius:12px;padding:12px;margin-top:10px}
+.tag{display:inline-block;font-size:12px;background:#eef0f3;border-radius:8px;padding:1px 8px;margin-left:6px;color:var(--mute)}
+#msg{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:#222;color:#fff;padding:8px 14px;border-radius:10px;opacity:0;transition:.3s;font-size:14px}
+</style>
+<main>
+<h1>糯米 · 后台</h1>
+<p class="sub" id="status">读取中…</p>
+
+<section>
+<h2>对话模型</h2>
+<div class="seg" id="presets">
+<button data-p="deepseek">DeepSeek</button><button data-p="openai">GPT</button><button data-p="claude">Claude</button><button data-p="custom">其他</button>
+</div>
+<label>接口地址 <small>（Claude 留空即可）</small></label><input id="c_base" placeholder="https://api.deepseek.com/v1">
+<label>模型名</label><input id="c_model" placeholder="deepseek-chat">
+<label>API key</label><input id="c_key" type="password" autocomplete="off" placeholder="sk-...">
+<div class="row" style="margin-top:12px"><button class="p" id="save_chat">保存</button><button id="test">试一句</button></div>
+<p class="note">key 只存在这台机器里（settings.json），不会上传到别处，网页也不会再显示它。对话按你自己的 key 计费，不需要订阅。</p>
+</section>
+
+<section>
+<h2>语音（听写和说话）</h2>
+<p class="note" style="margin-top:0">DeepSeek 和 Claude 没有语音接口，要另配一个兼容 OpenAI 格式的语音服务（/audio/transcriptions 和 /audio/speech）。对话用 GPT 时可以都留空，直接借用上面的。</p>
+<label>语音服务地址</label><input id="v_base" placeholder="留空 = 用对话服务的">
+<label>语音服务 key</label><input id="v_key" type="password" autocomplete="off">
+<div class="row"><div><label>听写模型</label><input id="v_asr_model" placeholder="whisper-1"></div>
+<div><label>说话模型</label><input id="v_tts_model"></div></div>
+<div class="row"><div><label>音色</label><input id="v_tts_voice"></div>
+<div><label>说话单独的服务地址</label><input id="v_tts_base" placeholder="例如自己的 tts_server.py"></div></div>
+<div class="row" style="margin-top:12px"><button class="p" id="save_voice">保存</button></div>
+</section>
+
+<section>
+<h2>主动开口</h2>
+<div class="chk"><input type="checkbox" id="p_on"><span>允许它主动打招呼（回家迎接、早安、睡前提醒、到日子的事）</span></div>
+<div class="row"><div><label>免打扰开始</label><input type="time" id="p_q0"></div><div><label>免打扰结束</label><input type="time" id="p_q1"></div></div>
+<p class="note">免打扰时段里看到你只做表情和亮灯，不出声。</p>
+<div class="row">
+<div><label>离开几小时算“回家”</label><input type="number" step="0.5" min="0.5" id="p_away_h"></div>
+<div><label>同一个人至少隔（分钟）</label><input type="number" min="5" id="p_cooldown_min"></div>
+</div>
+<div class="row">
+<div><label>一天最多主动几次</label><input type="number" min="0" id="p_max_per_day"></div>
+<div><label>说完等接话（秒，0 = 不等）</label><input type="number" min="0" max="15" id="p_listen_s"></div>
+</div>
+<div class="chk"><input type="checkbox" id="p_move"><span>迎接时转过来、往前迎两步（在桌上和充电时不动）</span></div>
+<div class="row" style="margin-top:12px"><button class="p" id="save_pro">保存</button><button id="mute">安静 2 小时</button><button id="unmute">取消安静</button></div>
+<p class="note">没人接话它就安静收住，不追问；连着被无视，它会自己隔得更久。也可以直接对它说“安静一会儿”。</p>
+</section>
+
+<section>
+<h2>家人和记忆</h2>
+<p class="note" style="margin-top:0" id="mood"></p>
+<div id="people"></div>
+<div class="row" style="margin-top:12px"><input id="new_name" placeholder="名字"><input id="new_call" placeholder="它怎么称呼（如 妈妈）"><button id="add_person">添加家人</button></div>
+<p class="note">记忆按人分开存在这台机器里，可以随时改、删，也可以对它说“把那件事忘了”。“近期”的事过两周自动淡忘，有日期的过了那天几天后淡忘。<br>
+手机 IP：在路由器里给手机绑定固定 IP，并关掉手机上这个 Wi-Fi 的“私有地址 / 随机 MAC”。填了它就能知道谁回家了，没装认人模型时也能迎接。</p>
+</section>
+</main>
+<div id="msg"></div>
+<script>
+const $=s=>document.querySelector(s);
+const api=(u,o)=>fetch(u,o?{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(o)}:undefined).then(r=>r.json());
+const toast=t=>{const m=$('#msg');m.textContent=t;m.style.opacity=1;clearTimeout(m._t);m._t=setTimeout(()=>m.style.opacity=0,2200)};
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]);
+let S=null,preset='custom';
+
+function fill(){
+  const c=S.chat,v=S.voice,p=S.proactive;
+  preset=c.preset||'custom';
+  document.querySelectorAll('#presets button').forEach(b=>b.classList.toggle('on',b.dataset.p===preset));
+  $('#c_base').value=c.base||'';$('#c_model').value=c.model||'';
+  $('#c_key').value='';$('#c_key').placeholder=c.key?'已填写（留空不改）':'sk-...';
+  for(const k of ['base','asr_model','tts_model','tts_voice','tts_base'])$('#v_'+k).value=v[k]||'';
+  $('#v_key').value='';$('#v_key').placeholder=v.key?'已填写（留空不改）':'留空 = 用对话服务的';
+  $('#p_on').checked=p.on;$('#p_move').checked=p.move;[$('#p_q0').value,$('#p_q1').value]=p.quiet;
+  for(const k of ['away_h','cooldown_min','max_per_day','listen_s'])$('#p_'+k).value=p[k];
+  $('#status').textContent=(S.ready?'✅ 对话和语音都配好了':(S.chat_ok?'✅ 对话模型已填':'⚠️ 对话模型还没填好')+' · '+(S.voice_ok?'✅ 语音已配':'⚠️ 语音服务还没配'))+' · '+(S.has_cam?'认人模型已装':'没装认人模型（用手机 IP 判断谁回家）');
+}
+async function load(){S=await api('/api/settings');fill();loadPeople();}
+
+document.querySelectorAll('#presets button').forEach(b=>b.onclick=()=>{
+  preset=b.dataset.p;const P=S.presets[preset];
+  document.querySelectorAll('#presets button').forEach(x=>x.classList.toggle('on',x===b));
+  $('#c_base').value=P.base;$('#c_model').value=P.model;
+  $('#c_base').placeholder=preset==='claude'?'留空即可':'https://…/v1';
+});
+$('#save_chat').onclick=async()=>{
+  const r=await api('/api/settings',{chat:{preset,provider:S.presets[preset].provider,base:$('#c_base').value.trim(),model:$('#c_model').value.trim(),key:$('#c_key').value.trim()}});
+  toast(r.ok?'已保存':'保存失败');load();
+};
+$('#test').onclick=async()=>{toast('问一下…');const r=await api('/api/test',{});toast(r.ok?'它说：'+r.reply:'不行：'+r.error);};
+$('#save_voice').onclick=async()=>{
+  const v={key:$('#v_key').value.trim()};for(const k of ['base','asr_model','tts_model','tts_voice','tts_base'])v[k]=$('#v_'+k).value.trim();
+  await api('/api/settings',{voice:v});toast('已保存');load();
+};
+$('#save_pro').onclick=async()=>{
+  const p={on:$('#p_on').checked,move:$('#p_move').checked,quiet:[$('#p_q0').value,$('#p_q1').value]};
+  for(const k of ['away_h','cooldown_min','max_per_day','listen_s'])p[k]=+$('#p_'+k).value;
+  await api('/api/settings',{proactive:p});toast('已保存');load();
+};
+$('#mute').onclick=async()=>{await api('/api/mute',{minutes:120});toast('接下来 2 小时不主动说话');loadPeople();};
+$('#unmute').onclick=async()=>{await api('/api/mute',{minutes:0});toast('已取消');loadPeople();};
+
+async function loadPeople(){
+  const d=await api('/api/people');
+  const m=d.mood;
+  $('#mood').textContent=`心情 ${m.joy} · 精神 ${m.energy}`+(d.muted_until*1000>Date.now()?` · 安静到 ${new Date(d.muted_until*1000).toLocaleTimeString().slice(0,5)}`:'');
+  $('#people').innerHTML=d.people.map(p=>`<div class="person" data-id="${p.id}">
+    <div class="row"><div><label>名字</label><input data-f="name" value="${esc(p.name)}"></div><div><label>它怎么称呼</label><input data-f="call" value="${esc(p.call)}"></div></div>
+    <div class="row"><div><label>手机 IP（可不填）</label><input data-f="phone" value="${esc(p.phone)}" placeholder="192.168.1.23"></div></div>
+    <div class="row" style="margin-top:8px"><button data-op="save">保存</button><button data-op="face">录脸（对着它站 4 秒）</button>
+    ${p.faces?`<button data-op="clear_faces">清除人脸（${p.faces}）</button>`:''}${p.id!=='p0'?'<button data-op="remove">删除这个人</button>':''}</div>
+    <label>它记得的事 <span class="tag">亲密度 ${m.bond[p.id]??40}</span></label>
+    ${p.facts.length?p.facts.map(f=>`<div class="fact" data-fid="${f.id}"><span>${esc(f.text)} <small>${f.kind}${f.due?' · '+f.due:''}</small></span><button data-fop="edit">改</button><button data-fop="forget">删</button></div>`).join(''):'<p class="note">还没有。多聊聊，它会自己记下来。</p>'}
+    <div class="row" style="margin-top:6px"><input data-new placeholder="手动加一条，例如：喜欢吃草莓"><select data-kind style="max-width:90px"><option>长期</option><option>近期</option></select><button data-fop="add">加</button></div>
+  </div>`).join('');
+}
+$('#people').onclick=async e=>{
+  const b=e.target.closest('button');if(!b)return;
+  const card=b.closest('.person'),id=card.dataset.id;
+  if(b.dataset.op){
+    const op=b.dataset.op;
+    if(op==='remove'&&!confirm('删除这个人和TA的全部记忆？'))return;
+    const o={op,id};
+    if(op==='save')card.querySelectorAll('[data-f]').forEach(i=>o[i.dataset.f]=i.value.trim()),o.op='edit';
+    if(op==='face')toast('请对着它的摄像头站好…');
+    const r=await api('/api/person',o);
+    toast(op==='face'?(r.ok?`收到 ${r.n} 张脸`:r.error):'已保存');
+  }else{
+    const op=b.dataset.fop;
+    if(op==='add'){const t=card.querySelector('[data-new]').value.trim();if(!t)return;await api('/api/fact',{op,pid:id,text:t,kind:card.querySelector('[data-kind]').value});}
+    else{const fid=b.closest('.fact').dataset.fid;
+      if(op==='edit'){const old=b.closest('.fact').querySelector('span').firstChild.textContent.trim();const t=prompt('改成：',old);if(!t)return;await api('/api/fact',{op,id:fid,text:t});}
+      else{if(!confirm('删掉这条记忆？'))return;await api('/api/fact',{op,id:fid});}}
+  }
+  loadPeople();
+};
+$('#add_person').onclick=async()=>{const n=$('#new_name').value.trim();if(!n)return;await api('/api/person',{op:'add',name:n,call:$('#new_call').value.trim()});$('#new_name').value=$('#new_call').value='';loadPeople();};
+load();
+</script>

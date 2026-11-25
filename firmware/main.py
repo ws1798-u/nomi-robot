@@ -2,16 +2,15 @@
 
 每个硬件模块都是可选的：哪个没接好，启动时会打印一行原因并跳过，其余照常工作。
 """
-import re
 import threading
 import time
 import config as C
 import dock
 
 state = {"v": 0.0, "w": 0.0, "manual_until": 0.0, "expr": "normal", "expr_until": 0.0, "desk": False, "dance_t0": 0.0,
-         "battery": None, "charging": False, "dock": dock.IDLE, "go_dock": False, "cancel_dock": False}
-DANCE_WORDS = re.compile(r"跳.{0,2}舞|转.?圈")        # 听到这些词直接跳，不用等大模型
-DOCK_WORDS = re.compile(r"去充电|回去充电|充电去|没电了")
+         "battery": None, "charging": False, "dock": dock.IDLE, "go_dock": False, "cancel_dock": False,
+         "greet_t0": 0.0, "greet_cx": 0.0}
+GREET_TURN, GREET_FWD = 1.5, 0.6          # 迎接：先转向对方 1.5 秒，再往前挪 0.6 秒
 
 
 def load(name, make):
@@ -23,7 +22,12 @@ def load(name, make):
 
 
 def main():
-    import drive, face, body, ir, voice, web, power, beacon
+    import drive, face, body, ir, voice, web, power, beacon, camera, vision, presence
+    from settings import Settings
+    from memory import Memory
+    from mood import Mood
+    from greet import Greeter
+    from brain import Brain
     d = load("底盘", drive.Drive)
     f = load("表情屏", face.Face)
     b = load("耳朵和灯环", body.Body)
@@ -49,17 +53,17 @@ def main():
             return "好的"
         return "不认识的动作"
 
-    v = voice.Voice(on_tool) if C.API_BASE else None
-    if not v:
-        print("[跳过] 对话: 没有设置 NOMI_API_BASE 等环境变量")
-    threading.Thread(target=web.serve, args=(state,), daemon=True).start()
+    cfg = Settings()
+    mem = Memory(creator=C.CREATOR)
+    cam = camera.Camera()
+    vis = load("认人", lambda: vision.Vision(cam, mem))
+    pres = presence.Presence(mem)
+    brain = Brain(cfg, mem, Mood(), voice.Voice(cfg), Greeter(cfg, mem), state, on_tool, face=f, vision=vis, presence=pres)
+    if not brain.ready():
+        print("[提示] 对话还没配置好：手机打开 http://<树莓派地址>:8080/setup 选模型、填 key")
+    threading.Thread(target=web.serve, args=(state,), kwargs={"cam": cam, "brain": brain}, daemon=True).start()
+    say = brain.say
 
-    def say(text):
-        print("[说]", text)
-        if v:
-            threading.Thread(target=lambda: v.speak(text), daemon=True).start()
-
-    talking = False
     t_prev = time.time()
     t_power = 0.0
     low_since = None
@@ -77,41 +81,9 @@ def main():
             except Exception as e:
                 print("[电量读取出错]", e)
 
-        # 摸头：按住说话，松开后去问大模型
-        touched = bool(b and b.touch.value)
-        if v and touched and not talking:
-            talking = True
-            v.start()
-            state["expr"], state["expr_until"] = "scan", now + 60
-        elif v and talking and not touched:
-            talking = False
-            wav = v.stop()
-
-            def answer():
-                try:
-                    text = v.transcribe(wav)
-                    if not text:
-                        return
-                    if DANCE_WORDS.search(text) and not state["charging"]:
-                        state["dance_t0"] = time.time()
-                        say_, mood = "好呀，看我转个圈！", "happy"
-                    elif DOCK_WORDS.search(text):
-                        state["go_dock"] = True
-                        say_, mood = "好的，我这就回去充电。", "normal"
-                    else:
-                        say_, mood = v.chat(text)
-                    state["expr"], state["expr_until"] = mood, time.time() + 6
-                    if f:
-                        f.talking = True
-                    v.speak(say_)
-                except Exception as e:
-                    print("[对话出错]", e)
-                finally:
-                    if f:
-                        f.talking = False
-            threading.Thread(target=answer, daemon=True).start()
-        elif not v and touched:
-            state["expr"], state["expr_until"] = "heart", now + 2      # 没配对话时，摸头就害羞
+        # 摸头说话、整理记忆、心情、主动问候都在 brain 里
+        brain.touch(bool(b and b.touch.value), now)
+        brain.tick(now)
 
         # 自动回充：电量低于 15% 持续 10 秒（不在桌面模式、没在充电），或者被叫去充电
         pct = state["battery"]
@@ -128,6 +100,8 @@ def main():
                 docker.start()
                 state["dance_t0"] = 0.0
                 help_said = False
+                if low:
+                    brain.mood.event("low_battery")
                 say("我有点累了，去充电啦。" if low else "好的，我回去充电。")
         if state["cancel_dock"]:                       # 遥控方向键随时接管
             state["cancel_dock"] = False
@@ -155,12 +129,16 @@ def main():
         elif dancing:                                        # 跳舞：原地转圈，表情开心；遥控方向键会打断
             state["v"], state["w"] = 0.0, drive.dance_w(now - state["dance_t0"])
             state["expr"], state["expr_until"] = "happy", now + 1
+        elif now - state["greet_t0"] < GREET_TURN + GREET_FWD and now > state["manual_until"] and not state["desk"] \
+                and not state["charging"] and cfg["proactive"].get("move"):
+            # 迎接：转向对方（脸在画面左边就往左转），再往前迎两步。桌面模式、充电时不动，只做表情
+            if now - state["greet_t0"] < GREET_TURN:
+                state["v"], state["w"] = 0.0, max(-1.5, min(1.5, -2.5 * state["greet_cx"]))
+            else:
+                state["v"], state["w"] = 120.0, 0.0
         elif now > state["manual_until"]:
             state["v"] = state["w"] = 0.0
         state["dock"] = docker.state
-
-        if now > state["expr_until"]:
-            state["expr"] = "normal"
         if state["charging"] and not docker.active:
             state["v"] = max(0.0, state["v"])              # 在座子上不许倒车，只能往前开下来
             if now - state["dance_t0"] < drive.DANCE_S:
