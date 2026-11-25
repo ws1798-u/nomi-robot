@@ -818,12 +818,12 @@ def base_boss(th):
     if math.sin(t) < 0:
         # v1.9：后面两根柱的筋要给滑门走的那一圈让位，滑门（不带拨片）才能从导轨一头转进去。原来直接减掉滑门扫过的空间，
         # 剩下的筋是一个斜着的 Z 字形（商家说“造型奇怪”），连到壳壁的只有底下 1.4 mm 高的一条。
-        # v1.9.4 改成规整的两段：① 柱子到滑门那一圈之间是整高的筋（外端是竖直面）；② 滑门那一圈下面，一块 8 mm 宽、
+        # v1.9.4 改成规整的两段：① 柱子到滑门那一圈之间是整高的筋（外端是竖直面）；② 滑门那一圈下面，一块 12 mm 宽、
         # 贴着底口内壁的横板把柱子连到壳壁（高度一直到滑门扫过的下沿，下面就是底盘，不再往下）
         z0d = _door_z()[0] - FIT
         r_in = min(inner_r(z0d) - nfit(*_door_z()) - door_t(_door_z()[0]) - FIT, inner_r(zb0) - 0.5) - 0.3
         upper = rib ^ cyl_z(r_in, zb0 - 1, zb1 + 1, seg=SEG)
-        lower = (box(BASE_SCREW_R, 80, -4, 4, zb0, z0d - 0.05).rotate([0, 0, th])) ^ inside
+        lower = (box(BASE_SCREW_R, 80, -6, 6, zb0, z0d - 0.05).rotate([0, 0, th])) ^ inside     # v1.9.4.1：8 → 12 宽，连到壳壁的截面大一半
         rib = (upper + lower) - door_path()
     return (boss + rib) - insert_hole('z', (x, y, zb0), 1, BOSS_H + 1)     # 铜螺母从底下（底盘那面）压进去
 
@@ -1136,6 +1136,16 @@ def frame():
         xm = s * (svx - SV_TOP - SV_H / 2)
         for yy in (-SV_SHAFT - 2.6, SV_L - SV_SHAFT + 0.6):
             f = f - box(xm - 2, xm + 2, yy, yy + 2, sv_shelf - 3, sv_shelf + 1)
+    # v1.9.4.1：上面那对合缝螺丝耳在离地 115，可立板只做到最上层搁板（约 111），螺丝耳后面是空的，这两颗螺丝拧不住骨架
+    # （v1.9 起就有这个漏洞，整机核对时查出来的）。立板两侧顶上各伸出一块 3 mm 厚的小耳朵，贴在这对螺丝耳后面，
+    # 上沿比前壳顶口搁板低 0.7；外沿照样离壳内壁 gap(h)
+    zz = SEAM_Z[1]
+    hu = np.linspace(sv_shelf - 3, zz + 5, 40)
+    inside_up = revolve([(0.01, sv_shelf - 3)] + [(inner_r(h) - gap(h), h) for h in hu] + [(0.01, zz + 5)])
+    for s in (1, -1):
+        r = inner_r(zz)
+        xa, xb = sorted((s * (r - 13), s * (r + 2)))
+        f = f + (box(xa, xb, -1.5, 1.5, sv_shelf - 2.5, LEDGE_Z0 - 0.7) ^ inside_up)
     # 合缝螺丝：立板贴在前壳螺丝耳后面，M2 × 8 从立板后面穿过（M2 过孔）拧进前壳；搁板在螺丝耳前后让开
     for zz in SEAM_Z:
         for s in (1, -1):
@@ -1170,9 +1180,49 @@ def ear():
     return e + lever - cyl_x(hole(0.7, 20), -3, 3, 0, -EAR_LEVER, 20)
 
 
+def fix_slivers(V, Fc, eps=1e-8):
+    """v1.9.4.1：去掉面积为零的细长三角形（三个点排成一条线）。直接删会留洞，所以把它和最长边对面的那个三角形
+    一起重新分成两个：中间那个点 b 落在最长边 a–c 上，对面三角形 (a, c, d) 改成 (a, b, d) + (b, c, d)。形状不变、仍然封闭。"""
+    F = [list(f) for f in Fc]
+    for _ in range(5):
+        area = lambda f: np.linalg.norm(np.cross(V[f[1]] - V[f[0]], V[f[2]] - V[f[0]])) / 2
+        bad = [i for i, f in enumerate(F) if f is not None and area(f) < eps]
+        if not bad:
+            break
+        edge = {}
+        for i, f in enumerate(F):
+            if f is None:
+                continue
+            for k in range(3):
+                edge[(f[k], f[(k + 1) % 3])] = i
+        for i in bad:
+            f = F[i]
+            if f is None or area(f) >= eps:
+                continue
+            L = [np.linalg.norm(V[f[(k + 1) % 3]] - V[f[k]]) for k in range(3)]
+            k = int(np.argmax(L))
+            a, c, b = f[k], f[(k + 1) % 3], f[(k + 2) % 3]      # 有向边 a→c 是最长边，b 在它上面
+            j = edge.get((c, a))
+            if j is None or F[j] is None:
+                continue
+            g = F[j]
+            r = g.index(c)
+            d = g[(r + 2) % 3]                                   # g = (c, a, d)
+            F[i], F[j] = None, None
+            F.append([c, b, d]); F.append([b, a, d])
+            edge = {}
+            for ii, ff in enumerate(F):
+                if ff is None:
+                    continue
+                for kk in range(3):
+                    edge[(ff[kk], ff[(kk + 1) % 3])] = ii
+    return np.array([f for f in F if f is not None])
+
+
 def save(name, m):
     mesh = m.to_mesh()
-    tm = trimesh.Trimesh(vertices=np.asarray(mesh.vert_properties)[:, :3], faces=np.asarray(mesh.tri_verts), process=False)
+    V = np.asarray(mesh.vert_properties)[:, :3].astype(np.float64)
+    tm = trimesh.Trimesh(vertices=V, faces=fix_slivers(V, np.asarray(mesh.tri_verts)), process=False)
     os.makedirs(OUT, exist_ok=True)
     tm.export(os.path.join(OUT, name + ".stl"))
     lo, hi = tm.bounds
