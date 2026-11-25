@@ -17,15 +17,35 @@ from manifold3d import Manifold, CrossSection
 K = float(sys.argv[1]) if len(sys.argv) > 1 else 1.15
 OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "stl")
 WALL = 2.0                       # 壁厚
-SEG = 96                         # 圆周分段
+SEG = 360                        # 圆周分段（v1.9.4：96 → 360。96 段时外壳上一条条约 4.5 mm 宽的平面，商家看模型说“有锯齿”）
+FINE_SEG = 720                   # 13 镜片、14 遮光罩用的圆周分段（v1.9.3）：96 段时每段约 4.5 mm 宽的平面，透明抛光件上看得出一条条棱
 # 配合间隙（每边）：两个零件套在一起、滑动、转动，或者买来的零件塞进打印件里，都留这么多。
 # 打印商家要求至少 0.3 mm（尼龙 ±0.2–0.3，光固化 ±0.1–0.2），0.3 是能装上的前提下最紧的值。
 FIT = 0.3
 
 
-# 攻牙底孔：商家打印后用丝锥攻 M2 牙（M2 标准底孔 Ø1.6）。这里不加间隙，商家先用 Ø1.6 钻头过一遍再攻。
-TAP_M2 = 0.8
-# 底盘固定：三颗 M2 螺丝从底下穿过底盘，拧进外壳内壁底部的三根螺丝柱（柱上攻 M2 牙）。
+# 螺丝孔（v1.9.4 起）：不再在树脂上直接攻牙（光固化树脂脆，攻出来的牙拧几次就花），改成预埋 M2 铜螺母（牙套）：
+# 买“M2 × 3 × 3.2 滚花铜螺母”（内牙 M2、外径 3.2、长 3），用 AB 胶 / 环氧胶粘进 Ø3.3 × 3.5 深的孔，螺母端面和孔口齐平。
+# 孔口在螺丝拧进来的那一面；孔底往里再接一段 Ø2.4 的过孔，给螺丝尖留地方。
+# 树脂件不能用热熔（烙铁）压螺母：树脂受热不软化，只会烫裂；尼龙 / FDM 件才能热熔。
+INSERT_R, INSERT_DEPTH = 1.65, 3.5          # 铜螺母孔：Ø3.3，深 3.5（螺母长 3，底下留 0.5 存胶）
+SCREW_CLEAR_R = 1.2                          # 孔底往里接的过孔 Ø2.4
+
+
+def insert_hole(axis, p, sign, depth_through):
+    """铜螺母孔 + 后面的过孔。axis 'x'/'y'/'z'；p 是孔口中心（在零件表面上）；sign=+1 表示从孔口往坐标正方向钻进去。
+    depth_through：从孔口算起，过孔一直打到多深。"""
+    x, y, z = p
+    a0, a1 = sorted((0.0, sign * INSERT_DEPTH))
+    b0, b1 = sorted((sign * (INSERT_DEPTH - 0.01), sign * depth_through))
+    e0, e1 = sorted((-sign * 1.0, 0.0))          # 孔口外面多切 1，不和表面共面
+    r1, r2 = hole(INSERT_R, 32), hole(SCREW_CLEAR_R, 24)
+    if axis == 'z':
+        return cyl_z(r1, z + min(a0, e0), z + max(a1, e1), x, y, 32) + cyl_z(r2, z + b0, z + b1, x, y, 24)
+    if axis == 'y':
+        return cyl_y(r1, y + min(a0, e0), y + max(a1, e1), x, z, 32) + cyl_y(r2, y + b0, y + b1, x, z, 24)
+    return cyl_x(r1, x + min(a0, e0), x + max(a1, e1), y, z, 32) + cyl_x(r2, x + b0, x + b1, y, z, 24)
+# 底盘固定：三颗 M2 螺丝从底下穿过底盘，拧进外壳内壁底部的三根螺丝柱（柱里粘 M2 铜螺母）。
 # 位置用程序在一圈里扫过：避开轮子、电机、骨架、USB 滑门和它推开的范围、悬崖传感器和模块板、滑垫、充电板垫块。
 BASE_SCREWS = (90, 220, 320)      # 角度：从 +X 逆时针（90 = 正前方）
 BASE_SCREW_R = 26.5               # 离中心
@@ -175,16 +195,21 @@ def box(x0, x1, y0, y1, z0, z1):
     return Manifold.cube([x1 - x0, y1 - y0, z1 - z0]).translate([x0, y0, z0])
 
 
+def segs(r, seg):
+    """大圆柱自动加密（v1.9.4）：每段弦长不超过 0.8 mm，小孔照用给的段数。"""
+    return max(seg, int(math.ceil(2 * math.pi * r / 0.8)))
+
+
 def cyl_z(r, z0, z1, x=0, y=0, seg=48):
-    return Manifold.cylinder(z1 - z0, r, r, seg).translate([x, y, z0])
+    return Manifold.cylinder(z1 - z0, r, r, segs(r, seg)).translate([x, y, z0])
 
 
 def cyl_y(r, y0, y1, x=0, z=0, seg=48):
-    return Manifold.cylinder(y1 - y0, r, r, seg).rotate([-90, 0, 0]).translate([x, y0, z])
+    return Manifold.cylinder(y1 - y0, r, r, segs(r, seg)).rotate([-90, 0, 0]).translate([x, y0, z])
 
 
 def cyl_x(r, x0, x1, y=0, z=0, seg=48):
-    return Manifold.cylinder(x1 - x0, r, r, seg).rotate([0, 90, 0]).translate([x0, y, z])
+    return Manifold.cylinder(x1 - x0, r, r, segs(r, seg)).rotate([0, 90, 0]).translate([x0, y, z])
 
 
 def ccw(points):
@@ -194,9 +219,9 @@ def ccw(points):
     return pts if area > 0 else pts[::-1]
 
 
-def revolve(points):
+def revolve(points, seg=None):
     """points：(半径, 高度) 的闭合多边形，绕 Z 轴转一圈。"""
-    return Manifold.revolve(CrossSection([ccw(points)]), SEG)
+    return Manifold.revolve(CrossSection([ccw(points)]), seg or SEG)
 
 
 def shell_body():
@@ -215,7 +240,7 @@ def sector(a0, a1, r0, r1, z0, z1, n=24):
     return Manifold.extrude(CrossSection([ccw(pts)]), z1 - z0).translate([0, 0, z0])
 
 
-def win_prism(d, r_ref, r0=30 * K, r1=80 * K, nc=24):
+def win_prism(d, r_ref, r0=30 * K, r1=80 * K, nc=48, nr=36):
     """表情窗形状的立体：在（角度 a，高度 h）平面里画圆角矩形，沿半径从 r0 拉到 r1。
     d 是四周等距外扩的距离（mm，负数是内缩）：把角度乘 r_ref 换成弧长，在（弧长，高度）平面里沿法向偏移 d，
     圆角处也处处是 d（不是简单地把两个圆角半径各加 d）。"""
@@ -243,14 +268,23 @@ def win_prism(d, r_ref, r0=30 * K, r1=80 * K, nc=24):
         N /= np.linalg.norm(N, axis=1, keepdims=True)
         P = P + d * N
         full = [(x / r_ref, h) for x, h in P]
+    # v1.9.3：侧面沿半径分成 nr 圈。原来只有内外两圈，圆角处相邻两条径向线不在一个平面上（角度、高度都变），
+    # 一块 r0..r1 的长四边形被斜着折成两个三角形，切出来的窗口边、镜片边、遮光罩的槽边在圆角处是一排小锯齿
     n = len(full)
-    V = [(r * math.sin(a), r * math.cos(a), h) for r in (r0, r1) for a, h in full]
+    rs = np.linspace(r0, r1, nr)
+    V = [(r * math.sin(a), r * math.cos(a), h) for r in rs for a, h in full]
+    c0, c1 = len(V), len(V) + 1
     V += [(0.0, r0, hc), (0.0, r1, hc)]
     F = []
+    for k in range(nr - 1):
+        for i in range(n):
+            j = (i + 1) % n
+            a, b = k * n, (k + 1) * n
+            F += [(a + i, a + j, b + j), (a + i, b + j, b + i)]
+    last = (nr - 1) * n
     for i in range(n):
         j = (i + 1) % n
-        F += [(i, j, n + j), (i, n + j, n + i)]
-        F += [(2 * n, j, i), (2 * n + 1, n + i, n + j)]
+        F += [(c0, j, i), (c1, last + i, last + j)]
     tm = trimesh.Trimesh(np.array(V), np.array(F), process=True)
     trimesh.repair.fix_normals(tm)
     assert tm.is_volume, "win_prism 不封闭"
@@ -305,7 +339,7 @@ def cam_socket():
     # 否则锥孔会穿出前额弧面，在盖片四周切出一圈碗形斜坡（下半边最宽 5 mm），看起来不是“刚好贴合”
     p_, n_ = cam_seat()
     rot = [-(90 - math.degrees(math.atan2(n_[2], n_[1]))), 0, 0]
-    inner = Manifold.cylinder(60, 40, 40, 64).translate([0, 0, -60 - CAM_SINK + 0.01]).rotate(rot).translate(list(p_))
+    inner = Manifold.cylinder(60, 40, 40, 320).translate([0, 0, -60 - CAM_SINK + 0.01]).rotate(rot).translate(list(p_))
     # 盖片背面留一圈托台：沿壳面法线，半径 CAM_LEDGE_R 到 8.4、厚 1，锥孔不切这一圈，盖片四周都有东西托着
     ledge = (Manifold.cylinder(1.0, 8.4, 8.4, 64) - Manifold.cylinder(3, CAM_LEDGE_R, CAM_LEDGE_R, 64).translate([0, 0, -1])) \
         .translate([0, 0, -CAM_SINK - 1.0]).rotate(rot).translate(list(p_))
@@ -397,10 +431,10 @@ def nfit(z0, z1):
     return FIT * math.sqrt(1 + worst * worst) + 2 * facet + chord
 
 
-def band(z0, z1, r_out, r_in, n=30):
+def band(z0, z1, r_out, r_in, n=30, seg=None):
     """贴着外壳内壁的一圈带子：半径从 内壁+r_out 到 内壁-r_in，高度 z0..z1（已乘比例）。"""
     hs = np.linspace(z0, z1, n)
-    return revolve([(inner_r(h) + r_out, h) for h in hs] + [(max(inner_r(h) - r_in, 0.5), h) for h in hs[::-1]])
+    return revolve([(inner_r(h) + r_out, h) for h in hs] + [(max(inner_r(h) - r_in, 0.5), h) for h in hs[::-1]], seg)
 
 
 def door_rails():
@@ -473,7 +507,7 @@ SEAM_Z = (45.5 * K, 100 * K)
 
 
 def seam_tabs(front):
-    """前壳合缝处的螺丝耳（v1.9 起只有前壳有）：四颗 M2 × 8 从骨架立板后面穿过立板，拧进前壳耳朵的攻牙孔（拧进约 5 mm）。
+    """前壳合缝处的螺丝耳（v1.9 起只有前壳有）：四颗 M2 × 8 从骨架立板后面穿过立板，拧进前壳耳朵里粘的 M2 铜螺母。
     v1.8 以前是 M2 × 14 从后壳耳朵穿过来：后壳装上以后螺丝头后面离壳壁只有 13.7 / 17.9 mm，螺丝和扳手都放不进去。
     现在先装前壳、后壳还没装，骨架后面是敞开的，随便拧；后壳靠底盘 2 颗螺丝和顶口两颗竖着的螺丝固定，见 top_ledges()。"""
     tabs, holes = [], []
@@ -485,14 +519,14 @@ def seam_tabs(front):
             x0, x1 = sorted((s * (r - 9), s * (r + 0.5)))
             y0, y1 = (1.5, 7.5) if front else (-7.5, -1.5)   # v1.3：前后耳之间空 3 mm，骨架立板夹在中间，螺丝一起穿过
             tabs.append(box(x0, x1, y0, y1, zz - 4, zz + 4))
-            holes.append(cyl_y(hole(TAP_M2, 24), -9, 9, s * (r - 5), zz, 24))   # 攻 M2 牙
+            holes.append(insert_hole('y', (s * (r - 5), y0, zz), 1, 9))   # 铜螺母从骨架那一面（y0）压进去
     return tabs, holes
 
 
 # 顶口固定（v1.9）：前后壳在合缝两侧、离地约 120 处各有一块小搁板，后壳的叠在前壳的上面，一颗 M2 × 8 竖着从上往下
-# 穿过后壳搁板（过孔）拧进前壳搁板（攻牙）。顶盖没装的时候，螺丝刀从顶口直着伸进去就能拧到（螺丝离中心 29，顶口内半径 31.5）。
+# 穿过后壳搁板（过孔）拧进前壳搁板（粘 M2 铜螺母）。顶盖没装的时候，螺丝刀从顶口直着伸进去就能拧到（螺丝离中心 29，顶口内半径 31.5）。
 LEDGE_X = 29.0                     # 螺丝离中线
-LEDGE_Z0 = 119.2                   # 前壳搁板底面（厚 5，攻牙）；上面隔 FIT 是后壳搁板（厚 2.5，过孔）
+LEDGE_Z0 = 119.2                   # 前壳搁板底面（厚 5，粘铜螺母）；上面隔 FIT 是后壳搁板（厚 2.5，过孔）
 LEDGE_TF, LEDGE_TB = 5.0, 2.5
 
 
@@ -513,7 +547,10 @@ def top_ledges(front):
         else:
             own, other = box(xa, xb, -8, 0, z0, z1), box(xa, xb, 0, 3.5, z0, z1)
         L = (own ^ solid_inside_all()) + (other ^ _inside_r(FIT))
-        L = L - cyl_z(hole(TAP_M2 if front else 1.0 + FIT, 24), z0 - 1, z1 + 1, s * LEDGE_X, 0, 24)
+        if front:                                    # 前壳搁板：铜螺母从上面（螺丝进来的那面）压进去
+            L = L - insert_hole('z', (s * LEDGE_X, 0, z1), -1, z1 - z0 + 1)
+        else:
+            L = L - cyl_z(hole(1.0 + FIT, 24), z0 - 1, z1 + 1, s * LEDGE_X, 0, 24)
         out = L if out is None else out + L
     return out
 
@@ -552,7 +589,7 @@ def tof_window():
     return boss, hole + place(beam)
 
 
-TOF_DIV_T = 0.6                   # 隔墙厚
+TOF_DIV_T = 1.0                   # 隔墙厚（v1.9.4：0.6 → 1.0，商家要求 1 mm 以上；离发射 / 接收孔 1.2 还有 0.7，光锥照样让开）
 
 
 def tof_board_relief():
@@ -753,31 +790,42 @@ def speaker_y():
     return -(min(ys) - 0.3)
 
 
+SPK_POSTS = [(-12, 72), (12, 72), (-12, 96), (12, 96)]   # 喇叭柱位置（未缩放，和出音孔同一套坐标）
+
+
 def speaker_posts():
-    """后壳内壁上的喇叭座：4 根 Ø4 小柱，在半径 19 的圆上（Ø36 和 Ø40 的喇叭框都压得到），内端齐在同一个平面上，喇叭用热熔胶或 B-7000 粘上去。"""
+    """后壳内壁上的喇叭座：4 根 Ø5 小柱，内端齐在同一个平面上，喇叭用热熔胶或 B-7000 粘上去。
+    v1.9.4：原来 4 根 Ø4 柱在半径 19 的圆上、角度 30°/150°…，正好压在出音孔上（商家说“圆柱错位”）。现在放在出音孔阵列
+    相邻四个孔的正中间（离中心 19.5，Ø36 和 Ø40 的喇叭框都压得到），离最近的孔边还有约 0.9 mm，不挡孔。"""
     y = speaker_y()
-    zc = SPK_Z * K
     posts = None
-    for a in (30, 150, 210, 330):
-        x, z = 19 * math.cos(math.radians(a)), zc + 19 * math.sin(math.radians(a))
-        p = cyl_y(2.0, -90, y, x, z, 24)
+    for gx, gz in SPK_POSTS:
+        p = cyl_y(2.5, -90, y, gx * K, gz * K, 32)
         posts = p if posts is None else posts + p
     return posts
 
 
 def base_boss(th):
-    """外壳内壁底部的一根螺丝柱（Ø6.5，高 BOSS_H）加一条连到壳壁的筋，底面正好顶住底盘上表面。柱上是 M2 攻牙底孔。"""
+    """外壳内壁底部的一根螺丝柱（Ø6.5，高 BOSS_H）加一条连到壳壁的筋，底面正好顶住底盘上表面。柱上是 M2 铜螺母孔（v1.9.4 起）。"""
     z0 = Y0 * K
     zb0, zb1 = z0 + 2.5, z0 + 2.5 + BOSS_H
     t = math.radians(th)
     x, y = BASE_SCREW_R * math.cos(t), BASE_SCREW_R * math.sin(t)
-    boss = cyl_z(3.25, zb0, zb1, x, y, 32)                     # Ø6.5，攻 M2 后柱壁约 2.2 mm
+    boss = cyl_z(3.25, zb0, zb1, x, y, 32)                     # Ø6.5，铜螺母孔 Ø3.3 外面柱壁 1.6
     # 筋伸到壁里、但停在外表面里面 0.5（壁厚 2，照样连牢）；上下各多 1，不和柱顶、柱底共面
     inside = revolve([(0.01, zb0 - 1)] + [(prof(h) - 0.5, h) for h in np.linspace(zb0 - 1, zb1 + 1, 24)] + [(0.01, zb1 + 1)])
     rib = (box(BASE_SCREW_R, 80, -2, 2, zb0, zb1).rotate([0, 0, th])) ^ inside
-    if math.sin(t) < 0:            # v1.9：后面两根柱的筋在滑门走的那一圈让开，滑门（不带拨片）才能从导轨一头转进去
-        rib = rib - door_path()
-    return (boss + rib) - cyl_z(hole(TAP_M2, 24), zb0 - 1, zb1 + 1, x, y, 24)
+    if math.sin(t) < 0:
+        # v1.9：后面两根柱的筋要给滑门走的那一圈让位，滑门（不带拨片）才能从导轨一头转进去。原来直接减掉滑门扫过的空间，
+        # 剩下的筋是一个斜着的 Z 字形（商家说“造型奇怪”），连到壳壁的只有底下 1.4 mm 高的一条。
+        # v1.9.4 改成规整的两段：① 柱子到滑门那一圈之间是整高的筋（外端是竖直面）；② 滑门那一圈下面，一块 8 mm 宽、
+        # 贴着底口内壁的横板把柱子连到壳壁（高度一直到滑门扫过的下沿，下面就是底盘，不再往下）
+        z0d = _door_z()[0] - FIT
+        r_in = min(inner_r(z0d) - nfit(*_door_z()) - door_t(_door_z()[0]) - FIT, inner_r(zb0) - 0.5) - 0.3
+        upper = rib ^ cyl_z(r_in, zb0 - 1, zb1 + 1, seg=SEG)
+        lower = (box(BASE_SCREW_R, 80, -4, 4, zb0, z0d - 0.05).rotate([0, 0, th])) ^ inside
+        rib = (upper + lower) - door_path()
+    return (boss + rib) - insert_hole('z', (x, y, zb0), 1, BOSS_H + 1)     # 铜螺母从底下（底盘那面）压进去
 
 
 LENS_LIP, LENS_LIP_T = 3.0, 1.2    # 镜片背面翻边：比窗口四周大 3 mm，厚 1.2
@@ -801,14 +849,14 @@ def lens():
     # 和窗口同一个圆角矩形，四周缩 FIT（角度方向按最小半径换算，外圈间隙更宽）。
     # 圆边用 7 层叠出来：第 k 层往里缩 e、高出壳面 t，(e, t) 落在 R LENS_RISE 的四分之一圆上（每层只差 0.01–0.1，打磨后是圆的）
     inset = None
-    for th in np.linspace(0, math.pi / 2, 7):
+    for th in np.linspace(0, math.pi / 2, 13):                   # v1.9.3：7 层改 13 层，每层台阶不到 0.07
         e, t = LENS_RISE * (1 - math.cos(th)), LENS_RISE * math.sin(th)
         outer = [(float(np.interp(h, hs, ro)) + t, h) for h in hz]
-        layer = revolve(outer + inner) ^ win_prism(-FIT - e, rmin)
+        layer = revolve(outer + inner, FINE_SEG) ^ win_prism(-FIT - e, rmin)
         inset = layer if inset is None else inset + layer
     zf0, zf1 = WIN_Z0F * K - LENS_LIP, WIN_Z1F * K + LENS_LIP
     rf = min(inner_r(h) for h in np.linspace(zf0, zf1, 60))
-    flange = band(zf0, zf1, -0.05, 0.05 + LENS_LIP_T, n=120) ^ win_prism(LENS_LIP, rf)
+    flange = band(zf0, zf1, -0.05, 0.05 + LENS_LIP_T, n=120, seg=FINE_SEG) ^ win_prism(LENS_LIP, rf)
     return inset + flange
 
 
@@ -824,9 +872,11 @@ SCR_AA = (48.96, 36.72)           # 显示区（240 × 320 横放）
 SCR_PCB_X = (-31.2, 46.0)         # PCB 左右范围（以玻璃中心为 0）：排针那头多出约 15，默认排针在右边（从正面看）
 SCR_PCB_T, SCR_BACK = 1.6, 3.0    # PCB 厚、PCB 背面元件高
 SCR_TILT = 13.0                   # 屏幕上沿往后仰的角度（度）
-SCR_DZ = -5.0                     # 屏幕中心比表情窗中心低多少（往下挪一点，上面两个角才放得进去）
+SCR_DZ = -9.5                     # 屏幕中心比表情窗中心低多少（往下挪一点，上面两个角才放得进去）。v1.9.4：-5 → -9.5，屏幕框背面顶上和摄像头板子之间那根横杆从 0.3–0.6 变成 2.2
 SHROUD_W = 1.6                    # 屏幕框四周的壁厚
 SHROUD_RIM = 3.0                  # 遮光罩前口贴壳内壁的那圈宽度（在镜片翻边外面）
+SHROUD_SKIN = 2.0                 # v1.9.4：摄像头让位四周补料的厚度（原来 1.2）
+SHROUD_LAND = 1.0                 # v1.9.4：漏斗口比表情窗四周小这么多，窗口边上不留刀口
 
 
 # 摄像头模组（OV5647 树莓派 Zero 款，买来的零件，不缩放）：板子 25 × 24，方形镜头座 8 × 8、高 6–10（120° 广角常见 8–10，两种都让开），
@@ -845,6 +895,8 @@ def cam_keepout(margin=1.0):
     # v1.9.1：只沿 ±x、±y、±z 挪的话，方块的棱角那里没放大（遮光罩会贴着摄像头座的棱），所以 26 个方向都挪
     for d in [[0.5 * a, 0.5 * b, 0.5 * c] for a in (-1, 0, 1) for b in (-1, 0, 1) for c in (-1, 0, 1) if (a, b, c) != (0, 0, 0)]:
         socket = socket + s0.translate(d)
+    # v1.9.4：平移叠出来的外形在棱角处有 0.15 深的小台阶，遮光罩贴着它会长出一片 0.15 厚的小毛刺。取凸包，把台阶填平
+    socket = Manifold.batch_hull([socket])
     bw, bh = CAM_BOARD
     zf, zr = -CAM_LEDGE - CAM_LENS_H[0], -CAM_LEDGE - CAM_LENS_H[1]   # 板子正面：镜头座最矮 / 最高时
     board = box(-bw / 2 - margin, bw / 2 + margin, -bh / 2 - margin, bh / 2 + margin, zr - 1.6 - CAM_BACK - margin, zf + margin)   # 板厚 1.6 + 背面元件；板子正面也留 margin
@@ -895,16 +947,20 @@ def screen_shroud():
     # 外形：前口那圈（贴壳内壁的一条带子）和屏幕框外形取凸包，再裁到壳内壁以内
     z0, z1 = WIN_Z0F * K - LENS_LIP - SHROUD_RIM - 1, WIN_Z1F * K + LENS_LIP + SHROUD_RIM + 1
     rf = min(inner_r(h) for h in np.linspace(z0, z1, 60))
-    rim = band(z0, z1, -0.1, 3.0, n=120) ^ win_prism(LENS_LIP + SHROUD_RIM, rf)
+    rim = band(z0, z1, -0.1, 3.0, n=120, seg=FINE_SEG) ^ win_prism(LENS_LIP + SHROUD_RIM, rf)
     frame_out = _scr_place(box(-gw / 2 - SHROUD_W, gw / 2 + SHROUD_W, -gt - 0.3, lip, -gh / 2 - SHROUD_W, gh / 2 + SHROUD_W), ys)
-    inside = revolve([(0.01, z0 - 5)] + [(inner_r(h) - 0.1, h) for h in np.linspace(z0 - 5, z1 + 5, 120)] + [(0.01, z1 + 5)])
+    # 裁剪面比前口那圈的外表面（内壁 - 0.1）再往里 0.02：两张面不能重合，否则切出来有几条边被四个面共用（切片软件报不封闭）
+    inside = revolve([(0.01, z0 - 5)] + [(inner_r(h) - 0.12, h) for h in np.linspace(z0 - 5, z1 + 5, 120)] + [(0.01, z1 + 5)], FINE_SEG)
     body = Manifold.batch_hull([rim, frame_out]) ^ inside
     hull0 = body
     # 让开镜片翻边（+0.35 胶缝）
-    keep = band(z0, z1, 1.0, LENS_LIP_T + 0.05 + 0.35, n=120) ^ win_prism(LENS_LIP + 0.35, rf)
+    keep = band(z0, z1, 1.0, LENS_LIP_T + 0.05 + 0.35, n=120, seg=FINE_SEG) ^ win_prism(LENS_LIP + 0.35, rf)
     body = body - keep
     # 漏斗内腔：前面是整个表情窗，后面是唇上的显示区开口
-    front = band(z0, z1, 1.0, LENS_LIP_T + 0.05 + 0.35 + 0.01, n=120) ^ win_prism(0.0, rf)
+    # v1.9.4：原来漏斗口正好等于窗口、深度和放镜片翻边的槽底一样，漏斗壁一开始就斜着往里收，和槽底交成一道刀口（0.5 mm 以下）。
+    # 现在漏斗口比窗口四周小 SHROUD_LAND，并且先沿半径直着往里走到前口那圈的里面（3.3），再斜着收到显示区：
+    # 窗口边上是一圈 1.3 mm 厚的直壁，不再有刀口。多出来的这一圈在镜片边缘后面，从外面看本来就是黑的
+    front = band(z0, z1, 1.0, 3.3, n=120, seg=FINE_SEG) ^ win_prism(-SHROUD_LAND, rf)
     back = _scr_place(box(-aw / 2 - 0.5, aw / 2 + 0.5, lip - 0.01, lip + 0.01, -ah / 2 - 0.5, ah / 2 + 0.5), ys)
     body = body - Manifold.batch_hull([front, back])
     body = body - _scr_place(box(-aw / 2 - 0.5, aw / 2 + 0.5, -1, lip + 0.5, -ah / 2 - 0.5, ah / 2 + 0.5), ys)   # 唇上的开口
@@ -913,14 +969,25 @@ def screen_shroud():
     ko = cam_keepout()
     # 摄像头板子的让位切到漏斗上沿内壁旁边，只剩 0.2–0.8 mm 的一层皮（一碰就破）。在让位外面补一圈 1.2 mm 厚的料，
     # 只补在原来的外形以内、往漏斗里补；补的地方在漏斗最上沿，屏幕那里是黑底，不挡显示区，也不碰镜片翻边和屏幕框
+    # v1.9.4：商家说这圈皮（“横杆”）只有 0.6 mm，要 2 mm：补料从 1.2 加到 SHROUD_SKIN，并且不再只补在原来的外形以内，
+    # 可以补到外形外面（仍在外壳内壁以内 0.05），否则靠近外壳的那一侧补不上
     sk = ko
-    for d in ([1.2, 0, 0], [-1.2, 0, 0], [0, 1.2, 0], [0, -1.2, 0], [0, 0, 1.2], [0, 0, -1.2],
-              [0, 0.85, 0.85], [0, -0.85, 0.85], [0, 0.85, -0.85], [0, -0.85, -0.85]):
+    e, q = SHROUD_SKIN, SHROUD_SKIN / math.sqrt(2)
+    for d in ([e, 0, 0], [-e, 0, 0], [0, e, 0], [0, -e, 0], [0, 0, e], [0, 0, -e],
+              [0, q, q], [0, -q, q], [0, q, -q], [0, -q, -q], [q, 0, q], [-q, 0, q], [q, 0, -q], [-q, 0, -q]):
         sk = sk + ko.translate(d)
-    patch = (sk ^ hull0) - keep                   # 先并进本体、再统一减掉让位：补料和本体融成一体，不会只碰一条边（切片软件报问题边）
+    # 补料离外壳内壁至少 0.3（和前口那圈一样不碰壳），也不高过原来的外形顶面
+    zt = hull0.bounding_box()[5]
+    clip = revolve([(0.01, z0 - 5)] + [(inner_r(h) - 0.3, h) for h in np.linspace(z0 - 5, zt, 120)] + [(0.01, zt)], FINE_SEG)
+    patch = (sk ^ clip) - keep                    # 先并进本体、再统一减掉让位：补料和本体融成一体，不会只碰一条边（切片软件报问题边）
     patch = patch - _scr_place(box(-aw / 2 - 0.5, aw / 2 + 0.5, -1, lip + 0.5, -ah / 2 - 0.5, ah / 2 + 0.5), ys)
     patch = patch - _scr_place(box(-gw / 2 - 0.3, gw / 2 + 0.3, -gt - 5, 0, -gh / 2 - 0.3, gh / 2 + 0.3), ys)
-    body = (body + patch) - ko
+    # 最后减的让位比补料用的大 0.02：补料是让位沿 ±x 等方向平移叠出来的，平移后的面和让位自己的面共面，
+    # 减完会剩一层零厚度的皮（切片软件报“问题边”）。放大一点点就切干净了
+    body = (body + patch) - cam_keepout(margin=1.02)
+    # v1.9.4：摄像头正下方，前口那圈在镜片翻边槽上面还剩一小片“帽檐”（被摄像头让位斜着切过，0.46 mm 厚、1.5 mm 长），去掉
+    zk = WIN_Z1F * K + LENS_LIP + 0.35
+    body = body - (band(zk - 0.01, z1 + 2, 1.0, 4.0, n=20, seg=FINE_SEG) ^ box(-15, 15, 0, 200, zk - 0.01, z1 + 2))
     # v1.9：玻璃背面以后、PCB 的范围里不留料（原来框边往后多出约 1 mm，PCB 比玻璃宽，会顶在上面，屏幕就贴不到唇上）
     body = body - _scr_place(box(SCR_PCB_X[0] - 0.3, SCR_PCB_X[1] + 0.3, -gt - 20, -gt, -gh / 2 - 0.3, gh / 2 + 0.3), ys)
     body = max(body.decompose(), key=lambda p: p.volume())    # 裁切边上会剩下体积为 0 的碎片，只留主体
@@ -983,7 +1050,7 @@ def ear_cup_placed(s=1):
     return max((ear_place(ear_cup(), s) ^ _head_inside()).decompose(), key=lambda b: b.volume())
 
 
-# 骨架底边固定（v1.6.1）：底盘下面再拧 2 颗 M2 × 6，拧进骨架底边的两个小凸台（凸台攻 M2）。这样腰部光带槽下面那一圈外壳
+# 骨架底边固定（v1.6.1）：底盘下面再拧 2 颗 M2 × 6，拧进骨架底边的两个小凸台（凸台里粘 M2 铜螺母）。这样腰部光带槽下面那一圈外壳
 # 不光靠槽道挂在上半身上：下面一圈 → 底盘 → 这 2 颗螺丝 → 骨架 → 合缝螺丝 → 上半身。x = ±21：再往里，螺丝头会碰到充电座里浮起来的接口台。
 FRAME_SCREW_X = 21.0
 
@@ -1056,7 +1123,7 @@ def frame():
         xt = s * (mf - 16)                                           # 扎带绑在电机机身中间
         # 上面一条扎带槽；下面那条做成从骨架底边往上开的缺口（离电机缺口留 1.3），扎带从底下绕过去，不留薄边
         f = f - box(xt - 2, xt + 2, -5, 5, AXLE_Z + 8, AXLE_Z + 10)
-        f = f - box(xt - 2, xt + 2, -5, 5, FB - 1, AXLE_Z - 6.2 - 1.3)
+        f = f - box(xt - 2, xt + 2, -5, 5, FB - 1, AXLE_Z - 6.2 - 2.0)        # v1.9.4：缺口上面那根横杆从 1.3 加到 2.0（商家要求）
         # 给轮子让位：按轮子的圆柱让（四周 2 mm），不再整块切掉，电池搁板在轮子前后还能伸出去托住电池盒
         xa, xb = sorted((s * (WHEEL_X - WHEEL_W / 2 - 2), s * 200))
         f = f - cyl_x(WHEEL_D / 2 + 2, xa, xb, 0, AXLE_Z, 96)
@@ -1083,12 +1150,14 @@ def frame():
     # （v1.4 起后面那个悬崖传感器的小板往右伸，不再从立板下面穿过去，立板上不用开缺口）
     # 走线孔
     f = f - cyl_y(7, -5, 5, 0, 48 * K, 32) - cyl_y(7, -5, 5, 0, 80 * K, 32)
-    # 骨架底边两个小凸台（6 × 7）：底面压在底盘上表面（留 0.2），顶面停在电机缺口下面 0.5；中间 Ø1.6 攻 M2，M2 × 6 从底盘下面拧上来
+    # 骨架底边两个小凸台（6 × 7）：底面压在底盘上表面（留 0.2），顶面停在电机缺口下面 0.5；中间粘 M2 铜螺母，M2 × 6 从底盘下面拧上来
+    # v1.9.4：凸台从 6 宽加到 6.5（铜螺母孔 Ø3.3 两边各留 1.6），孔改成铜螺母孔，从底下压进去
     zt = AXLE_Z - 6.2 - 0.5
     for sx in (1, -1):
         x = sx * FRAME_SCREW_X
-        f = f + box(x - 3, x + 3, -3.5, 3.5, Y0 * K + 2.5 + 0.2, zt)
-        f = f - cyl_z(hole(TAP_M2, 24), Y0 * K + 2.5 - 1, zt - 0.8, x, 0, 24)
+        zb = Y0 * K + 2.5 + 0.2
+        f = f + box(x - 3.25, x + 3.25, -3.5, 3.5, zb, zt)
+        f = f - insert_hole('z', (x, 0, zb), 1, zt - 0.8 - zb)
     return f
 
 
@@ -1116,7 +1185,7 @@ def iface(t, r_edge, pins, floor=3):
     """在托盘 / 底板上加接口凸台：6 个圆片磁铁坑、弹针孔、凸台下面的走线腔，以及一条通到后边缘的走线槽。
     t 的上表面是 Z=0，底板厚 floor。r_edge：后边缘离中心的距离，走线槽通到这里。"""
     boss_h = Y0 * K - 0.5                                        # 凸台顶离底盘垫片 0.5 mm
-    t = t + Manifold.cylinder(boss_h, 16, 15.5, 64)              # 接口凸台：磁铁坑外圈约 1.7 mm（v1.1 是 0.7）
+    t = t + Manifold.cylinder(boss_h, 16, 15.5, 128)              # 接口凸台：磁铁坑外圈约 1.7 mm（v1.1 是 0.7）
     for a in MAG_ANG:                                            # 6 个 Ø6 × 3 磁铁坑，深 3.1（磁铁顶面比凸台低 0.1）
         t = t - cyl_z(hole(MAG_D / 2 + FIT, 32), boss_h - MAG_T - 0.1, boss_h + 1, MAG_R * math.cos(math.radians(a)), MAG_R * math.sin(math.radians(a)), 32)
     t = t - cyl_z(8.5, -(floor - 1.5), boss_h - 4.6, seg=48)     # 走线腔：弹针尾巴在这里焊线；上面离磁铁坑 1.5，底下留 1.5

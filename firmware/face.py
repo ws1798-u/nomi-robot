@@ -8,6 +8,9 @@ import config as C
 
 EYE = (98, 247, 216)
 BG = (10, 14, 17)
+# v1.9.4：屏幕在外壳里往下挪了 4.5 mm（给遮光罩顶上的横杆让厚度），240 像素对应 36.7 mm，
+# 所以整张脸往上画 29 像素，眼睛在表情窗里的位置和原来一样
+DY = -29
 
 
 class Face:
@@ -24,7 +27,7 @@ class Face:
         d = ImageDraw.Draw(img)
         blink = (t % 3.7) < 0.14
         for s in (-1, 1):
-            cx, cy = 160 + s * 62, 105
+            cx, cy = 160 + s * 62, 105 + DY
             if self.expr == "happy":
                 d.arc((cx - 24, cy - 6, cx + 24, cy + 42), 200, 340, fill=EYE, width=11)
             elif self.expr == "heart":
@@ -42,7 +45,7 @@ class Face:
                 d.rounded_rectangle((cx - 17, cy - h / 2, cx + 17, cy + h / 2), radius=min(16, h / 2), fill=EYE)
         if self.talking:
             m = 4 + 8 * abs(math.sin(t * 14))
-            d.ellipse((150, 168 - m, 170, 168 + m), fill=EYE)
+            d.ellipse((150, 168 + DY - m, 170, 168 + DY + m), fill=EYE)
         elif self.expr in ("happy", "heart"):
-            d.arc((148, 150, 172, 172), 20, 160, fill=EYE, width=5)
+            d.arc((148, 150 + DY, 172, 172 + DY), 20, 160, fill=EYE, width=5)
         self.lcd.display(img)
