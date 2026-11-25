@@ -448,7 +448,7 @@ def _knob(e=0.0):
 
 
 def usb_door():
-    """滑门本体（v1.9 起不带拨片）。门在关闭位置（居中对着正后方）。门外表面有一个 1.4 深的小槽，拨片 usb_knob() 插进去粘牢。
+    """滑门本体（v1.9 起不带拨片）。门在关闭位置（居中对着正后方）。门外表面有一个 1.4 深的小槽（四周比拨片大 0.2，留胶），拨片 usb_knob() 插进去粘牢。
     v1.8 以前拨片和门是一体的：拨片一离开窗口就卡在壳壁里，门根本推不进导轨。现在先把门从导轨一头转进去，再从窗口把拨片粘上。"""
     z0, z1 = _door_z()
     g = nfit(z0, z1)
@@ -456,7 +456,7 @@ def usb_door():
     outer = [(inner_r(h) - g, h) for h in hs]
     inner = [(inner_r(h) - g - door_t(h), h) for h in hs[::-1]]
     d = revolve(outer + inner) ^ sector(math.pi - DOOR_HALF, math.pi + DOOR_HALF, 1, 200, 0, 60 * K, 48)
-    return d - _knob(0.1)
+    return d - _knob(0.2)
 
 
 def usb_knob():
@@ -612,9 +612,9 @@ def tof_strip_pad():
 
 
 def tof_strip():
-    """长条本体（机身坐标）：四周比坑小 0.15，外表面和壳面齐平，背面离坑底 0.05 留胶。"""
+    """长条本体（机身坐标）：四周比坑小 0.2（v1.9.1 从 0.15 放大，商家打印误差 ±0.1–0.2 也放得进），外表面和壳面齐平，背面离坑底 0.05 留胶。"""
     z0, z1 = TOF_STRIP_ZC - TOF_STRIP_H / 2 - 1, TOF_STRIP_ZC + TOF_STRIP_H / 2 + 1
-    return _skin(TOF_STRIP_T - 0.05, 0.0, z0, z1) ^ _stadium_y(TOF_STRIP_W - 0.3, TOF_STRIP_H - 0.3, TOF_STRIP_ZC)
+    return _skin(TOF_STRIP_T - 0.05, 0.0, z0, z1) ^ _stadium_y(TOF_STRIP_W - 0.4, TOF_STRIP_H - 0.4, TOF_STRIP_ZC)
 
 
 # 腰部光带（v1.6，方案 A）：前后壳在离地 BELT_Z0–BELT_Z1 开一道 3 mm 高的槽，卡进一根 T 形乳白导光条（light_strip，打 2 个）：
@@ -629,7 +629,7 @@ BELT_Z0, BELT_Z1 = 41.7, 44.7
 BELT_LIP, BELT_FLANGE = 1.0, 1.5
 BELT_LED_T = 2.6                  # 灯带厚（软板 + 灯珠）
 BELT_RIB = 1.6                    # 槽道的筋和后墙厚
-BELT_SEAM = 0.15                  # 导光条两头离合缝（y = 0）各让 0.15
+BELT_SEAM = 0.2                   # 导光条两头离合缝（y = 0）各让 0.2
 
 
 def belt_slot():
@@ -684,8 +684,8 @@ def belt_gussets():
 
 
 def belt_strip(front=True):
-    """导光条（前段或后段，机身坐标，两段一样）：外面那条四周比槽小 0.15，外表面和壳面齐平；里面翻边。半圈 180°，两头离合缝各 BELT_SEAM。"""
-    hs = np.linspace(BELT_Z0 + 0.15, BELT_Z1 - 0.15, 12)
+    """导光条（前段或后段，机身坐标，两段一样）：外面那条上下比槽各小 0.2（v1.9.1 从 0.15 放大），外表面和壳面齐平；里面翻边。半圈 180°，两头离合缝各 BELT_SEAM。"""
+    hs = np.linspace(BELT_Z0 + 0.2, BELT_Z1 - 0.2, 12)
     outer = revolve([(inner_r(h) - 0.05, h) for h in hs] + [(prof(h), h) for h in hs[::-1]])
     flange = band(BELT_Z0 - BELT_LIP, BELT_Z1 + BELT_LIP, -0.05, 0.05 + BELT_FLANGE, n=12)
     return (outer + flange) ^ (box(-200, 200, BELT_SEAM, 200, -10, 200) if front else box(-200, 200, -200, -BELT_SEAM, -10, 200))
