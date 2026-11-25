@@ -31,7 +31,7 @@ pre code { background: none; padding: 0; color: inherit; }
 </style>
 </head>
 <body>
-<nav><div class="wrap"><b>Nomi</b><a href="index.html">首页</a><a href="#parts">采购清单</a><a href="#drawing">尺寸图</a><a href="#stl">打印文件</a><a href="#wiring">接线</a><a href="#steps">步骤</a><a href="#code">程序</a><a href="make.html">量产与成本</a><a class="cta" href="sim.html?v=20261125c">打开 3D 模型</a></div></nav>
+<nav><div class="wrap"><b>Nomi</b><a href="index.html">首页</a><a href="#parts">采购清单</a><a href="#drawing">尺寸图</a><a href="#stl">打印文件</a><a href="#wiring">接线</a><a href="#steps">步骤</a><a href="#code">程序</a><a href="make.html">量产与成本</a><a class="cta" href="sim.html?v=20261125d">打开 3D 模型</a></div></nav>
 
 <header class="hero"><div class="wrap">
   <div class="eyebrow">样机制作指南</div>
@@ -184,7 +184,7 @@ pre code { background: none; padding: 0; color: inherit; }
     <li><b>贴合和缝隙：</b>镜片从里往外塞进窗口，背面翻边顶住前壳内壁就推不出去了，所以镜片露出来的高度由翻边定住，不用手去对。镜片外表面比壳面<b>高 0.5 mm，外沿是 R0.5 的圆边</b>（3D 模型里是高 0.7）：摸过去是一道圆滑的小台阶，不会摸到沟；打印 ±0.1–0.2 mm 的误差也藏在这道台阶里。四周和窗口留 0.3 mm 缝，装好是一圈均匀的细线。两个零件拼在一起不可能完全没缝，量产的手机玻璃也有 0.1–0.2 mm；塞不进去就用砂纸修镜片的边，不要修壳。</li>
     <li><b>摄像头怎么装（v1.3）：</b>前额是外凸的弧面。盖片沉台沿<b>壳面法线</b>铣（那里壳面朝上仰 42°），Ø16 × 1 的平盖片放进去，坐在底下一圈 1 mm 宽的托台上，四周和壳面的缝只有 0–0.8 mm，侧面看是贴着弧面的一个小圆窗；盖片用一点点 UV 胶或 B-7000 点在边上。摄像头本身朝前上方仰 29°，在盖片后面斜着看出去：前壳里面有一个摄像头座，<b>模组的 8 × 8 方形镜头座从里面插进方孔</b>，顶到前端挡边就到位，光轴自动对准，镜头筒从挡边中间的孔伸出去、离盖片 1.2 mm 以上；然后在板子四边点 B-7000 粘住（等胶干之前别碰）。用程序核对过：镜头筒伸出方块 2 mm 以上时，120° 广角的整个 4:3 画面都不被挡（伸出 1 mm 时上边两个角挡掉约 3%），镜头座高 6–10 都放得下。</li>
     <li><b>屏幕支架 + 遮光罩 <code>screen_shroud.stl</code>：</b>外壳越往上越收，平屏的四个角会先碰到壳壁，所以屏幕上沿往后仰 13°、比表情窗中心低 9.5 mm（v1.9.4 从 5 改成 9.5：遮光罩背面顶上夹在摄像头板和屏幕电路板之间的那根横杆原来只有 0.3–0.6 mm，挪下去以后是 2.2 mm；固件 <code>face.py</code> 里整张脸往上画 29 像素，眼睛在窗口里的位置不变），玻璃中心在镜片背面后面约 22 mm。这段距离由黑色漏斗包住：后口正好是显示区，前口是整个表情窗。眼睛看上去在镜片后面一点点，侧面看也不漏光。屏幕尺寸按常见 2.4 寸 8 针模块写的（玻璃 60.3 × 42.7、PCB 77 × 43、排针在右边）；买到的不一样，量一下改 <code>make_shell.py</code> 里 <code>SCR_</code> 开头的几个数，重新生成。想让屏幕再靠前，可以换不带 PCB 的 2.4 寸裸屏（FPC 排线 + 转接板），四个角小一圈，能往前挪约 5 mm。遮光罩上沿中间切了一个缺口，给摄像头的板子（25 × 24，镜头座高 6–10 都放得下）让位；装好后如果从镜片上沿能看到摄像头板，从后面贴一小块黑胶布挡住。</li>
-    <li><b>装的顺序：</b>① 前壳正面朝下垫在软布上，镜片从里面放进窗口，翻边上薄薄涂一圈 B-7000（不要用 UV 胶：茶色镜片和不透光的壳体照不透紫外，胶不固化），用泡棉块从里面压住；② 屏幕玻璃朝前放进遮光罩的框里，PCB 背面用两条胶带或几点热熔胶固定；③ 遮光罩前口一圈涂 B-7000，扣到镜片后面：里圈压在镜片翻边上，外圈贴在壳内壁上。一圈都要涂满，不然屏幕边上会漏光；④ 压 24 小时再接线。正面溢出来的胶用酒精棉擦掉。<br><img src="img/cad-face.jpg?v=20261125v195" alt="表情窗：装好后的正面、从中间剖开的侧面、镜片上沿特写、遮光罩和屏幕" style="width:100%;margin:8px 0 2px;border-radius:8px;border:1px solid var(--line);background:#fff" loading="lazy"><br><img src="img/cad-lens.jpg?v=20261125c" alt="表情窗镜片：正面、背面翻边、装在前壳里" style="width:100%;margin:8px 0 2px;border-radius:8px;border:1px solid var(--line);background:#fff" loading="lazy"></li>
+    <li><b>装的顺序：</b>① 前壳正面朝下垫在软布上，镜片从里面放进窗口，翻边上薄薄涂一圈 B-7000（不要用 UV 胶：茶色镜片和不透光的壳体照不透紫外，胶不固化），用泡棉块从里面压住；② 屏幕玻璃朝前放进遮光罩的框里，PCB 背面用两条胶带或几点热熔胶固定；③ 遮光罩前口一圈涂 B-7000，扣到镜片后面：里圈压在镜片翻边上，外圈贴在壳内壁上。一圈都要涂满，不然屏幕边上会漏光；④ 压 24 小时再接线。正面溢出来的胶用酒精棉擦掉。<br><img src="img/cad-face.jpg?v=20261125v195" alt="表情窗：装好后的正面、从中间剖开的侧面、镜片上沿特写、遮光罩和屏幕" style="width:100%;margin:8px 0 2px;border-radius:8px;border:1px solid var(--line);background:#fff" loading="lazy"><br><img src="img/cad-lens.jpg?v=20261125d" alt="表情窗镜片：正面、背面翻边、装在前壳里" style="width:100%;margin:8px 0 2px;border-radius:8px;border:1px solid var(--line);background:#fff" loading="lazy"></li>
   </ul>
 </div></section>
 
@@ -316,7 +316,7 @@ sudo -E python3 main.py</code></pre>
   <div class="note"><b>最可能要调的地方：</b>声卡配置（<code>arecord -l</code> 看不到设备时检查 overlay 和接线）；红外设备号（用 <code>ir-ctl -f -d /dev/lirc0</code> 看哪个是发射）；灯环需要 root 权限；屏幕方向不对就改 <code>face.py</code> 里的 <code>rotate</code>。大模型服务要支持“工具调用”，否则它不会替你开空调。密钥不要写进代码或传到公开仓库。</div>
 </div></section>
 
-<footer><div class="wrap"><p>这是一份自己动手的样机方案，未经实物验证，仅供个人制作。要销售需要重新做结构、电路并通过相关认证，见<a href="make.html">量产与成本</a>。</p><a href="index.html">首页</a><a href="sim.html?v=20261125c">3D 交互</a><a href="app.html">APP 与互联</a><a href="make.html">制造与成本</a></div></footer>
+<footer><div class="wrap"><p>这是一份自己动手的样机方案，未经实物验证，仅供个人制作。要销售需要重新做结构、电路并通过相关认证，见<a href="make.html">量产与成本</a>。</p><a href="index.html">首页</a><a href="sim.html?v=20261125d">3D 交互</a><a href="app.html">APP 与互联</a><a href="make.html">制造与成本</a></div></footer>
 
 <script>
 const PARTS = [
