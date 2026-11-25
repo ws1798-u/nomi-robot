@@ -14,7 +14,7 @@
 <link rel="stylesheet" href="phone.css">
 </head>
 <body>
-<nav><div class="wrap"><b>Nomi</b><a href="index.html">首页</a><a href="#link">连接方式</a><a href="#pair">配网流程</a><a href="#ui">APP 界面</a><a href="#iot">家电互联</a><a href="make.html">制造与成本</a><a class="cta" href="sim.html">打开 3D 模型</a></div></nav>
+<nav><div class="wrap"><b>Nomi</b><a href="index.html">首页</a><a href="#link">连接方式</a><a href="#pair">配网流程</a><a href="#ui">APP 界面</a><a href="#iot">家电互联</a><a href="#ai">AI 陪伴</a><a href="make.html">制造与成本</a><a class="cta" href="sim.html">打开 3D 模型</a></div></nav>
 
 <header class="hero"><div class="wrap">
   <div class="eyebrow">Nomi Home APP</div>
@@ -124,7 +124,7 @@
       <div class="c"><div class="row" style="padding:4px 0"><b>性格与声音</b><span class="mut">活泼 · 童声 ›</span></div><div class="row" style="padding:4px 0"><b>主动问候</b><div class="sw on"></div></div><div class="row" style="padding:4px 0"><b>勿扰时段</b><span class="mut">23:00–7:00 ›</span></div></div>
       <div class="c"><div class="row" style="padding:4px 0"><b>它记得的事</b><span class="mut">12 条 ›</span></div><div class="row" style="padding:4px 0"><b>摄像头物理挡片提醒</b><div class="sw on"></div></div><div class="row" style="padding:4px 0"><b>对话记录保存</b><span class="mut">7 天 ›</span></div></div>
       <div class="c"><div class="row" style="padding:4px 0"><b>家庭成员与权限</b><span class="mut">›</span></div><div class="row" style="padding:4px 0"><b>固件更新</b><span class="chip">已是最新</span></div></div>
-    </div><div class="tab"><span><i></i>首页</span><span><i></i>看家</span><span><i></i>家电</span><b><i></i>我的</b></div></div></div><figcaption><b>我的</b>性格、勿扰时段、它记住了什么（可逐条删除）、隐私和成员权限都在这里。</figcaption></figure>
+    </div><div class="tab"><span><i></i>首页</span><span><i></i>看家</span><span><i></i>家电</span><b><i></i>我的</b></div></div></div><figcaption><b>我的</b>性格、主动问候、勿扰时段、它记住了什么（可逐条删除）、隐私和成员权限都在这里。</figcaption></figure>
   </div>
 </div></section>
 
@@ -175,13 +175,34 @@
   <div class="note"><b>3D 模型里可以直接试：</b>打开 <a href="sim.html">3D 交互模型</a>，点下方“控制家电”，再在右侧手机面板里开关台灯、风扇、窗帘、空调，能看到头顶红外灯闪烁、信号波纹扩散，房间灯光跟着变化。</div>
 </div></section>
 
+<section id="ai"><div class="wrap">
+  <div class="sec-head"><div class="eyebrow">05 AI 陪伴</div><h2>记得你，会想你，回家先开口</h2><p>对话用哪家大模型由你决定：在后台选 DeepSeek、GPT、Claude，或通义、Kimi 等兼容 OpenAI 格式的服务，填上你自己的 key。key 只存在机器本地，费用按用量直接付给服务商。</p></div>
+  <div class="bento">
+    <div><h3>回家迎接</h3><p>离开几个小时后再出现，摄像头认出是谁（没开摄像头时看手机连上家里 Wi-Fi），它叫着名字打招呼，还会提起上次聊到的事。</p></div>
+    <div><h3>先开口</h3><p>早上第一次见到说早安；快到睡觉时间提醒早点睡；今天、明天有要办的事，见面就提一句。</p></div>
+    <div><h3>记得你</h3><p>一段对话结束后，大模型帮它整理出值得记住的事，按人分开存：喜好、习惯一直留着；“下周去成都”这类小事 14 天后淡忘，带日期的到那天会提起。</p></div>
+    <div class="w3"><h3>有情绪</h3><p>心情、精神和每个人的亲密度三样状态。被摸头、陪它聊天，心情变好；被冷落、电量低会蔫，深夜犯困。谁好几天没回家，再见到时会特别开心。这些状态决定它空闲时的表情，也写进对话的提示词里。</p></div>
+    <div class="w3"><h3>分寸</h3><p>免打扰时段只亮灯、换表情，不出声；同一个人隔一阵才再开口，连着几次没人理就把间隔拉长；一天有上限；说完一句没人接话就不追问；说“安静一会儿”就闭嘴。</p></div>
+  </div>
+
+  <h3>后台能设置什么</h3>
+  <div class="tbl"><table>
+    <tr><th>分组</th><th>设置项</th><th>说明</th></tr>
+    <tr><td><b>对话模型</b></td><td>服务商、接口地址、模型名、API key</td><td>DeepSeek、GPT、通义、Kimi 走 OpenAI 格式；Claude 用官方接口，地址留空即可。保存后可以先试一句</td></tr>
+    <tr><td><b>语音</b></td><td>听写模型、说话模型、音色</td><td>DeepSeek 和 Claude 没有语音接口，语音服务单独填；也可以指到自己架的语音合成服务</td></tr>
+    <tr><td><b>主动开口</b></td><td>总开关、免打扰时段、离开几小时算回家、同一个人间隔、一天最多几次、说完等接话几秒</td><td>默认克制：宁可少说，不打扰</td></tr>
+    <tr><td><b>家人和记忆</b></td><td>名字、它怎么称呼、手机 IP、录入人脸、它记得的事、亲密度</td><td>每条记忆都能改、能删；对它说“把这件事忘了”也会删</td></tr>
+  </table></div>
+  <div class="note"><b>3D 模型里还能给它穿外套：</b>打开 <a href="sim.html?coat=1">3D 交互模型</a>，点“穿外套”，针织小外套带领口蝴蝶结、胸口小爱心，背后绣着名字。</div>
+</div></section>
+
 <section><div class="wrap">
-  <div class="sec-head"><div class="eyebrow">05 隐私与安全</div><h2>家里的摄像头和麦克风，要让人放心</h2></div>
+  <div class="sec-head"><div class="eyebrow">06 隐私与安全</div><h2>家里的摄像头和麦克风，要让人放心</h2></div>
   <div class="bento">
     <div><h3>看得见的开关</h3><p>摄像头有物理挡片；摄像头或麦克风在工作时，机身指示灯一定亮，这是硬件电路决定的，软件关不掉。</p></div>
     <div><h3>没唤醒不上传</h3><p>唤醒词在本机识别。只有唤醒之后的那一句话才会传到云端。</p></div>
     <div><h3>画面点对点</h3><p>实时视频加密直传手机。人脸特征只存在本机，不上传照片。</p></div>
-    <div class="w3"><h3>它记得什么，你说了算</h3><p>对话记录和它记住的习惯都能在 APP 里逐条查看、删除，也可以设置自动清除周期。</p></div>
+    <div class="w3"><h3>它记得什么，你说了算</h3><p>对话记录和它记住的事都能在后台逐条查看、修改、删除，也可以设置自动清除周期。人脸特征只存在机器里。</p></div>
     <div class="w3"><h3>家庭成员分权限</h3><p>主人可以邀请家人，分别设置能不能看画面、能不能遥控。恢复出厂会清空账号绑定和本机数据。</p></div>
   </div>
 </div></section>
