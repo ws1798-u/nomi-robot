@@ -762,7 +762,7 @@ def half(front):
     for th in BASE_SCREWS:
         if (math.sin(math.radians(th)) > 0) == front:
             body = body + base_boss(th)
-    body = body + top_ledges(front)
+    body = body + top_ledges(front) + cap_mag_pads(front)
     tabs, holes = seam_tabs(front)
     solid_inside = revolve([(0.01, Y0 * K), (prof(Y0 * K), Y0 * K)] + [(prof(h), h) for h in np.linspace(Y0 * K, YCAP * K, 60)] + [(0.01, YCAP * K)])
     for t in tabs:
@@ -994,8 +994,51 @@ def screen_shroud():
     return body.simplify(0.01)    # 去掉存成 STL 后会变成零面积的细小三角形（否则切片软件报“问题边”）
 
 
+# 顶盖固定（v1.9.6）：原来顶盖只靠一圈止口插在外壳顶口里（单边 0.3 的缝），拎起机器人、摸头、耳朵一摆就会松、会掉。
+# 现在顶盖止口下面伸出 CAP_MAG_N 个小块，块底面各粘一颗 Ø3 × 2 圆片磁铁；前后壳顶口里面对应位置各有一块小托板，
+# 托板顶面也粘一颗磁铁，两颗磁铁隔着 FIT（0.3）吸住，把顶盖往下拉紧。要拆顶盖直接往上拔（每对约 0.2–0.3 kgf）。
+# 位置避开两只耳朵和托碗（0° / 180°）、头顶 4 颗斜着照的红外灯（45° / 135° / 225° / 315°），每颗离红外灯 22.5°。
+CAP_MAG_ANG = (67.5, 112.5, 247.5, 292.5)   # 角度：从 +X 逆时针（90 = 正前方）
+CAP_MAG_R = 28.5                  # 磁铁中心离机身竖轴（离止口外沿还有 1.1）
+CMAG_R, CMAG_T = 1.5, 2.0         # Ø3 × 2 磁铁
+CAP_MAG_Z = 132.4                 # 顶盖小块底面（磁铁面）离地；托板顶面比它低 FIT。托板底面 129.1，在摄像头板子最高点（128.6，镜头座高 6 时）上面
+CAP_MAG_W = 7.0                   # 小块、托板宽（沿圆周）
+
+
+def _cap_mag_pocket(z_face, sign):
+    """磁铁坑：Ø3.3（单边 0.15 留胶），深 2.1，坑口在 z_face，sign=+1 往上挖、-1 往下挖。"""
+    out = None
+    for ang in CAP_MAG_ANG:
+        z0, z1 = sorted((z_face - sign * 1.0, z_face + sign * (CMAG_T + 0.1)))
+        c = cyl_z(hole(CMAG_R + 0.15, 32), z0, z1, CAP_MAG_R, 0, 32).rotate([0, 0, ang])
+        out = c if out is None else out + c
+    return out
+
+
+def cap_mag_tabs(r_lip):
+    """顶盖止口下面的小块：从止口外沿（r_lip）往里到 CAP_MAG_R - 3.5，从止口里往下伸到 CAP_MAG_Z。"""
+    out = None
+    for ang in CAP_MAG_ANG:
+        b = box(CAP_MAG_R - 3.5, r_lip, -CAP_MAG_W / 2, CAP_MAG_W / 2, CAP_MAG_Z, (YCAP - 3) * K + 2.5).rotate([0, 0, ang])   # 顶面在顶盖内表面下面，磁铁坑上面还剩 1.4
+        out = b if out is None else out + b
+    return out - _cap_mag_pocket(CAP_MAG_Z, 1)
+
+
+def cap_mag_pads(front):
+    """前后壳顶口里面的小托板（厚 3）：从壳内壁伸到 CAP_MAG_R - 3.5，顶面比顶盖小块低 FIT，顶面粘磁铁。"""
+    zt = CAP_MAG_Z - FIT
+    out = None
+    for ang in CAP_MAG_ANG:
+        if (math.sin(math.radians(ang)) > 0) != front:
+            continue
+        b = box(CAP_MAG_R - 3.5, 80, -CAP_MAG_W / 2, CAP_MAG_W / 2, zt - 3.0, zt).rotate([0, 0, ang])
+        out = b if out is None else out + b
+    return (out ^ solid_inside_all()) - _cap_mag_pocket(zt, -1)
+
+
 def cap():
-    """顶盖：离地 119 以上，带一圈向下的止口；两个球窝让耳朵的根部插进来（v1.5，原来是两条槽）。"""
+    """顶盖：离地 119 以上，带一圈向下的止口；两个球窝让耳朵的根部插进来（v1.5，原来是两条槽）。
+    v1.9.6：止口下面加 4 个放磁铁的小块，和前后壳顶口里的小托板吸住，顶盖不会松、不会掉。"""
     hs = np.linspace(YCAP * K, YTOP * K - 0.01, 40)
     outer = [(prof(h), h) for h in hs] + [(0.0, YTOP * K)]
     # 内表面也沿法向往里 WALL（和外壳一样），盖子边缘不会变成薄片
@@ -1010,7 +1053,7 @@ def cap():
     for s_ in (1, -1):                # 止口在托碗那里让开（托碗外面再留 FIT）
         ro = EAR_RB + EAR_GAP + CUP_T + FIT
         lip = lip - ear_place(Manifold.sphere(ro, 96) + cyl_z(ro, 0, 14, seg=96), s_)
-    part = dome + lip
+    part = dome + lip + cap_mag_tabs(r)
     # 耳朵球窝：以球心为中心、半径 EAR_RB + EAR_GAP 的球挖掉。球心在外表面下 EAR_SINK，所以外表面处的孔比球小，球卡得住；
     # 止口在球窝和托碗那里让开
     for s_ in (1, -1):
