@@ -13,8 +13,8 @@ EAR_LEVER, EAR_HORN = 11.5, 6.0     # 耳朵拨杆孔离球心、舵机摇臂孔
 class Body:
     def __init__(self):
         self.kit = ServoKit(channels=16)
-        # 灯环 + 腰部光带串在一起，一共 RING_N + BELT_N 颗。亮度上限 90/255：52 颗全白也不超过约 1.1 A，不和舵机抢 5 V
-        self.ring = PixelStrip(C.RING_N + C.BELT_N, C.RING_PIN, brightness=90)
+        # 灯环 + 腰部光带串在一起，一共 RING_N + BELT_N 颗。亮度上限 70/255：68 颗全白也不超过约 1.1 A，不和舵机抢 5 V
+        self.ring = PixelStrip(C.RING_N + C.BELT_N, C.RING_PIN, brightness=70)
         self.ring.begin()
         self.touch = DigitalInputDevice(C.TOUCH)
         self.ears(0)
@@ -36,7 +36,7 @@ class Body:
         self.ring.show()
 
     def belt(self, fn):
-        """腰部光带逐颗设颜色：fn(k, n) 返回 (r, g, b)，k 是这一颗在这一段里的位置 0..n-1，前后两段对称（从轮舱口往中间数）。"""
+        """腰部光带逐颗设颜色：fn(k, n) 返回 (r, g, b)，k 是这一颗在这一段里的位置 0..n-1，前后两段对称（从右侧合缝往左数）。"""
         n = C.BELT_N // 2
         for k in range(n):
             col = Color(*(int(max(0, min(255, c))) for c in fn(k, n)))

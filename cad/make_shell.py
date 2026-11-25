@@ -123,7 +123,8 @@ USB_DX = 1.0                     # 底部隐藏 USB-C 转接板（垫块）中�
 #   所以舵机转 ±asin(EAR_LEVER / EAR_RH · sin 20°) ≈ ±41°，耳朵摆 ±20°。
 # 舵机用 3.7 g 小舵机：轴沿左右方向，机身朝里平躺在最上层搁板上。
 # 买之前确认的外形上限：机身长 ≤ 21（不含安装耳，安装耳总长 ≤ 28）、宽 ≤ 9、高（底面到顶面，不含输出轴）≤ 19。
-EAR_X = 21 * K                    # 耳朵根部在顶盖外表面上的位置离中线（水平量）。再往外，根部的球会碰到外壳顶口
+EAR_X = 19.6 * K                  # 耳朵根部在顶盖外表面上的位置离中线（水平量）。v1.9 从 21 × K 往里收 1.6：
+                                  # 托碗最外缘原来离中心 32.8，比外壳顶口（内半径 31.5）大，装好耳朵和托碗的顶盖放不进去；现在 31.2
 EAR_RB, EAR_R = 8.5, 6 * K        # 根部球半径、耳朵胶囊半径（Ø13.8，和 3D 模型一样）
 EAR_SINK, EAR_GAP = 3.0, 0.3      # 球心在外表面下多深、球和孔之间的缝
 EAR_H = 23.6                      # 胶囊圆柱段顶端离球心（沿法线），顶上再加半球：耳朵露出顶盖约 27.5
@@ -425,39 +426,93 @@ def door_rails():
     return rails - cyl_z(R_OPEN + 0.5, Y0 * K - 1, Y0 * K + 2.5 + FIT, seg=SEG)   # 半径多 0.5，切口不和底口内壁重合
 
 
+def _door_z():
+    return (WIN_Z0 - 0.6) * K + FIT, (WIN_Z1 + 0.6) * K - FIT
+
+
+def door_path():
+    """滑门本体绕竖轴转一整圈扫过的地方（四周再放 FIT），用来给后面两根底盘螺丝柱的筋让位。"""
+    z0, z1 = _door_z()
+    g = nfit(z0, z1)
+    hs = np.linspace(z0 - FIT, z1 + FIT, 40)
+    return revolve([(inner_r(h) + 0.5, h) for h in hs] + [(inner_r(h) - g - door_t(min(max(h, z0), z1)) - FIT, h) for h in hs[::-1]])
+
+
+def _knob(e=0.0):
+    """拨片（门在关闭位置）：端面在壳面下 0.3，往里伸进门板 1.4（插槽深 1.4，门板还剩 1.2 以上）。e：四周放大（给门上的插槽用）。"""
+    z0, z1 = _door_z()
+    g = nfit(z0, z1)
+    zk = (WIN_Z0 + WIN_Z1) / 2 * K
+    da = 0.025 + e / inner_r(zk)
+    return band(zk - 2.5 - e, zk + 2.5 + e, prof(zk) - inner_r(zk) - 0.3, g + 1.4 + e) ^ sector(math.pi - 0.22 - da, math.pi - 0.22 + da, 1, 200, 0, 60 * K, 8)
+
+
 def usb_door():
-    """滑门本体 + 从窗口露出来的拨片。门在关闭位置（居中对着正后方）。"""
-    z0, z1 = (WIN_Z0 - 0.6) * K + FIT, (WIN_Z1 + 0.6) * K - FIT
+    """滑门本体（v1.9 起不带拨片）。门在关闭位置（居中对着正后方）。门外表面有一个 1.4 深的小槽，拨片 usb_knob() 插进去粘牢。
+    v1.8 以前拨片和门是一体的：拨片一离开窗口就卡在壳壁里，门根本推不进导轨。现在先把门从导轨一头转进去，再从窗口把拨片粘上。"""
+    z0, z1 = _door_z()
     g = nfit(z0, z1)
     hs = np.linspace(z0, z1, 40)
     outer = [(inner_r(h) - g, h) for h in hs]
     inner = [(inner_r(h) - g - door_t(h), h) for h in hs[::-1]]
     d = revolve(outer + inner) ^ sector(math.pi - DOOR_HALF, math.pi + DOOR_HALF, 1, 200, 0, 60 * K, 48)
-    zk = (WIN_Z0 + WIN_Z1) / 2 * K
-    # 拨片：端面在壳面下 0.3，往里伸进门板 0.8，和门连成一体
-    knob = band(zk - 2.5, zk + 2.5, prof(zk) - inner_r(zk) - 0.3, g + 0.8) ^ sector(math.pi - 0.22 - 0.025, math.pi - 0.22 + 0.025, 1, 200, 0, 60 * K, 8)
-    return d + knob
+    return d - _knob(0.1)
+
+
+def usb_knob():
+    """拨片（单独打印，米白）：门装进导轨以后，从窗口插进门上的小槽，B-7000 粘住。"""
+    return _knob(0.0)
 
 
 # 前后壳合缝螺丝耳的高度。v1.4 下面那对从离地 30 × 比例挪到 43 × 比例：轮子宽到 19 以后，轮子外侧面会顶到原来那对螺丝耳
-SEAM_Z = (43 * K, 100 * K)
+# v1.9 下面那对再挪到 45.5 × 比例：腰部光带槽道改成整圈（经过两侧），螺丝耳要在槽道上沿（47.6）上面
+SEAM_Z = (45.5 * K, 100 * K)
 
 
 def seam_tabs(front):
-    """前后壳合缝处的螺丝耳：四颗 M2 × 14 从后壳耳朵穿过来，穿过骨架立板，拧进前壳耳朵的攻牙孔（拧进约 5 mm）。
-    骨架就靠这四颗螺丝夹在前后壳中间，不用热熔胶。"""
+    """前壳合缝处的螺丝耳（v1.9 起只有前壳有）：四颗 M2 × 8 从骨架立板后面穿过立板，拧进前壳耳朵的攻牙孔（拧进约 5 mm）。
+    v1.8 以前是 M2 × 14 从后壳耳朵穿过来：后壳装上以后螺丝头后面离壳壁只有 13.7 / 17.9 mm，螺丝和扳手都放不进去。
+    现在先装前壳、后壳还没装，骨架后面是敞开的，随便拧；后壳靠底盘 2 颗螺丝和顶口两颗竖着的螺丝固定，见 top_ledges()。"""
     tabs, holes = [], []
+    if not front:
+        return tabs, holes
     for zz in SEAM_Z:
         for s in (1, -1):
             r = inner_r(zz)
             x0, x1 = sorted((s * (r - 9), s * (r + 0.5)))
             y0, y1 = (1.5, 7.5) if front else (-7.5, -1.5)   # v1.3：前后耳之间空 3 mm，骨架立板夹在中间，螺丝一起穿过
             tabs.append(box(x0, x1, y0, y1, zz - 4, zz + 4))
-            if front:      # 前壳这侧攻 M2 牙：螺丝从后壳穿过来，直接拧进前壳，不用在壳里塞螺母
-                holes.append(cyl_y(hole(TAP_M2, 24), -9, 9, s * (r - 5), zz, 24))
-            else:          # 后壳这侧是 M2 过孔
-                holes.append(cyl_y(hole(1.0 + FIT, 24), -9, 9, s * (r - 5), zz, 24))
+            holes.append(cyl_y(hole(TAP_M2, 24), -9, 9, s * (r - 5), zz, 24))   # 攻 M2 牙
     return tabs, holes
+
+
+# 顶口固定（v1.9）：前后壳在合缝两侧、离地约 120 处各有一块小搁板，后壳的叠在前壳的上面，一颗 M2 × 8 竖着从上往下
+# 穿过后壳搁板（过孔）拧进前壳搁板（攻牙）。顶盖没装的时候，螺丝刀从顶口直着伸进去就能拧到（螺丝离中心 29，顶口内半径 31.5）。
+LEDGE_X = 29.0                     # 螺丝离中线
+LEDGE_Z0 = 119.2                   # 前壳搁板底面（厚 5，攻牙）；上面隔 FIT 是后壳搁板（厚 2.5，过孔）
+LEDGE_TF, LEDGE_TB = 5.0, 2.5
+
+
+def _inside_r(off):
+    """壳内壁往里 off 的实心回转体（只用来裁搁板）。"""
+    hs = np.linspace(Y0 * K, YCAP * K, 120)
+    return revolve([(0.01, Y0 * K)] + [(inner_r(h) - off, h) for h in hs] + [(0.01, YCAP * K)])
+
+
+def top_ledges(front):
+    """顶口固定用的搁板：自己这半边连在壳壁上，越过合缝 3.5 mm 伸到对面那半边（那一截离对面壳壁留 FIT）。"""
+    out = None
+    z0, z1 = (LEDGE_Z0, LEDGE_Z0 + LEDGE_TF) if front else (LEDGE_Z0 + LEDGE_TF + FIT, LEDGE_Z0 + LEDGE_TF + FIT + LEDGE_TB)
+    for s in (1, -1):
+        xa, xb = sorted((s * (LEDGE_X - 3.5), s * 70))
+        if front:
+            own, other = box(xa, xb, 0, 8, z0, z1), box(xa, xb, -3.5, 0, z0, z1)
+        else:
+            own, other = box(xa, xb, -8, 0, z0, z1), box(xa, xb, 0, 3.5, z0, z1)
+        L = (own ^ solid_inside_all()) + (other ^ _inside_r(FIT))
+        L = L - cyl_z(hole(TAP_M2 if front else 1.0 + FIT, 24), z0 - 1, z1 + 1, s * LEDGE_X, 0, 24)
+        out = L if out is None else out + L
+    return out
 
 
 # ToF 避障窗口（VL53L1X）：窗口中心离地 22（随比例缩放），光轴上仰 10°。
@@ -565,26 +620,21 @@ def tof_strip():
 # 腰部光带（v1.6，方案 A）：前后壳在离地 BELT_Z0–BELT_Z1 开一道 3 mm 高的槽，卡进一根 T 形乳白导光条（light_strip，打 2 个）：
 # 外面那条卡在槽里、和壳面齐平；里面一圈翻边（上下各比槽宽 BELT_LIP、厚 BELT_FLANGE），后面贴一段 5 mm 宽的 WS2812B 灯带（144 颗/米）。
 # 结构：槽穿透壳壁，所以壳里面沿槽做一条封闭的槽道（上筋 + 下筋 + 后墙，壁厚 BELT_RIB），把槽上下两半壳整圈连起来——
-#   槽下面那一圈（底盘螺丝柱都在上面）不会只靠几截细颈连着。槽和槽道一直开到轮舱口边上，
-#   导光条连同贴好的灯带从轮舱口那头顺着槽道推进去。后墙正中开一个小口走线。
-# 高度：后壳两侧回充红外接收头（离地 34.5，本体到约 38）在下面，槽道下沿离它 1.2；槽道上沿 46 正好等于轮舱口顶，导光条才推得进去。
+#   槽下面那一圈（底盘螺丝柱都在上面）不会只靠几截细颈连着。后墙正中开一个小口走线。
+# v1.9：槽和槽道改成整圈（经过两侧轮子上面），前后两段各 180°，一直开到前后壳的合缝。
+#   v1.8 以前写的是“开到轮舱口边上、从轮舱口推进去”，其实轮舱口在外壳上只开到离地 23–28，光带那里两头都是实心壳壁，硬导光条推不进去。
+#   现在装法：前后壳还没合起来的时候，导光条（贴好灯带）从合缝那头对准槽道，绕机身竖轴转进去（转 180°，另一半壳不在，没有东西挡）。
+# 高度：后壳两侧回充红外接收头（离地 34.5，本体到约 38）在下面，槽道下沿离它 1.2。
 BELT_Z0, BELT_Z1 = 41.7, 44.7
 BELT_LIP, BELT_FLANGE = 1.0, 1.5
 BELT_LED_T = 2.6                  # 灯带厚（软板 + 灯珠）
 BELT_RIB = 1.6                    # 槽道的筋和后墙厚
-BELT_END = 0.0                    # 槽一直开到轮舱口边上
-
-
-def belt_wells(m):
-    """两侧轮舱口（再往外放 m）。"""
-    y = WHEEL_D / 2 + 3 + m
-    x = WHEEL_X - WHEEL_W / 2 - 2 - m
-    return box(x, 200, -y, y, -5, 80) + box(-200, -x, -y, y, -5, 80)
+BELT_SEAM = 0.15                  # 导光条两头离合缝（y = 0）各让 0.15
 
 
 def belt_slot():
     """外壳上要挖掉的槽（穿透壳壁）。"""
-    return band(BELT_Z0, BELT_Z1, WALL + 3, 0.5, n=12) - belt_wells(BELT_END)
+    return band(BELT_Z0, BELT_Z1, WALL + 3, 0.5, n=12)
 
 
 def _belt_channel_z():
@@ -601,13 +651,13 @@ def belt_ribs():
     for sy in (1, -1):                                               # 前后两段正中的走线口：只切后墙，不碰壳壁和槽口
         y0, y1 = sorted((sy * (rb - BELT_RIB - 1.0), sy * (rb + 0.5)))
         ch = ch - box(-3, 3, y0, y1, zm - 1.2, zm + 1.2)
-    return (ch + belt_gussets()) - belt_wells(BELT_END) - belt_slot()   # 槽道不能把槽口又补上
+    return (ch + belt_gussets()) - belt_slot()   # 槽道不能把槽口又补上
 
 
 def belt_gussets():
     """槽道后墙外侧的三角加强筋（v1.6.1）：每隔约 30 mm（弧长）一片，厚 1.6，上下各一片，
     一个角贴着槽道后墙，另外两个角连到槽上方 / 下方 8 mm 的壳内壁上，把后墙和上下两半壳撑成一体，摔的时候腰不容易折。
-    筋都在后墙外面（朝机身中间那侧），不挡灯带，也不挡导光条从轮舱口推进去。"""
+    筋都在后墙外面（朝机身中间那侧），不挡灯带，也不挡导光条转进去。两侧（轮子上面、合缝两边）不放筋：那里有合缝螺丝耳和骨架立板。"""
     za, zb, depth = _belt_channel_z()
     zlo, zhi = za - BELT_RIB, zb + BELT_RIB
     zm = (za + zb) / 2
@@ -633,12 +683,12 @@ def belt_gussets():
 
 
 
-def belt_strip():
-    """导光条（前后两段，机身坐标）：外面那条四周比槽小 0.15，外表面和壳面齐平；里面翻边。两头和轮舱口切边齐平。"""
+def belt_strip(front=True):
+    """导光条（前段或后段，机身坐标，两段一样）：外面那条四周比槽小 0.15，外表面和壳面齐平；里面翻边。半圈 180°，两头离合缝各 BELT_SEAM。"""
     hs = np.linspace(BELT_Z0 + 0.15, BELT_Z1 - 0.15, 12)
     outer = revolve([(inner_r(h) - 0.05, h) for h in hs] + [(prof(h), h) for h in hs[::-1]])
     flange = band(BELT_Z0 - BELT_LIP, BELT_Z1 + BELT_LIP, -0.05, 0.05 + BELT_FLANGE, n=12)
-    return (outer + flange) - belt_wells(BELT_END + 0.15)
+    return (outer + flange) ^ (box(-200, 200, BELT_SEAM, 200, -10, 200) if front else box(-200, 200, -200, -BELT_SEAM, -10, 200))
 
 
 def half(front):
@@ -658,6 +708,7 @@ def half(front):
     for th in BASE_SCREWS:
         if (math.sin(math.radians(th)) > 0) == front:
             body = body + base_boss(th)
+    body = body + top_ledges(front)
     tabs, holes = seam_tabs(front)
     solid_inside = revolve([(0.01, Y0 * K), (prof(Y0 * K), Y0 * K)] + [(prof(h), h) for h in np.linspace(Y0 * K, YCAP * K, 60)] + [(0.01, YCAP * K)])
     for t in tabs:
@@ -707,6 +758,8 @@ def base_boss(th):
     # 筋伸到壁里、但停在外表面里面 0.5（壁厚 2，照样连牢）；上下各多 1，不和柱顶、柱底共面
     inside = revolve([(0.01, zb0 - 1)] + [(prof(h) - 0.5, h) for h in np.linspace(zb0 - 1, zb1 + 1, 24)] + [(0.01, zb1 + 1)])
     rib = (box(BASE_SCREW_R, 80, -2, 2, zb0, zb1).rotate([0, 0, th])) ^ inside
+    if math.sin(t) < 0:            # v1.9：后面两根柱的筋在滑门走的那一圈让开，滑门（不带拨片）才能从导轨一头转进去
+        rib = rib - door_path()
     return (boss + rib) - cyl_z(hole(TAP_M2, 24), zb0 - 1, zb1 + 1, x, y, 24)
 
 
@@ -850,6 +903,8 @@ def screen_shroud():
     patch = patch - _scr_place(box(-aw / 2 - 0.5, aw / 2 + 0.5, -1, lip + 0.5, -ah / 2 - 0.5, ah / 2 + 0.5), ys)
     patch = patch - _scr_place(box(-gw / 2 - 0.3, gw / 2 + 0.3, -gt - 5, 0, -gh / 2 - 0.3, gh / 2 + 0.3), ys)
     body = (body + patch) - ko
+    # v1.9：玻璃背面以后、PCB 的范围里不留料（原来框边往后多出约 1 mm，PCB 比玻璃宽，会顶在上面，屏幕就贴不到唇上）
+    body = body - _scr_place(box(SCR_PCB_X[0] - 0.3, SCR_PCB_X[1] + 0.3, -gt - 20, -gt, -gh / 2 - 0.3, gh / 2 + 0.3), ys)
     body = max(body.decompose(), key=lambda p: p.volume())    # 裁切边上会剩下体积为 0 的碎片，只留主体
     return body.simplify(0.01)    # 去掉存成 STL 后会变成零面积的细小三角形（否则切片软件报“问题边”）
 
@@ -949,7 +1004,7 @@ def base_plate():
 
 def frame():
     """内部骨架：一块立板（在左右方向的平面里，正好在前后壳合缝上）加三层搁板。
-    · 立板被前后壳合缝处的 4 颗 M2 × 14 螺丝夹住（螺丝穿过立板），装好后不会晃；
+    · 立板贴在前壳 4 个合缝螺丝耳后面，4 颗 M2 × 8 从立板后面穿过去拧进前壳（v1.9），装好后不会晃；
     · 最下层：立板前后各放一个 18650 单节电池盒（两节串联）；
     · 中间层：前侧放树莓派 Zero 2 W（四个 M2.5 孔都在立板前侧），后侧放舵机板、降压、功放、电量检测等小板；
     · 最上层：两只 3.7 g 小舵机平躺，输出轴朝外，摇臂用一根钢丝连杆推耳朵的拨杆。立板只做到这层搁板为止；
@@ -996,7 +1051,7 @@ def frame():
         xm = s * (svx - SV_TOP - SV_H / 2)
         for yy in (-SV_SHAFT - 2.6, SV_L - SV_SHAFT + 0.6):
             f = f - box(xm - 2, xm + 2, yy, yy + 2, sv_shelf - 3, sv_shelf + 1)
-    # 合缝螺丝：立板夹在前后壳的螺丝耳中间，螺丝从这里穿过（M2 过孔）；搁板在螺丝耳前后让开
+    # 合缝螺丝：立板贴在前壳螺丝耳后面，M2 × 8 从立板后面穿过（M2 过孔）拧进前壳；搁板在螺丝耳前后让开
     for zz in SEAM_Z:
         for s in (1, -1):
             r = inner_r(zz)
@@ -1004,6 +1059,9 @@ def frame():
             x0, x1 = sorted((s * (r - 9 - FIT), s * (r + 1)))
             for y0, y1 in ((1.5, 7.5 + FIT), (-7.5 - FIT, -1.5)):
                 f = f - box(x0, x1, y0, y1, zz - 4 - FIT, zz + 4 + FIT)
+    # v1.9：腰部光带槽道改成整圈，立板两侧边在槽道那里让开（槽道 + FIT）
+    za, zb, depth = _belt_channel_z()
+    f = f - band(za - BELT_RIB - FIT, zb + BELT_RIB + FIT, 1.0, depth + BELT_RIB + FIT, n=10)
     # （v1.4 起后面那个悬崖传感器的小板往右伸，不再从立板下面穿过去，立板上不用开缺口）
     # 走线孔
     f = f - cyl_y(7, -5, 5, 0, 48 * K, 32) - cyl_y(7, -5, 5, 0, 80 * K, 32)
@@ -1216,6 +1274,6 @@ def clip_leg():
 
 if __name__ == "__main__":
     print(f"比例 {K:.2f}：整机约 {2 * RB * K:.0f} × {2 * RB * K:.0f} × {YTOP * K:.0f} mm，壁厚 {WALL} mm")
-    parts = {"lens": lens(), "screen_shroud": screen_shroud(), "shell_front": half(True), "shell_back": half(False), "top_cap": cap(), "base_plate": base_plate(), "frame": frame(), "ear": ear(), "ear_cup": ear_cup_placed(1), "light_strip": belt_strip() ^ box(-200, 200, 0, 200, -10, 200), "tof_strip": tof_strip(), "clip_tray": clip_tray(), "clip_leg": clip_leg(), "usb_door": usb_door(), "dock_base": dock_base(), "dock_plug": dock_plug(), "dock_cap": dock_cap()}
+    parts = {"lens": lens(), "screen_shroud": screen_shroud(), "shell_front": half(True), "shell_back": half(False), "top_cap": cap(), "base_plate": base_plate(), "frame": frame(), "ear": ear(), "ear_cup": ear_cup_placed(1), "light_strip": belt_strip(True), "tof_strip": tof_strip(), "clip_tray": clip_tray(), "clip_leg": clip_leg(), "usb_door": usb_door(), "usb_knob": usb_knob(), "dock_base": dock_base(), "dock_plug": dock_plug(), "dock_cap": dock_cap()}
     for n, m in parts.items():
         save(n, m)
