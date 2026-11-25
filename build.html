@@ -31,7 +31,7 @@ pre code { background: none; padding: 0; color: inherit; }
 </style>
 </head>
 <body>
-<nav><div class="wrap"><b>Nomi</b><a href="index.html">首页</a><a href="#parts">采购清单</a><a href="#drawing">尺寸图</a><a href="#stl">打印文件</a><a href="#wiring">接线</a><a href="#steps">步骤</a><a href="#code">程序</a><a href="make.html">量产与成本</a><a class="cta" href="sim.html">打开 3D 模型</a></div></nav>
+<nav><div class="wrap"><b>Nomi</b><a href="index.html">首页</a><a href="#parts">采购清单</a><a href="#drawing">尺寸图</a><a href="#stl">打印文件</a><a href="#wiring">接线</a><a href="#steps">步骤</a><a href="#code">程序</a><a href="make.html">量产与成本</a><a class="cta" href="sim.html?v=20261125c">打开 3D 模型</a></div></nav>
 
 <header class="hero"><div class="wrap">
   <div class="eyebrow">样机制作指南</div>
@@ -316,7 +316,7 @@ sudo -E python3 main.py</code></pre>
   <div class="note"><b>最可能要调的地方：</b>声卡配置（<code>arecord -l</code> 看不到设备时检查 overlay 和接线）；红外设备号（用 <code>ir-ctl -f -d /dev/lirc0</code> 看哪个是发射）；灯环需要 root 权限；屏幕方向不对就改 <code>face.py</code> 里的 <code>rotate</code>。大模型服务要支持“工具调用”，否则它不会替你开空调。密钥不要写进代码或传到公开仓库。</div>
 </div></section>
 
-<footer><div class="wrap"><p>这是一份自己动手的样机方案，未经实物验证，仅供个人制作。要销售需要重新做结构、电路并通过相关认证，见<a href="make.html">量产与成本</a>。</p><a href="index.html">首页</a><a href="sim.html">3D 交互</a><a href="app.html">APP 与互联</a><a href="make.html">制造与成本</a></div></footer>
+<footer><div class="wrap"><p>这是一份自己动手的样机方案，未经实物验证，仅供个人制作。要销售需要重新做结构、电路并通过相关认证，见<a href="make.html">量产与成本</a>。</p><a href="index.html">首页</a><a href="sim.html?v=20261125c">3D 交互</a><a href="app.html">APP 与互联</a><a href="make.html">制造与成本</a></div></footer>
 
 <script>
 const PARTS = [
